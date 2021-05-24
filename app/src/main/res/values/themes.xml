@@ -1,0 +1,55 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Theme.MineCraft" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <!-- Primary brand color. -->
+        <item name="colorPrimary">@color/purple_500</item>
+        <item name="colorPrimaryVariant">@color/purple_700</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <!-- Secondary brand color. -->
+        <item name="colorSecondary">@color/teal_200</item>
+        <item name="colorSecondaryVariant">@color/teal_700</item>
+        <item name="colorOnSecondary">@color/black</item>
+        <!-- Status bar color. -->
+        <item name="android:statusBarColor" tools:targetApi="l">?attr/colorPrimaryVariant</item>
+        <!-- Customize your theme here. -->
+
+    </style>
+
+
+    <style name="ToolbarTheme" parent="@style/Theme.MineCraft">
+        <item name="android:homeAsUpIndicator">@drawable/ic_baseline_arrow_back_ios_24</item>
+        <item name="colorControlNormal">@color/white</item>
+    </style>
+
+    <style name="CustomStyleButtons">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:inputType">text</item>
+        <item name="fontFamily">@font/regular_bmg</item>
+        <item name="android:padding">5dp</item>
+    </style>
+
+    <style name="CustomStyleText">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:inputType">text</item>
+        <item name="fontFamily">@font/regular_bmg</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <style name="CustomStyleTitleBar" parent="CustomStyleText">
+        <item name="fontFamily">@font/regular_alt</item>
+    </style>
+
+    <style name="Theme.MineCraft.Fullscreen" parent="Theme.MineCraft">
+        <item name="android:actionBarStyle">@style/Widget.Theme.MineCraft.ActionBar.Fullscreen
+        </item>
+        <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowBackground">@null</item>
+    </style>
+
+    <style name="ThemeOverlay.MineCraft.FullscreenContainer" parent="">
+        <item name="fullscreenBackgroundColor">@color/light_blue_600</item>
+        <item name="fullscreenTextColor">@color/light_blue_A200</item>
+    </style>
+</resources>

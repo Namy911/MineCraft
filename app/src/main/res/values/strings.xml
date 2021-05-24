@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">MineCraft</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="btn_download">Download</string>
+    <string name="btn_install_behavior">Install</string>
+    <string name="btn_install">Install</string>
+    <string name="terms_of_usage">Terms of Usage</string>
+    <string name="help">Help</string>
+    <string name="privacy_policy">Privacy Policy</string>
+    <string name="go_premium">Go Premium</string>
+
+    <!-- Text  From Settings -->
+    <string name="txt_terms_of_usage">Terms of Usage</string>
+    <string name="txt_help">Help</string>
+    <string name="txt_privacy_policy">Privacy Policy</string>
+    <string name="title_fragment_setinga">Settings</string>
+    <string name="title_fragment_detailt">Addons</string>
+    <string name="title_activity_splashscreen">FullscreenActivity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+</resources>
