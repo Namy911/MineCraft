@@ -5,13 +5,6 @@ import retrofit2.Response
 import retrofit2.http.GET
 
 interface TaskService {
-
     @GET("addons.json")
     suspend fun getData(): Response<TaskEntity>
-
-    @GET("resource.mcpack")
-    suspend fun getResource()
-
-    @GET("behavior.mcpack")
-    suspend fun getBehavior()
 }

@@ -19,7 +19,7 @@ data class AddonModel(
     val image: String,
     val preview: List<String>,
     val resource: String,
-    val title: String
+    val title: String,
 ) : Parcelable {
     fun convertToAddonEntity(model: AddonModel): AddonEntity{
         return AddonEntity(
@@ -38,7 +38,7 @@ data class AddonModel(
             image  = model.image,
             preview = model.preview,
             resource = model.resource,
-            title = model.title
+            title = model.title,
         )
     }
     @Dao
@@ -46,12 +46,12 @@ data class AddonModel(
         @Query("SELECT * FROM `addon` WHERE  `_id` = :id")
          suspend fun getOne(id: Int): AddonModel
 
-        @Query("SELECT * FROM `addon`  ORDER BY _id DESC LIMIT :limit  OFFSET :offset  ")
-        fun getLimit(offset: Int, limit: Int): Flow<List<AddonModel>>
+        @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
+        suspend fun getLimit(offset: Int, limit: Int): List<AddonModel>
 
-        @Query("SELECT * FROM `addon` ")
-        fun getAll(): Flow<List<AddonModel>>
-        fun getAllDistinct() = getAll().distinctUntilChanged()
+//        @Query("SELECT * FROM `addon` ")
+//        fun getAll(): Flow<List<AddonModel>>
+//        fun getAllDistinct() = getAll().distinctUntilChanged()
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         suspend fun insertAll(items: List<AddonModel>)

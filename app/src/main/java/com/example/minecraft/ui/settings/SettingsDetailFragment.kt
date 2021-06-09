@@ -3,6 +3,7 @@ package com.example.minecraft.ui.settings
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
@@ -40,6 +41,7 @@ class SettingsDetailFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+
     fun setupToolBartTitle(title: String){
         (activity as MainActivity?)!!.setupToolBartTitle(title)
     }

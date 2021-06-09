@@ -6,8 +6,11 @@ import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
 import androidx.activity.viewModels
 import androidx.appcompat.app.ActionBar
+import androidx.core.view.isVisible
+import androidx.core.view.marginEnd
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
@@ -29,50 +32,58 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: MainActivityBinding
     private lateinit var navController: NavController
 
-    private val viewModel: MainViewModel by viewModels()
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = MainActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Setup Navigation
-        setupToolBartTitle(getString(R.string.app_name))
-        binding.toolbar.setNavigationIcon(R.drawable.ic_baseline_arrow_back_ios_24)
+        setupToolBartTitle()
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.findNavController()
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.apply {
+            setDisplayShowTitleEnabled(false)
+            setDisplayShowHomeEnabled(false)
+        }
+
+        // Setup navigation with colliders
+        binding.colliderBackArrow.setOnClickListener { super.onBackPressed() }
+        binding.colliderSettings.setOnClickListener { setActionBarSettings() }
         navController.addOnDestinationChangedListener { _, destination, _ ->
-            if(destination.id == R.id.blankFragment) {
-                binding.toolbar.visibility = View.GONE
-            } else {
-                binding.toolbar.visibility = View.VISIBLE
+            when (destination.id) {
+                R.id.mainFragment -> {
+                    if (binding.homeIndicator.isVisible){
+                        binding.homeIndicator.visibility = View.INVISIBLE
+                        binding.colliderBackArrow.visibility = View.GONE
+                    }
+                    binding.toolBarSettings.visibility = View.VISIBLE
+                }
+                R.id.detailFragment -> {
+                    binding.homeIndicator.visibility = View.VISIBLE
+                    binding.colliderBackArrow.visibility = View.VISIBLE
+                    binding.toolBarSettings.visibility = View.VISIBLE
+                }
+                R.id.settingsFragment -> {
+                    binding.homeIndicator.visibility = View.VISIBLE
+                    binding.colliderBackArrow.visibility = View.VISIBLE
+                    binding.toolBarSettings.visibility = View.INVISIBLE
+                }
+                R.id.settingsDetailFragment -> {
+                    binding.homeIndicator.visibility = View.VISIBLE
+                    binding.colliderBackArrow.visibility = View.VISIBLE
+                }
+                else -> { }
             }
         }
-        setSupportActionBar(binding.toolbar)
-        setupActionBarWithNavController(navController)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.bar_settings, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return if (item.itemId == R.id.settings) {
+    private fun setActionBarSettings(){
             val action = NavGraphDirections.globalSettingsFragment()
             navController.navigate(action)
-            true
-        } else {
-            item.onNavDestinationSelected(navController) || super.onOptionsItemSelected(item)
-        }
     }
 
-    override fun onSupportNavigateUp(): Boolean {
-        return navController.navigateUp() || super.onSupportNavigateUp()
-    }
-
-    fun setupToolBartTitle(title: String){
+    fun setupToolBartTitle(title: String = getString(R.string.app_name)){
         binding.txtBar.text = title
     }
 }

@@ -17,6 +17,8 @@
     <color name="btn_terms">#AA49E5</color>
     <color name="btn_default">#E56349</color>
     <color name="setting_bg">#005B9B</color>
+    <color name="main_bg">#4353FF</color>
+    <color name="progress_bg">#80000000</color>
     <color name="light_blue_600">#FF039BE5</color>
     <color name="light_blue_900">#FF01579B</color>
     <color name="light_blue_A200">#FF40C4FF</color>

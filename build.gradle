@@ -12,10 +12,12 @@ buildscript {
         paging_version = "3.0.0"
         lottieVersion = "3.4.0"
         activity_version = "1.2.3"
+        work_version = "2.5.0"
     }
     repositories {
         google()
         mavenCentral()
+
     }
     dependencies {
         classpath "com.android.tools.build:gradle:4.2.1"
@@ -32,6 +34,7 @@ allprojects {
     repositories {
         google()
         mavenCentral()
+        maven { url 'https://jitpack.io' }
         jcenter() // Warning: this repository is going to shut down soon
     }
 }

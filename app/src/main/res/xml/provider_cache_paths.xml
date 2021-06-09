@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-cache-path
+        name="mine_craft_addon_cache"
+        path="." />
+</paths>

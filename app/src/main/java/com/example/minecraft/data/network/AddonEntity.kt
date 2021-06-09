@@ -8,7 +8,6 @@ import kotlinx.android.parcel.Parcelize
 
 
 @Parcelize
-@Entity(tableName = "addon_server")
 data class AddonEntity(
     val behavior: String,
     val description: String,

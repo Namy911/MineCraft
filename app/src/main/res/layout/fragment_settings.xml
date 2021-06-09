@@ -8,14 +8,14 @@
     android:layout_height="match_parent"
     tools:context=".ui.settings.SettingsFragment">
 
-
     <View
         android:layout_width="match_parent"
         android:layout_height="85dp"
         android:background="@color/txt_share_bg"
         app:layout_constraintBottom_toBottomOf="@+id/btn_help"
-        app:layout_constraintTop_toTopOf="@+id/btn_help"
-        tools:layout_editor_absoluteX="0dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btn_help" />
 
     <Button
         android:id="@+id/btn_help"
@@ -23,7 +23,7 @@
         android:layout_width="230dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="100dp"
-        android:background="@drawable/btn_default"
+        android:background="@drawable/btn_help"
         android:text="@string/help"
         app:layout_constraintBottom_toTopOf="@+id/btn_policy"
         app:layout_constraintEnd_toEndOf="parent"
@@ -36,8 +36,9 @@
         android:layout_height="85dp"
         android:background="@color/txt_share_bg"
         app:layout_constraintBottom_toBottomOf="@+id/btn_policy"
-        app:layout_constraintTop_toTopOf="@+id/btn_policy"
-        tools:layout_editor_absoluteX="0dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btn_policy" />
 
     <Button
         android:id="@+id/btn_policy"
@@ -46,10 +47,9 @@
         android:text="@string/privacy_policy"
         style="@style/CustomStyleButtons"
         android:layout_marginTop="90dp"
-        android:background = "@drawable/btn_privacy"
+        android:background = "@drawable/btn_policy"
         app:layout_constraintBottom_toTopOf="@+id/btn_terms"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_help" />
 
@@ -58,8 +58,10 @@
         android:layout_height="85dp"
         android:background="@color/txt_share_bg"
         app:layout_constraintBottom_toBottomOf="@+id/btn_terms"
-        app:layout_constraintTop_toTopOf="@+id/btn_terms"
-        tools:layout_editor_absoluteX="0dp" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/btn_terms" />
+
     <Button
         android:id="@+id/btn_terms"
         android:layout_marginTop="90dp"
@@ -72,5 +74,6 @@
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_policy" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

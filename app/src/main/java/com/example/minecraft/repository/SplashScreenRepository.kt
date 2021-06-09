@@ -8,11 +8,14 @@ import javax.inject.Inject
 
 class SplashScreenRepository @Inject constructor( private val service: TaskService, private val taskStore: AddonModel.Store) {
 
-    suspend fun getData() = withContext(Dispatchers.IO) {
+    suspend fun getDataFromServer() = withContext(Dispatchers.IO) {
         service.getData()
     }
 
     suspend fun insertFulData(list: List<AddonModel>) = withContext(Dispatchers.IO) {
         taskStore.initialization(list)
     }
+
+//    fun getOfflineData() = taskStore.getAllDistinct()
+
 }

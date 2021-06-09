@@ -3,7 +3,12 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="btn_download">Download</string>
-    <string name="btn_install_behavior">Install</string>
+
+    <string name="btn_install_behavior">Install Behavior</string>
+    <string name="btn_download_behavior">DownLoad Behavior</string>
+    <string name="btn_install_pack">Install Pack</string>
+    <string name="btn_download_pack">Download Pack</string>
+
     <string name="btn_install">Install</string>
     <string name="terms_of_usage">Terms of Usage</string>
     <string name="help">Help</string>
@@ -14,9 +19,25 @@
     <string name="txt_terms_of_usage">Terms of Usage</string>
     <string name="txt_help">Help</string>
     <string name="txt_privacy_policy">Privacy Policy</string>
-    <string name="title_fragment_setinga">Settings</string>
-    <string name="title_fragment_detailt">Addons</string>
+    <string name="title_fragment_settings">Settings</string>
+    <string name="title_fragment_details">Addons</string>
     <string name="title_activity_splashscreen">FullscreenActivity</string>
     <string name="dummy_button">Dummy Button</string>
     <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="empty_addon">No Addon Installed</string>
+    <!-- Text  From Permissions -->
+    <string name="dialog_requestPerm_msg">Needed permissions to <bold> WRITE EXTERNAL STORAGE</bold>, with out this you can\'t install pack </string>
+    <string name="dialog_requestPerm_title">Permission</string>
+    <string name="dialog_requestPerm_butt_OK">Give Permission</string>
+    <string name="msg_no_internet">No Internet connection</string>
+    <string name="btn_snack_connect">Connect</string>
+    <string name="msg_snack_go_main">Go to Next</string>
+    <string name="dialog_title_no_internet">Bad Connection</string>
+    <string name="dialog_no_internet_go_next">Go Next</string>
+    <string name="dialog_no_internet_leave">Leave</string>
+    <string name="msg_finish_download">Finished</string>
+    <string name="title_no_found_app">Not found Application</string>
+    <string name="msg_go_download_app">Please download  MineCraft to install addon </string>
+    <string name="msg_empty_list">Empty list</string>
+
 </resources>

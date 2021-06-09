@@ -7,7 +7,7 @@ import java.lang.reflect.Type
 
 
 class Converter {
-
+    // Image Gallery resource
     @TypeConverter
     fun fromPreview(values: List<String> ): String {
         val gson = Gson()

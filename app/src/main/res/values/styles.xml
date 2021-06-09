@@ -8,4 +8,25 @@
         <item name="android:background">@color/black_overlay</item>
         <item name="android:buttonBarStyle">?android:attr/buttonBarStyle</item>
     </style>
+
+    <style name="CustomStyleButtons">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:background">@drawable/btn_default</item>
+        <item name="android:textAlignment">center</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:inputType">text</item>
+        <item name="fontFamily">@font/regular_bmg</item>
+    </style>
+
+    <style name="CustomStyleText">
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:inputType">text</item>
+        <item name="fontFamily">@font/regular_bmg</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <style name="CustomStyleTitleBar" parent="CustomStyleText">
+        <item name="fontFamily">@font/regular_alt</item>
+    </style>
 </resources>

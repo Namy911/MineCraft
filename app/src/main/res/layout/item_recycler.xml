@@ -8,6 +8,16 @@
     android:layout_width="match_parent"
     android:layout_height="212dp">
 
+    <Button
+        android:id="@+id/btn_download"
+        style="@style/CustomStyleButtons"
+        android:layout_width="155dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:text="@string/btn_install"
+        app:layout_constraintBottom_toBottomOf="@+id/imageView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/txt_install" />
     <ImageView
         android:id="@+id/imageView"
         android:layout_width="0dp"
@@ -17,17 +27,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/btn_install"
-        style="@style/CustomStyleButtons"
-        android:layout_width="155dp"
-        android:layout_height="40dp"
-        android:layout_marginEnd="16dp"
-        android:background="@drawable/btn_default"
-        android:text="@string/btn_install"
-        app:layout_constraintBottom_toBottomOf="@+id/imageView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/txt_install" />
 
     <TextView
         android:id="@+id/txt_install"
