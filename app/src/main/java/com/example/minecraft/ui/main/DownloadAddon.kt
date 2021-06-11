@@ -53,6 +53,7 @@ companion object{
                     DIR_EXT_STORAGE -> {
 //                           outputId = downloadFileDir(uri, title)
                            outputId = downloadPublicDir(uri, title)
+//                        outputId = downloadCacheDir(uri, title)
                     }
 //                    DIR_PUBLIC -> {
 //                        outputId = downloadSdPublicDir(uri, title)
