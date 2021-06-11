@@ -2,33 +2,44 @@ package com.example.minecraft.ui.util
 
 import android.Manifest
 import android.app.DownloadManager
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.work.*
 import com.example.minecraft.BuildConfig
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.ui.main.DownloadAddon
 import com.example.minecraft.ui.main.MainViewModel
-import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
+import java.io.FileInputStream
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.*
 
 
 private const val TAG = "DownloadDialogUtil"
@@ -37,70 +48,114 @@ abstract class DownloadDialogUtil : Fragment(){
     companion object{
 //        val FILE_NAME = "addon.file.name"
 //        val URI_DOWNLOAD = "uri.download"
-//        private val URI_RESOURCE = "resource"
-//        private val URI_BEHAVIOR = "behavior"
+        val TAG_RESOURCE = "resource"
+        val TAG_BEHAVIOR = "behavior"
 
         const val RECORD_REQUEST_CODE = 101
         const val packageName = "com.mojang.minecraftpe"
     }
     private val viewModel: MainViewModel by viewModels()
     // Config name of downloaded file
-    fun getPackFileName(resource: String): String {
+    fun getPackFileName(resource: String, tag: String): String {
         var term = ".mcpack"
         if (resource.endsWith(".mcaddon")) {
             term = ".mcaddon"
         }
-        return "A" + resource.hashCode() + term
+
+        return if (tag == TAG_RESOURCE) {
+            TAG_RESOURCE + resource.hashCode() + term
+        } else {
+            TAG_BEHAVIOR + resource.hashCode() + term
+        }
     }
     //
     private fun checkInstallation(model: AddonModel, tag: String) {
-        if (isAppInstalled()) {
             // Cache Dir
             if (tag == DownloadAddon.DIR_CACHE) {
-                val cacheResourceLink =
-                    requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource)
-                val cacheBehaviorLink =
-                    requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior)
-                // install packs
-                if (File(cacheResourceLink).exists()) {
-                    viewModel.setCachePathResource(cacheResourceLink)
-                    installAddon(File(cacheResourceLink), DownloadAddon.DIR_CACHE)
+                Toast.makeText(requireActivity(), "DIR_CACHE", Toast.LENGTH_SHORT).show()
+                if (isAppInstalled()) {
+                    val cacheResourceLink =
+                        requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
+                    val cacheBehaviorLink =
+                        requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
+                    // install packs
+                    if (File(cacheResourceLink).exists()) {
+                        viewModel.setCachePathResource(cacheResourceLink)
+                        installAddon(File(cacheResourceLink), DownloadAddon.DIR_CACHE)
+                    } else {
+                        Log.d(TAG, "checkInstallation: No $cacheResourceLink")
+                    }
+                    if (File(cacheBehaviorLink).exists()) {
+                        viewModel.setCachePathBehavior(cacheBehaviorLink)
+                        installAddon(File(cacheBehaviorLink), DownloadAddon.DIR_CACHE)
+                    } else {
+                        Log.d(TAG, "checkInstallation: No $cacheBehaviorLink")
+                    }
                 } else {
-                    Log.d(TAG, "checkInstallation: No $cacheResourceLink")
-                }
-                if (File(cacheBehaviorLink).exists()) {
-                    viewModel.setCachePathBehavior(cacheBehaviorLink)
-                    installAddon(File(cacheBehaviorLink), DownloadAddon.DIR_CACHE)
-                } else {
-                    Log.d(TAG, "checkInstallation: No $cacheBehaviorLink")
+                    dialogDownloadApp()
                 }
             }
             // Private Dir
-            if (tag == DownloadAddon.DIR_PRIVATE) {
-                val pathResourceLink = requireActivity().applicationContext
-                    .getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                    .toString() + File.separator + getPackFileName(model.resource)
-                val pathBehaviorLink = requireActivity().applicationContext
-                    .getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-                    .toString() + File.separator + getPackFileName(model.behavior)
+            if (tag == DownloadAddon.DIR_EXT_STORAGE) {
+                val pathResourceLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                    .toString() + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
+                val pathBehaviorLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
+                    .toString() + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
+
+                val pathSdResourceLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator  + getPackFileName(model.resource, TAG_RESOURCE)
+                val pathSdBehaviorLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
                 // install packs
                 if (File(pathResourceLink).exists()) {
                     viewModel.setPrivatePathResource(pathResourceLink)
-                    installAddon(File(pathResourceLink), DownloadAddon.DIR_PRIVATE)
+                    saveFilePublicDownload(File(pathResourceLink), getPackFileName(model.resource, TAG_RESOURCE))
+//                    saveFilePublicDownload(File(pathResourceLink), model.title)
+                    Toast.makeText(requireActivity(), "DA", Toast.LENGTH_SHORT).show()
                 } else {
                     Log.d(TAG, "checkInternetConnection: No $pathResourceLink")
                 }
                 if (File(pathBehaviorLink).exists()) {
                     viewModel.setPrivatePathBehavior(pathBehaviorLink)
-                    installAddon(File(pathBehaviorLink), DownloadAddon.DIR_PRIVATE)
+                    saveFilePublicDownload(File(pathBehaviorLink), getPackFileName(model.behavior, TAG_BEHAVIOR))
+//                    saveFilePublicDownload(File(pathBehaviorLink), model.title)
+                    Toast.makeText(requireActivity(), "DA", Toast.LENGTH_SHORT).show()
                 } else {
                     Log.d(TAG, "checkInternetConnection: No $pathBehaviorLink")
                 }
             }
-        } else {
-            dialogDownloadApp()
-        }
+    }
+    // Copy file from internal storage to Shared storage
+    fun saveFilePublicDownload(file: File, name: String){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            CoroutineScope(Dispatchers.IO).launch {
+                    val contentValue = ContentValues().apply {
+//                        put(MediaStore.DownloadColumns.TITLE , name)
+                        put(MediaStore.DownloadColumns.DISPLAY_NAME , name)
+                        put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
+                        put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
+                    }
 
+                    requireActivity().contentResolver.insert(
+                        MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                        contentValue
+                    )?.also { uri ->
+                        requireActivity().contentResolver.openOutputStream(uri).use { output ->
+                            val encoded = Files.readAllBytes(Paths.get(file.toURI()))
+                            output?.write(encoded)
+//                            FileInputStream(file).use { inputStream ->
+//                                val buffer = ByteArray(1024)
+//                                var length: Int
+//                                length = inputStream.read(buffer)
+//
+//                                while (inputStream.read(buffer).also { length = it } > 0) {
+//                                    output?.write(buffer, 0, length)
+//                                }
+//                                Log.d(TAG, "saveFilePublicDownload: $output")
+//                            }
+
+                        }
+                    }
+                }
+        }
     }
     // WorkManager config, download file
     private fun workDownloadAddon(uri: String, fileName: String, flagDir: String, model: AddonModel){
@@ -126,7 +181,7 @@ abstract class DownloadDialogUtil : Fragment(){
             if (it.state.isFinished){
                 // Download addon type(resource or behavior)
                 val result = it.outputData
-                val id = result.getLong(DownloadAddon.DOWNLOAD_FLAG, -3)
+                val id = result.getLong(DownloadAddon.DOWNLOAD_FLAG_CACHE, -3)
                 receiverComplete(id, model, flagDir)
             }
         }
@@ -173,10 +228,10 @@ abstract class DownloadDialogUtil : Fragment(){
     }
     // Check permission: WRITE_EXTERNAL_STORAGE
     private fun setupPermissions() {
-        val premWrite = ContextCompat.checkSelfPermission(requireActivity(),
+        val permWrite = ContextCompat.checkSelfPermission(requireActivity(),
             Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
-        if (premWrite != PackageManager.PERMISSION_GRANTED) {
+        if (permWrite != PackageManager.PERMISSION_GRANTED) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(),
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
                 dialogRequest()
@@ -211,22 +266,18 @@ abstract class DownloadDialogUtil : Fragment(){
         builder.show()
     }
     // Dialog download Addon
-    fun dialogInstall(model: AddonModel, flagDir: String ){
+    fun dialogDownload(model: AddonModel, flagDir: String ){
         val dialogView = layoutInflater.inflate(R.layout.item_dialog, null)
-        val builder = AlertDialog.Builder(requireActivity()).apply {
-            setView(dialogView)
-        }
+        val builder = AlertDialog.Builder(requireActivity()).apply { setView(dialogView) }
         val dialog = builder.create()
         dialog.show()
 
         val closeView = dialogView.findViewById<ImageView>(R.id.img_close)
-        closeView.setOnClickListener {
-            dialog.cancel()
-        }
+        closeView.setOnClickListener { dialog.cancel() }
         // Check if link is not empty
-        val resourceLink: String? = if (model.resource.isNotBlank()){ getPackFileName(model.resource)} else { null }
-        val behaviorLink: String? = if (model.behavior.isNotBlank()){ getPackFileName(model.behavior) } else { null }
-
+        val resourceLink: String? = if (model.resource.isNotBlank()){ getPackFileName(model.resource, TAG_RESOURCE)} else { null }
+        val behaviorLink: String? = if (model.behavior.isNotBlank()){ getPackFileName(model.behavior, TAG_BEHAVIOR) } else { null }
+        // Button resource on dialog config
         if (resourceLink != null) {
             val behavior = dialogView.findViewById<Button>(R.id.btn_behavior)
             behavior.apply {
@@ -238,12 +289,14 @@ abstract class DownloadDialogUtil : Fragment(){
                     }
                 }
                 visibility = View.VISIBLE
-                text = getString(R.string.btn_install_pack)
+                if(flagDir == DownloadAddon.DIR_CACHE) {
+                    text = getString(R.string.btn_install_resource)
+                }
             }
         } else {
             Log.d(TAG, "isFileResource Install: no file")
         }
-
+        // Button behavior on dialog config
         if (behaviorLink != null ) {
             val resource = dialogView.findViewById<Button>(R.id.btn_pack)
             resource.apply {
@@ -255,7 +308,9 @@ abstract class DownloadDialogUtil : Fragment(){
                     }
                 }
                 visibility = View.VISIBLE
-                text = getString(R.string.btn_install_behavior)
+                if(flagDir == DownloadAddon.DIR_CACHE) {
+                    text = getString(R.string.btn_install_behavior)
+                }
             }
         } else {
             Log.d(TAG, "isFileBehavior Install: no file")
@@ -292,5 +347,11 @@ abstract class DownloadDialogUtil : Fragment(){
         } catch (e: PackageManager.NameNotFoundException) {
             false
         }
+    }
+
+    inline fun <T> sdk29(sdk29: () -> T): T? {
+        return  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            sdk29()
+        } else return null
     }
 }

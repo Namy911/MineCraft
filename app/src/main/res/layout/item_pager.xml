@@ -21,7 +21,7 @@
         android:id="@+id/txt_title"
         style="@style/CustomStyleText"
         android:layout_width="0dp"
-        android:paddingStart="20dp"
+        android:paddingStart="15dp"
         android:layout_height="55dp"
         android:background="@color/black_bg"
         tools:text="TextView"

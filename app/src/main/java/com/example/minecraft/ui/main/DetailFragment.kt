@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -55,6 +56,7 @@ class DetailFragment : DownloadDialogUtil() {
         super.onViewCreated(view, savedInstanceState)
         setupToolBartTitle(getString(R.string.title_fragment_details))
         checkFileExists(args.model)
+
         binding.apply {
             val list: List<String> = args.model.preview
             imgContainer.adapter = DetailPageAdapter(list, args.title, requireActivity())
@@ -67,10 +69,18 @@ class DetailFragment : DownloadDialogUtil() {
             btnShare.setOnClickListener { shareFile() }
 
             btnDownload.setOnClickListener {
-                if (checkPermission()){ dialogInstall(args.model, DownloadAddon.DIR_PRIVATE) }
+                if (checkPermission()) {
+//                    if (checkSdCardAvailability()) {
+//                        dialogDownload(args.model, DownloadAddon.DIR_PUBLIC_SD)
+//                        Toast.makeText(context, "SD", Toast.LENGTH_SHORT).show()
+//                    } else {
+                        dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+//                        Toast.makeText(context, "priv", Toast.LENGTH_SHORT).show()
+//                    }
+                }
             }
             btnInstall.setOnClickListener {
-                if (checkPermission()){ dialogInstall(args.model, DownloadAddon.DIR_CACHE) }
+                if (checkPermission()){ dialogDownload(args.model, DownloadAddon.DIR_CACHE) }
             }
         }
     }
@@ -83,13 +93,16 @@ class DetailFragment : DownloadDialogUtil() {
     fun setupToolBartTitle(title: String){ (activity as MainActivity?)!!.setupToolBartTitle(title) }
     // Initialisation, Check file exist from share file
     private fun checkFileExists(model: AddonModel){
-        val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource)
-        val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior)
+        val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
+        val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
         val pathResourceLink = requireActivity().applicationContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            .toString() + File.separator + getPackFileName(model.resource)
+            .toString() + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val pathBehaviorLink = requireActivity().applicationContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            .toString() + File.separator + getPackFileName(model.behavior)
+            .toString() + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
+
+        val pathSdResourceLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
+        val pathSdBehaviorLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
         if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink) }
         if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
@@ -97,15 +110,41 @@ class DetailFragment : DownloadDialogUtil() {
         if (File(pathResourceLink).exists()) { viewModel.setPrivatePathResource(pathResourceLink) }
         if (File(pathBehaviorLink).exists()) { viewModel.setPrivatePathBehavior(pathBehaviorLink) }
 
+//        if (File(pathSdResourceLink).exists()) { viewModel.setSdPathResource(pathResourceLink) }
+//        if (File(pathSdBehaviorLink).exists()) { viewModel.setSdPathBehavior(pathBehaviorLink) }
+
+//            val uri =  MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY))
     }
+    //
+    private fun checkSdCardAvailability(): Boolean{
+        val isSDPresent = Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
+        val isSDSupportedDevice = Environment.isExternalStorageRemovable()
+
+        return isSDSupportedDevice && isSDPresent
+    }
+
+//    fun getSdPath(){
+//        val sdpath = "/storage/extSdCard/"
+//        val sd1path = "/storage/sdcard1/"
+//        val usbdiskpath = "/storage/usbcard1/"
+//        val sd0path = "/storage/sdcard0/"
+//
+//        if(File(sdpath).exists()) { Log.i("Sd Cardext Path",sdpath) }
+//        if(File(sd1path).exists()) { Log.i("Sd Card1 Path",sd1path) }
+//        if(File(usbdiskpath).exists()) { Log.i("USB Path",usbdiskpath) }
+//        if(File(sd0path).exists()) { Log.i("Sd Card0 Path",sd0path) }
+//    }
+
     // Button share logic
     private fun shareFile() {
         val temp1 = viewModel.getCachePathBehavior()
         val temp2 = viewModel.getCachePathResource()
         val temp3 = viewModel.getPrivatePathBehavior()
         val temp4 = viewModel.getPrivatePathResource()
+//        val temp5 = viewModel.getSdPathBehavior()
+//        val temp6 = viewModel.getSdPathResource()
 
-        Log.d(TAG, "shareFile: $temp1, $temp2, $temp3, $temp4, ")
+        Log.d(TAG, "shareFile temp: $temp1, $temp2, $temp3, $temp4, ")
 
         val sendIntent: Intent = Intent().apply {
             putExtra(Intent.EXTRA_TEXT, "Share Addon")
@@ -117,21 +156,29 @@ class DetailFragment : DownloadDialogUtil() {
         when {
             temp1 != null -> { list[1] = getPath(File(temp1)) }
             temp3 != null -> { list[1] = getPath(File(temp3)) }
+//            temp5 != null -> { list[1] = getPath(File(temp5)) }
             else -> { Log.d(TAG, "shareFile: No behavior file") }
         }
         // Resource cell config
         when {
             temp2 != null -> { list[0] = getPath(File(temp2)) }
             temp4 != null -> { list[0] = getPath(File(temp4)) }
+//            temp6 != null -> { list[0] = getPath(File(temp6)) }
             else -> { Log.d(TAG, "shareFile: No resource file")}
         }
+        Log.d(TAG, "shareFile: list ${list[0]} - ${list[1]}")
         // Intent share config, multiple or single
         if (list[0] != null && list[1] != null) {
             sendIntent.action = Intent.ACTION_SEND_MULTIPLE
             sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, list) }
-        else if (list[0] != null){ sendIntent.putExtra(Intent.EXTRA_STREAM, list[0]);sendIntent.action = Intent.ACTION_SEND }
-        else if (list[1] != null){ sendIntent.putExtra(Intent.EXTRA_STREAM, list[1]);sendIntent.action = Intent.ACTION_SEND }
-        else { Toast.makeText(requireActivity(), "Download Addon", Toast.LENGTH_SHORT).show()}
+        else if (list[0] != null){
+            sendIntent.putExtra(Intent.EXTRA_STREAM, list[0])
+            sendIntent.action = Intent.ACTION_SEND
+        }
+        else if (list[1] != null){
+            sendIntent.putExtra(Intent.EXTRA_STREAM, list[1])
+            sendIntent.action = Intent.ACTION_SEND
+        } else { Toast.makeText(requireActivity(), "Download Addon", Toast.LENGTH_SHORT).show()}
 
         val shareIntent = Intent.createChooser(sendIntent, "null")
         startActivity(shareIntent)
@@ -140,9 +187,7 @@ class DetailFragment : DownloadDialogUtil() {
     private fun getPath(file: File) = try {
         FileProvider.getUriForFile(
             requireContext().applicationContext,
-            BuildConfig.APPLICATION_ID + ".fileProvider",
-            file
-        )
+            BuildConfig.APPLICATION_ID + ".fileProvider", file)
     } catch (e: IllegalArgumentException) {
         Log.d("File Selector", "The selected file not funded: $file")
         null

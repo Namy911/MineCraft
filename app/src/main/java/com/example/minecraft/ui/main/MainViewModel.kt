@@ -20,6 +20,8 @@ class MainViewModel @Inject constructor(
         val PATH_CACHE_BEHAVIOR: String = "ui.main.path.cache.behavior"
         val PATH_PRIVATE_RESOURCE: String = "ui.main.path.private.resource"
         val PATH_PRIVATE_BEHAVIOR: String = "ui.main.path.private.behavior"
+//        val PATH_SD_RESOURCE: String = "ui.main.path.sd.resource"
+//        val PATH_SD_BEHAVIOR: String = "ui.main.path.sd.behavior"
     }
 
     private val _list: MutableLiveData<Event<List<AddonModel>>> by lazy { MutableLiveData<Event<List<AddonModel>>>() }
@@ -37,11 +39,15 @@ class MainViewModel @Inject constructor(
     fun setPrivatePathResource(path: String){ savedStateHandle.set(PATH_PRIVATE_RESOURCE, path) }
     fun getPrivatePathResource() = savedStateHandle.get<String>(PATH_PRIVATE_RESOURCE)
 
-
     fun setPrivatePathBehavior(path: String){ savedStateHandle.set(PATH_PRIVATE_BEHAVIOR, path) }
     fun getPrivatePathBehavior() = savedStateHandle.get<String>(PATH_PRIVATE_BEHAVIOR)
 
-
     fun setCachePathBehavior(path: String){ savedStateHandle.set(PATH_CACHE_BEHAVIOR, path) }
     fun getCachePathBehavior() = savedStateHandle.get<String>(PATH_CACHE_BEHAVIOR)
+
+//    fun setSdPathBehavior(path: String){ savedStateHandle.set(PATH_SD_BEHAVIOR, path) }
+//    fun getSdPathBehavior() = savedStateHandle.get<String>(PATH_SD_BEHAVIOR)
+//
+//    fun setSdPathResource(path: String){ savedStateHandle.set(PATH_SD_RESOURCE, path) }
+//    fun getSdPathResource() = savedStateHandle.get<String>(PATH_SD_RESOURCE)
 }

@@ -39,5 +39,6 @@
     <string name="title_no_found_app">Not found Application</string>
     <string name="msg_go_download_app">Please download  MineCraft to install addon </string>
     <string name="msg_empty_list">Empty list</string>
+    <string name="btn_install_resource">Install Resource</string>
 
 </resources>

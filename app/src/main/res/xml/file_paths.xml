@@ -6,4 +6,13 @@
     <external-cache-path
         name="mine_craft_addon_cache"
         path="." />
+    <external-path
+        name="public_directory_addons"
+        path="./" />
+    <files-path
+        name="directory_addons"
+        path="./" />
+    <external-media-path
+        name="media_path"
+        path="." />
 </paths>

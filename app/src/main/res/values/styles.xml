@@ -28,5 +28,6 @@
 
     <style name="CustomStyleTitleBar" parent="CustomStyleText">
         <item name="fontFamily">@font/regular_alt</item>
+        <item name="android:textSize">16sp</item>
     </style>
 </resources>

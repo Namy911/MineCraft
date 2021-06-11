@@ -170,7 +170,7 @@ class MainFragment : DownloadDialogUtil(){
                 }
                 txtInstall.text = title
                 btnDownload.setOnClickListener {
-                    if (checkPermission()) { dialogInstall(model, DownloadAddon.DIR_CACHE) }
+                    if (checkPermission()) { dialogDownload(model, DownloadAddon.DIR_CACHE) }
                 }
                 itemView.setOnClickListener {
                     findNavController().navigate(MainFragmentDirections.detailFragment(model,title))
