@@ -16,10 +16,13 @@ import androidx.work.Data
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.example.minecraft.BuildConfig
+import com.example.minecraft.ui.util.DownloadDialogUtil
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.security.Provider
 
 
@@ -91,16 +94,27 @@ companion object{
         private fun downloadPublicDir(uri: String, fileName: String): Long {
         val request = downloadManagerBuilder(uri, fileName)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ) {
-//            makeDirAddons()
-//            val media = MediaStore.VOLUME_EXTERNAL_PRIMARY
-//            val media = MediaStore.VOLUME_EXTERNAL
-//            val media = MediaStore.Downloads.DOWNLOAD_URI
-//            val media =  MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY).path
-//            val file = File(media + File.separator + fileName)
-//            request.setDestinationInExternalFilesDir(context, media, fileName)
-
             val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
             request.setDestinationUri(file.toUri())
+//            makeDirAddons()
+//            val resolver = context.contentResolver
+//            val contentValue = ContentValues().apply {
+//                put(MediaStore.DownloadColumns.DISPLAY_NAME, "fileName")
+//                put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
+//                put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
+//                put(MediaStore.Downloads.IS_PENDING, 1)
+//            }
+//
+//
+//            val fileUri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValue)
+//            fileUri?.let {
+//                resolver.openOutputStream(fileUri)?.use { outputStream ->
+//                    val encoded = Files.readAllBytes(Paths.get(file.toURI()))
+//                    outputStream.write(encoded)
+//                    contentValue.put(MediaStore.Video.Media.IS_PENDING, 0)
+//                }
+//            }
+
         }else{
             val file = File(Environment.DIRECTORY_DOWNLOADS + File.separator + fileName)
             val path = Environment.getExternalStoragePublicDirectory(file.absolutePath)
@@ -110,6 +124,28 @@ companion object{
 
         val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         return dm.enqueue(request)
+    }
+    // Copy file from internal storage to Shared storage
+    fun saveFilePublicDownload(file: File, name: String) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val contentValue = ContentValues().apply {
+                put(MediaStore.DownloadColumns.DISPLAY_NAME, name)
+                put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
+                put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
+//                put(MediaStore.Downloads.IS_PENDING, 1)
+            }
+
+            context.contentResolver.insert(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                contentValue
+            )?.also { uri ->
+                context.contentResolver.openOutputStream(uri).use { output ->
+                    val encoded = Files.readAllBytes(Paths.get(file.toURI()))
+                    output?.write(encoded)
+//                    contentValue.put(MediaStore.Downloads.IS_PENDING, 0)
+                }
+            }
+        }
     }
     // Cache directory download
     private fun downloadCacheDir(uri: String, fileName: String): Long {

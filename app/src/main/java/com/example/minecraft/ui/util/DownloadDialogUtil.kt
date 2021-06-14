@@ -40,33 +40,44 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import kotlin.random.Random
 
 
 private const val TAG = "DownloadDialogUtil"
 
 abstract class DownloadDialogUtil : Fragment(){
     companion object{
-//        val FILE_NAME = "addon.file.name"
+        val FILE_Q = "Q"
 //        val URI_DOWNLOAD = "uri.download"
         val TAG_RESOURCE = "resource"
         val TAG_BEHAVIOR = "behavior"
 
         const val RECORD_REQUEST_CODE = 101
         const val packageName = "com.mojang.minecraftpe"
+
+
     }
     private val viewModel: MainViewModel by viewModels()
+
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
         var term = ".mcpack"
         if (resource.endsWith(".mcaddon")) {
             term = ".mcaddon"
         }
-
         return if (tag == TAG_RESOURCE) {
             "$TAG_RESOURCE${resource.hashCode()}$term"
-        } else {
-            "$TAG_RESOURCE${resource.hashCode()}$term"
         }
+        else {
+            "$TAG_BEHAVIOR${resource.hashCode()}$term"
+        }
+    }
+    fun getPackFileExtension(resource: String): String{
+        var term = ".mcpack"
+        if (resource.endsWith(".mcaddon")) {
+            term = ".mcaddon"
+        }
+        return term
     }
     //
     private fun checkInstallation(model: AddonModel, tag: String) {
@@ -126,10 +137,9 @@ abstract class DownloadDialogUtil : Fragment(){
     fun saveFilePublicDownload(file: File, name: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             val contentValue = ContentValues().apply {
-                put(MediaStore.DownloadColumns.DISPLAY_NAME, name)
+                put(MediaStore.DownloadColumns.DISPLAY_NAME, "$FILE_Q$name") // Bug fix "Q", empty string
                 put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
                 put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
-//                put(MediaStore.Downloads.IS_PENDING, 1)
             }
 
             requireActivity().contentResolver.insert(
@@ -139,7 +149,6 @@ abstract class DownloadDialogUtil : Fragment(){
                 requireActivity().contentResolver.openOutputStream(uri).use { output ->
                     val encoded = Files.readAllBytes(Paths.get(file.toURI()))
                     output?.write(encoded)
-//                    contentValue.put(MediaStore.Downloads.IS_PENDING, 0)
                 }
             }
         }
