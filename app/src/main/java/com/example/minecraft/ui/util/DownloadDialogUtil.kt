@@ -40,6 +40,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.*
+import kotlin.math.log
 import kotlin.random.Random
 
 
@@ -148,6 +149,7 @@ abstract class DownloadDialogUtil : Fragment(){
             )?.also { uri ->
                 requireActivity().contentResolver.openOutputStream(uri).use { output ->
                     val encoded = Files.readAllBytes(Paths.get(file.toURI()))
+//                    Log.d(TAG, "saveFilePublicDownload: $uri")
                     output?.write(encoded)
                 }
             }

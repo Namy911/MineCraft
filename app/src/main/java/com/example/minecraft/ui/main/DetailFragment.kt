@@ -1,10 +1,13 @@
 package com.example.minecraft.ui.main
 
+import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.DocumentsContract
 import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
@@ -70,13 +73,7 @@ class DetailFragment : DownloadDialogUtil() {
 
             btnDownload.setOnClickListener {
                 if (checkPermission()) {
-//                    if (checkSdCardAvailability()) {
-//                        dialogDownload(args.model, DownloadAddon.DIR_PUBLIC_SD)
-//                        Toast.makeText(context, "SD", Toast.LENGTH_SHORT).show()
-//                    } else {
-                        dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-//                        Toast.makeText(context, "priv", Toast.LENGTH_SHORT).show()
-//                    }
+                    dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
                 }
             }
             btnInstall.setOnClickListener {
@@ -96,55 +93,67 @@ class DetailFragment : DownloadDialogUtil() {
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
-        val pathResourceLink = requireActivity().applicationContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            .toString() + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
-        val pathBehaviorLink = requireActivity().applicationContext.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
-            .toString() + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ) {
+            val projection = arrayOf(
+                MediaStore.DownloadColumns._ID,
+                MediaStore.DownloadColumns.DISPLAY_NAME,
+                MediaStore.DownloadColumns.RELATIVE_PATH)
+            val selection = "${MediaStore.DownloadColumns.DISPLAY_NAME} like ?"
+            val selectionArgsBehavior = arrayOf(getPackFileName(model.behavior, TAG_BEHAVIOR))
+            val selectionArgsResource = arrayOf(getPackFileName(model.resource, TAG_RESOURCE))
 
-        val pathSdResourceLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
-        val pathSdBehaviorLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)?.absolutePath + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
-
+            requireActivity().applicationContext.contentResolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                selectionArgsBehavior,
+                null
+            )?.use { cursor ->
+                val columnId = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns._ID)
+                val columnName = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.DISPLAY_NAME)
+                val columnUri = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.RELATIVE_PATH)
+                while (cursor.moveToNext()) {
+                    val name = cursor.getString(columnName)
+                    val id = cursor.getLong(columnId)
+                    val uri = ContentUris.withAppendedId( MediaStore.Downloads.EXTERNAL_CONTENT_URI, columnId.toLong())
+//                    if (name ==  getPackFileName(model.behavior, TAG_BEHAVIOR)){
+                    viewModel.setPrivatePathBehavior(uri.toString())
+                        Log.d(TAG, "While : ${name} ${uri}")
+//                    }
+                }
+            }
+            requireActivity().applicationContext.contentResolver.query(
+                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                projection,
+                selection,
+                selectionArgsResource,
+                null
+            )?.use { cursor ->
+                val columnId = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns._ID)
+                val columnName = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.DISPLAY_NAME)
+                val columnUri = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.RELATIVE_PATH)
+                while (cursor.moveToNext()) {
+                    val name = cursor.getString(columnName)
+                    val id = cursor.getLong(columnId)
+                    val uri = ContentUris.withAppendedId( MediaStore.Downloads.EXTERNAL_CONTENT_URI, columnId.toLong())
+//                    if (name ==  getPackFileName(model.behavior, TAG_BEHAVIOR)){
+                    viewModel.setPrivatePathResource(uri.toString())
+                        Log.d(TAG, "While : ${name} ${uri}")
+//                    }
+                }
+            }
+        }
         if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink) }
         if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
-
-        if (File(pathResourceLink).exists()) { viewModel.setPrivatePathResource(pathResourceLink) }
-        if (File(pathBehaviorLink).exists()) { viewModel.setPrivatePathBehavior(pathBehaviorLink) }
-
-//        if (File(pathSdResourceLink).exists()) { viewModel.setSdPathResource(pathResourceLink) }
-//        if (File(pathSdBehaviorLink).exists()) { viewModel.setSdPathBehavior(pathBehaviorLink) }
-
-//            val uri =  MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY))
     }
-    //
-    private fun checkSdCardAvailability(): Boolean{
-        val isSDPresent = Environment.getExternalStorageState() == Environment.MEDIA_MOUNTED
-        val isSDSupportedDevice = Environment.isExternalStorageRemovable()
-
-        return isSDSupportedDevice && isSDPresent
-    }
-
-//    fun getSdPath(){
-//        val sdpath = "/storage/extSdCard/"
-//        val sd1path = "/storage/sdcard1/"
-//        val usbdiskpath = "/storage/usbcard1/"
-//        val sd0path = "/storage/sdcard0/"
-//
-//        if(File(sdpath).exists()) { Log.i("Sd Cardext Path",sdpath) }
-//        if(File(sd1path).exists()) { Log.i("Sd Card1 Path",sd1path) }
-//        if(File(usbdiskpath).exists()) { Log.i("USB Path",usbdiskpath) }
-//        if(File(sd0path).exists()) { Log.i("Sd Card0 Path",sd0path) }
-//    }
-
     // Button share logic
     private fun shareFile() {
         val temp1 = viewModel.getCachePathBehavior()
         val temp2 = viewModel.getCachePathResource()
         val temp3 = viewModel.getPrivatePathBehavior()
         val temp4 = viewModel.getPrivatePathResource()
-//        val temp5 = viewModel.getSdPathBehavior()
-//        val temp6 = viewModel.getSdPathResource()
 
-        Log.d(TAG, "shareFile temp: $temp1, $temp2, $temp3, $temp4, ")
+//        Log.d(TAG, "shareFile temp: $temp1, $temp2, $temp3, $temp4, ")
 
         val sendIntent: Intent = Intent().apply {
             putExtra(Intent.EXTRA_TEXT, "Share Addon")
