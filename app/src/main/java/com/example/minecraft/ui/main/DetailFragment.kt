@@ -99,14 +99,18 @@ class DetailFragment : DownloadDialogUtil() {
                 MediaStore.DownloadColumns.DISPLAY_NAME,
                 MediaStore.DownloadColumns.RELATIVE_PATH)
             val selection = "${MediaStore.DownloadColumns.DISPLAY_NAME} like ?"
-            val selectionArgsBehavior = arrayOf(getPackFileName(model.behavior, TAG_BEHAVIOR))
-            val selectionArgsResource = arrayOf(getPackFileName(model.resource, TAG_RESOURCE))
+//            val selectionArgsBehavior = arrayOf(getPackFileName(model.behavior, TAG_BEHAVIOR))
+//            val selectionArgsResource = arrayOf(getPackFileName(model.resource, TAG_RESOURCE))
+
+            val selectionArgsBehavior = arrayOf(getPackFileName("$FILE_Q${model.behavior}", TAG_BEHAVIOR))
+            val selectionArgsResource = arrayOf(getPackFileName("$FILE_Q${model.resource}", TAG_RESOURCE))
+
 
             requireActivity().applicationContext.contentResolver.query(
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                 projection,
-                selection,
-                selectionArgsBehavior,
+                null,
+                null,
                 null
             )?.use { cursor ->
                 val columnId = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns._ID)
@@ -115,18 +119,21 @@ class DetailFragment : DownloadDialogUtil() {
                 while (cursor.moveToNext()) {
                     val name = cursor.getString(columnName)
                     val id = cursor.getLong(columnId)
-                    val uri = ContentUris.withAppendedId( MediaStore.Downloads.EXTERNAL_CONTENT_URI, columnId.toLong())
-//                    if (name ==  getPackFileName(model.behavior, TAG_BEHAVIOR)){
-                    viewModel.setPrivatePathBehavior(uri.toString())
-                        Log.d(TAG, "While : ${name} ${uri}")
-//                    }
+                    val uri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, columnId.toLong())
+                    val sb = StringBuffer()
+                    val nameQ = getPackFileName(model.behavior, TAG_BEHAVIOR)
+                    sb.append("Q").append(nameQ)
+                    if (name ==  sb.toString()){
+                        viewModel.setPrivatePathBehavior(uri.toString())
+                        Log.d(TAG, "While B :  ${uri}")
+                    }
                 }
             }
             requireActivity().applicationContext.contentResolver.query(
                 MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                 projection,
-                selection,
-                selectionArgsResource,
+                null,
+                null,
                 null
             )?.use { cursor ->
                 val columnId = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns._ID)
@@ -136,10 +143,13 @@ class DetailFragment : DownloadDialogUtil() {
                     val name = cursor.getString(columnName)
                     val id = cursor.getLong(columnId)
                     val uri = ContentUris.withAppendedId( MediaStore.Downloads.EXTERNAL_CONTENT_URI, columnId.toLong())
-//                    if (name ==  getPackFileName(model.behavior, TAG_BEHAVIOR)){
-                    viewModel.setPrivatePathResource(uri.toString())
-                        Log.d(TAG, "While : ${name} ${uri}")
-//                    }
+                    val sb = StringBuffer()
+                    val nameQ = getPackFileName(model.resource, TAG_RESOURCE)
+                    sb.append("Q").append(nameQ)
+                    if (name ==  sb.toString()){
+                        viewModel.setPrivatePathResource(uri.toString())
+                        Log.d(TAG, "While R : ${uri}")
+                    }
                 }
             }
         }
@@ -153,7 +163,7 @@ class DetailFragment : DownloadDialogUtil() {
         val temp3 = viewModel.getPrivatePathBehavior()
         val temp4 = viewModel.getPrivatePathResource()
 
-//        Log.d(TAG, "shareFile temp: $temp1, $temp2, $temp3, $temp4, ")
+        Log.d(TAG, "shareFile temp: $temp1, $temp2, $temp3, $temp4, ")
 
         val sendIntent: Intent = Intent().apply {
             putExtra(Intent.EXTRA_TEXT, "Share Addon")

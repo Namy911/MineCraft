@@ -59,7 +59,6 @@ abstract class DownloadDialogUtil : Fragment(){
 
     }
     private val viewModel: MainViewModel by viewModels()
-
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
         var term = ".mcpack"
@@ -72,13 +71,6 @@ abstract class DownloadDialogUtil : Fragment(){
         else {
             "$TAG_BEHAVIOR${resource.hashCode()}$term"
         }
-    }
-    fun getPackFileExtension(resource: String): String{
-        var term = ".mcpack"
-        if (resource.endsWith(".mcaddon")) {
-            term = ".mcaddon"
-        }
-        return term
     }
     //
     private fun checkInstallation(model: AddonModel, tag: String) {
@@ -108,6 +100,7 @@ abstract class DownloadDialogUtil : Fragment(){
                 }
             }
             // Private Dir
+        // TO DO DE MODIFICAT
             if (tag == DownloadAddon.DIR_EXT_STORAGE) {
                 val pathResourceLink = requireActivity().getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)
                     .toString() + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
