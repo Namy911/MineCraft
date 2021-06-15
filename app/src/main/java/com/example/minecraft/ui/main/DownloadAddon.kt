@@ -55,19 +55,12 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             val directory = inputData.getString(DIRECTORY)
 
             var outputId: Long = -2
-//            makeDirAddons()
             // Check download directory
             if (uri != null && title != null) {
                 when (directory) {
                     DIR_EXT_STORAGE -> {
-//                           outputId = downloadFileDir(uri, title)
-//                        outputId = downloadPublicDir(uri, title)
-                        downloadPublicExtDir(uri, title)
-//                        outputId = downloadCacheDir(uri, title)
+                        outputId = downloadPublicDir(uri, title)
                     }
-//                    DIR_PUBLIC -> {
-//                        outputId = downloadSdPublicDir(uri, title)
-//                    }
                     DIR_CACHE -> {
                         outputId = downloadCacheDir(uri, title)
                     }
@@ -85,7 +78,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             Result.failure()
         }
     }
-
     // Private directory download
     private fun downloadFileDir(uri: String, fileName: String): Long {
         val path = context.getExternalFilesDir(
@@ -98,14 +90,12 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
         val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         return dm.enqueue(request)
     }
-
     // Public directory download
     @Suppress("DEPRECATION")
     private fun downloadPublicDir(uri: String, fileName: String): Long {
         val request = downloadManagerBuilder(uri, fileName)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val file = File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), fileName)
-            request.setDestinationUri(file.toUri())
+            downloadPublicMediaDir(uri, fileName)
 
         } else {
             val file = File(Environment.DIRECTORY_DOWNLOADS + File.separator + fileName)
@@ -116,7 +106,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
         val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         return dm.enqueue(request)
     }
-
     // Cache directory download
     private fun downloadCacheDir(uri: String, fileName: String): Long {
         val path = File(context.externalCacheDir, fileName).toUri()
@@ -134,20 +123,16 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setAllowedOverMetered(true)
 
-
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun makeDirAddons() {
         val f = File(
             MediaStore.Downloads.EXTERNAL_CONTENT_URI.path,
             FOLDER_DOWNLOAD_ADDONS
         )
-        if (!f.exists()) {
-            f.mkdirs()
-        }
+        if (!f.exists()) { f.mkdirs() }
     }
-
-
-    fun downloadPublicExtDir(fileUri: String, fileName: String) {
+    // Download in media/download with okhttp
+    private fun downloadPublicMediaDir(fileUri: String, fileName: String) {
         val request = Request.Builder()
             .url(fileUri)
             .build()
@@ -163,37 +148,27 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             override fun onResponse(call: Call, response: Response) {
                 response.use {
                     if (response.isSuccessful) {
+                        makeDirAddons()
                         val values = ContentValues().apply {
                             put(MediaStore.DownloadColumns.DISPLAY_NAME, "Q$fileName")
-                            put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
+                            put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download/$FOLDER_DOWNLOAD_ADDONS")
                             put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
                             put(MediaStore.DownloadColumns.IS_PENDING, 1)
                         }
 
                         val resolver = context.contentResolver
                         val fileByte = response.body?.byteStream()
-                        resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)?.also { uri ->
-                            context.contentResolver.openOutputStream(uri).use { output ->
+                        resolver.insert(
+                            MediaStore.Downloads.EXTERNAL_CONTENT_URI,
+                            values
+                        )?.also { uri ->
+                            resolver.openOutputStream(uri).use { output ->
                                 val encoded = Files.readAllBytes(Paths.get(fileByte.toString()))
                                 output?.write(encoded)
-                                values.clear()
+//                                values.clear() // ????
                                 values.put(MediaStore.DownloadColumns.IS_PENDING, 0)
                             }
                         }
-
-
-//                        if (fileByte != null) {
-//                            try {
-//                                val path = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).absolutePath + File.separator + fileName)
-////                                context.openFileOutput("myFile.mcaddon", Context.MODE_PRIVATE).use { output ->
-//                                context.contentResolver.openOutputStream(path.toUri()).use { output ->
-//                                    output?.write(fileByte.readBytes())
-//                                }
-//                                println("successful download")
-//                            } catch (e: IOException) {
-//                                e.printStackTrace()
-//                            }
-//                        }
                     }
                 }
             }
