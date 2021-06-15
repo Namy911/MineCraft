@@ -274,6 +274,7 @@ abstract class DownloadDialogUtil : Fragment(){
             behavior.apply {
                 setOnClickListener {
                     if (checkInternetConnection()) {
+//                        workDownloadAddon(model.resource, resourceLink, flagDir, model)
                         workDownloadAddon(model.resource, resourceLink, flagDir, model)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -293,6 +294,7 @@ abstract class DownloadDialogUtil : Fragment(){
             resource.apply {
                 setOnClickListener {
                     if (checkInternetConnection()) {
+//                        workDownloadAddon(model.behavior, behaviorLink, flagDir, model)
                         workDownloadAddon(model.behavior, behaviorLink, flagDir, model)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
