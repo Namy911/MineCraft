@@ -23,6 +23,9 @@ import com.example.minecraft.databinding.MainActivityBinding
 import com.example.minecraft.ui.main.MainFragment
 import com.example.minecraft.ui.main.MainViewModel
 import com.example.minecraft.ui.settings.SettingsFragmentDirections
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
 
 private const val TAG = "MainActivity"
@@ -32,10 +35,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: MainActivityBinding
     private lateinit var navController: NavController
 
+    lateinit var mAdView : AdView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = MainActivityBinding.inflate(layoutInflater)
+
         setContentView(binding.root)
+        MobileAds.initialize(this) {}
+        mAdView = findViewById(R.id.adView)
+        val adRequest = AdRequest.Builder().build()
+
+        mAdView.loadAd(adRequest)
         // Setup Navigation
         setupToolBartTitle()
         val navHostFragment =

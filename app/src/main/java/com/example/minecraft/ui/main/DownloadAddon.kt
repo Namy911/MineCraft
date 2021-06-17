@@ -11,10 +11,13 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.core.content.FileProvider
+import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import com.example.minecraft.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -86,7 +89,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
     }
     // Cache directory download
     private fun downloadCacheDir(uri: String, fileName: String): Long {
-        Log.d(TAG, "downloadCacheDir: ")
         val path = File(context.externalCacheDir, fileName).toUri()
         val request = downloadManagerBuilder(uri, fileName)
             .setDestinationUri(path)
@@ -117,7 +119,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
     private suspend fun downloadPublicMediaDir(fileUri: String, fileName: String) {
         withContext(Dispatchers.IO) {
             makeDirAddons()
-            Log.d(TAG, "downloadPublicMediaDir: $fileName")
             val request = Request.Builder()
                 .url(fileUri)
                 .build()
@@ -138,8 +139,8 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
 //                            put(MediaStore.DownloadColumns.DISPLAY_NAME, fileName)
                                 put(MediaStore.DownloadColumns.TITLE, fileName)
 //                                put(MediaStore.DownloadColumns.DISPLAY_NAME, fileName)
-                                put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download/$FOLDER_DOWNLOAD_ADDONS")
-//                                put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
+//                                put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download/$FOLDER_DOWNLOAD_ADDONS")
+                                put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
                                 put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
                                 put(MediaStore.DownloadColumns.IS_PENDING, 1)
                             }
@@ -160,10 +161,23 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                                 values.clear()
                                 values.put(MediaStore.DownloadColumns.IS_PENDING, 0)
                                 values.put(MediaStore.DownloadColumns.DISPLAY_NAME, fileName)
+//                                val segments = uri.pathSegments
+//                                val path = "${segments[0]}${File.separator}${segments[1]}${File.separator}$FOLDER_DOWNLOAD_ADDONS${File.separator}${segments[2]}"
+//                                Log.d(TAG, "onResponse: $path")
+//                                scanMedia( File(path).path )
+//                                scanMedia(uri)
+//                                val temp = FileProvider.getUriForFile(
+//                                    context,
+//                                    BuildConfig.APPLICATION_ID + ".fileProvider",
+//                                    File(insert.path)
+//                                )
+////                                Log.d(TAG, "onResponse: $temp")
+//                                resolver.notifyChange(
+//                                   temp,
+//                                    null
+//                                )
                                 try {
                                     resolver.update(insert, values, null, null)
-                                    resolver.notifyChange(uri, null)
-                                    scanMedia(uri)
                                 }catch (e: Exception){
                                     Log.d(TAG, "onResponse: resolver.update ${e.message}")
                                 }
@@ -175,14 +189,9 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
         }
     }
     
-    private fun scanMedia(uri: Uri) {
-        val file = File(uri.path)
+    private fun scanMedia(uri: String) {
+        Log.d(TAG, "scanMedia: $uri")
         MediaScannerConnection
-            .scanFile(
-                context,
-                arrayOf(file.toString()),
-                null,
-                null
-            )
+            .scanFile(context, arrayOf(uri), null, null)
     }
 }

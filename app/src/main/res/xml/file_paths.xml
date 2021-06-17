@@ -8,10 +8,10 @@
         path="." />
     <external-path
         name="public_directory_addons"
-        path="./" />
+        path="." />
     <files-path
         name="directory_addons"
-        path="./" />
+        path="." />
     <external-media-path
         name="media_path"
         path="." />
