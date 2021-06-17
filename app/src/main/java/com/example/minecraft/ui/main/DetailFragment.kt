@@ -1,14 +1,10 @@
 package com.example.minecraft.ui.main
 
-import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
+import android.database.ContentObserver
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.DocumentsContract
-import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -35,6 +31,7 @@ import java.io.File
 class DetailFragment : DownloadDialogUtil() {
     companion object{
         const val TAG = "DetailFragment"
+//        const val FLAG_BUTTON_SHARE = "ui.main.flag.button_share"
     }
 
     private var _binding: FragmentDetailBinding? = null
@@ -69,7 +66,11 @@ class DetailFragment : DownloadDialogUtil() {
             }
             txtDesc.text = args.model.description
 
-            btnShare.setOnClickListener { shareFile() }
+            btnShare.setOnClickListener {
+                checkFileExists(args.model)
+                shareFileCheck()
+//                downloadShareFile(args.model)
+            }
 
             btnDownload.setOnClickListener {
                 if (checkPermission()) {
@@ -77,7 +78,10 @@ class DetailFragment : DownloadDialogUtil() {
                 }
             }
             btnInstall.setOnClickListener {
-                if (checkPermission()){ dialogDownload(args.model, DownloadAddon.DIR_CACHE) }
+                if (checkPermission()){
+                    checkFileExists(args.model)
+                    dialogDownload(args.model, DownloadAddon.DIR_CACHE)
+                }
             }
         }
     }
@@ -89,81 +93,18 @@ class DetailFragment : DownloadDialogUtil() {
 
     fun setupToolBartTitle(title: String){ (activity as MainActivity?)!!.setupToolBartTitle(title) }
     // Initialisation, Check file exist from share file
-    private fun checkFileExists(model: AddonModel){
+    fun checkFileExists(model: AddonModel){
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ) {
-            val projection = arrayOf(
-                MediaStore.DownloadColumns._ID,
-                MediaStore.DownloadColumns.DISPLAY_NAME,
-                MediaStore.DownloadColumns.RELATIVE_PATH)
-            val selection = "${MediaStore.DownloadColumns.DISPLAY_NAME} like ?"
-//            val selectionArgsBehavior = arrayOf(getPackFileName(model.behavior, TAG_BEHAVIOR))
-//            val selectionArgsResource = arrayOf(getPackFileName(model.resource, TAG_RESOURCE))
-
-            val selectionArgsBehavior = arrayOf(getPackFileName("$FILE_Q${model.behavior}", TAG_BEHAVIOR))
-            val selectionArgsResource = arrayOf(getPackFileName("$FILE_Q${model.resource}", TAG_RESOURCE))
-
-
-            requireActivity().applicationContext.contentResolver.query(
-                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                projection,
-                null,
-                null,
-                null
-            )?.use { cursor ->
-                val columnId = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns._ID)
-                val columnName = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.DISPLAY_NAME)
-                val columnUri = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.RELATIVE_PATH)
-                while (cursor.moveToNext()) {
-                    val name = cursor.getString(columnName)
-                    val id = cursor.getLong(columnId)
-                    val uri = ContentUris.withAppendedId(MediaStore.Downloads.EXTERNAL_CONTENT_URI, columnId.toLong())
-                    val sb = StringBuffer()
-                    val nameQ = getPackFileName(model.behavior, TAG_BEHAVIOR)
-                    sb.append("Q").append(nameQ)
-                    if (name ==  sb.toString()){
-                        viewModel.setPrivatePathBehavior(uri.toString())
-                        Log.d(TAG, "While B :  ${uri}")
-                    }
-                }
-            }
-            requireActivity().applicationContext.contentResolver.query(
-                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
-                projection,
-                null,
-                null,
-                null
-            )?.use { cursor ->
-                val columnId = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns._ID)
-                val columnName = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.DISPLAY_NAME)
-                val columnUri = cursor.getColumnIndexOrThrow(MediaStore.DownloadColumns.RELATIVE_PATH)
-                while (cursor.moveToNext()) {
-                    val name = cursor.getString(columnName)
-                    val id = cursor.getLong(columnId)
-                    val uri = ContentUris.withAppendedId( MediaStore.Downloads.EXTERNAL_CONTENT_URI, columnId.toLong())
-                    val sb = StringBuffer()
-                    val nameQ = getPackFileName(model.resource, TAG_RESOURCE)
-                    sb.append("Q").append(nameQ)
-                    if (name ==  sb.toString()){
-                        viewModel.setPrivatePathResource(uri.toString())
-                        Log.d(TAG, "While R : ${uri}")
-                    }
-                }
-            }
-        }
         if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink) }
         if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
     }
     // Button share logic
-    private fun shareFile() {
+    fun shareFileCheck() {
+//        checkFileExists(args.model)
         val temp1 = viewModel.getCachePathBehavior()
         val temp2 = viewModel.getCachePathResource()
-        val temp3 = viewModel.getPrivatePathBehavior()
-        val temp4 = viewModel.getPrivatePathResource()
-
-        Log.d(TAG, "shareFile temp: $temp1, $temp2, $temp3, $temp4, ")
 
         val sendIntent: Intent = Intent().apply {
             putExtra(Intent.EXTRA_TEXT, "Share Addon")
@@ -172,38 +113,56 @@ class DetailFragment : DownloadDialogUtil() {
         }
         val list = arrayListOf<Uri?>(null, null)
         // Behavior cell config
-        when {
-            temp1 != null -> { list[1] = getPath(File(temp1)) }
-            temp3 != null -> { list[1] = getPath(File(temp3)) }
-//            temp5 != null -> { list[1] = getPath(File(temp5)) }
-            else -> { Log.d(TAG, "shareFile: No behavior file") }
+        if (temp1 != null) {
+            list[1] = getPath(File(temp1))
+        } else {
+            if (checkInternetConnection() && checkPermission()) {
+                workDownloadAddon(
+                    args.model.behavior,
+                    getPackFileName(args.model.behavior, TAG_BEHAVIOR),
+                    DownloadAddon.DIR_CACHE,
+                    args.model,
+                    true
+                )
+            } else {
+                Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+            }
         }
         // Resource cell config
-        when {
-            temp2 != null -> { list[0] = getPath(File(temp2)) }
-            temp4 != null -> { list[0] = getPath(File(temp4)) }
-//            temp6 != null -> { list[0] = getPath(File(temp6)) }
-            else -> { Log.d(TAG, "shareFile: No resource file")}
+        if (temp2 != null) {
+            list[0] = getPath(File(temp2))
+        } else {
+            if (checkInternetConnection() && checkPermission()) {
+                workDownloadAddon(
+                    args.model.resource,
+                    getPackFileName(args.model.resource, TAG_RESOURCE),
+                    DownloadAddon.DIR_CACHE,
+                    args.model,
+                    true
+                )
+            } else {
+                Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+            }
         }
-        Log.d(TAG, "shareFile: list ${list[0]} - ${list[1]}")
         // Intent share config, multiple or single
         if (list[0] != null && list[1] != null) {
             sendIntent.action = Intent.ACTION_SEND_MULTIPLE
-            sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, list) }
-        else if (list[0] != null){
-            sendIntent.putExtra(Intent.EXTRA_STREAM, list[0])
-            sendIntent.action = Intent.ACTION_SEND
+            sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
+            val shareIntent = Intent.createChooser(sendIntent, "null")
+            requireActivity().startActivity(shareIntent)
         }
-        else if (list[1] != null){
-            sendIntent.putExtra(Intent.EXTRA_STREAM, list[1])
-            sendIntent.action = Intent.ACTION_SEND
-        } else { Toast.makeText(requireActivity(), "Download Addon", Toast.LENGTH_SHORT).show()}
+//        else if (list[0] != null){
+//            sendIntent.putExtra(Intent.EXTRA_STREAM, list[0])
+//            sendIntent.action = Intent.ACTION_SEND
+//        } else if (list[1] != null){
+//            sendIntent.putExtra(Intent.EXTRA_STREAM, list[1])
+//            sendIntent.action = Intent.ACTION_SEND
+//        } else {  } // Toast file to share
 
-        val shareIntent = Intent.createChooser(sendIntent, "null")
-        startActivity(shareIntent)
+
     }
-
-    private fun getPath(file: File) = try {
+    //
+    fun getPath(file: File) = try {
         FileProvider.getUriForFile(
             requireContext().applicationContext,
             BuildConfig.APPLICATION_ID + ".fileProvider", file)
