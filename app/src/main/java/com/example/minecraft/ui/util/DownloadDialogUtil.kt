@@ -8,6 +8,7 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -26,6 +27,14 @@ import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.ui.main.DetailFragment
 import com.example.minecraft.ui.main.DownloadAddon
 import com.example.minecraft.ui.main.MainViewModel
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.OnUserEarnedRewardListener
+import com.google.android.gms.ads.rewarded.RewardItem
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
@@ -43,6 +52,9 @@ abstract class DownloadDialogUtil : Fragment(){
         const val RECORD_REQUEST_CODE = 101
         const val packageName = "com.mojang.minecraftpe"
     }
+
+
+
     private val viewModel: MainViewModel by viewModels()
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
@@ -199,19 +211,17 @@ abstract class DownloadDialogUtil : Fragment(){
         val builder = AlertDialog.Builder(requireActivity()).apply { setView(dialogView) }
         val dialog = builder.create()
         dialog.show()
-
+        Log.d(TAG, "dialogDownload: ")
         val closeView = dialogView.findViewById<ImageView>(R.id.img_close)
         closeView.setOnClickListener { dialog.cancel() }
 
         val temp1 = viewModel.getCachePathBehavior()
         val temp2 = viewModel.getCachePathResource()
-
         // Check if link is not empty
         val resourceLink: String? = if (model.resource.isNotBlank()){ getPackFileName(model.resource, TAG_RESOURCE)} else { null }
         val behaviorLink: String? = if (model.behavior.isNotBlank()){ getPackFileName(model.behavior, TAG_BEHAVIOR) } else { null }
         Log.d(TAG, "dialogDownload: $temp1")
         // Button resource on dialog config
-
         if (behaviorLink != null) {
             val behavior = dialogView.findViewById<Button>(R.id.btn_behavior)
             behavior.apply {
@@ -221,7 +231,7 @@ abstract class DownloadDialogUtil : Fragment(){
                 }
 
                 setOnClickListener {
-                    if (temp1 != null) {
+                    if (temp1 != null && flagDir == DownloadAddon.DIR_CACHE) {
                         checkInstallation(model, flagDir)
                         return@setOnClickListener
                     }
@@ -245,7 +255,7 @@ abstract class DownloadDialogUtil : Fragment(){
                 }
 
                 setOnClickListener {
-                    if (temp2 != null) {
+                    if (temp2 != null && flagDir == DownloadAddon.DIR_CACHE) {
                         checkInstallation(model, flagDir)
                         return@setOnClickListener
                     }
@@ -269,19 +279,11 @@ abstract class DownloadDialogUtil : Fragment(){
                     // check if needed install, yes = install, no = button share
                     if (flagBtnShare){
                         downloadShareFile(model)
-//                        DetailFragment().checkFileExists(model)
                     } else {
                         checkInstallation(model, flagDir)
                     }
                     // check if needed toast message, from cache do not needed
                     if (flagDir == DownloadAddon.DIR_EXT_STORAGE){
-//                        val dir = File(DownloadAddon.FOLDER_DOWNLOAD_ADDONS)
-//                        if (dir.isDirectory){
-//                            val files = dir.listFiles()
-//                            if (files != null && files.isNotEmpty()){
-//
-//                            }
-//                        }
                         Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT).show()
                     }
                 }

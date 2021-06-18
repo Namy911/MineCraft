@@ -20,7 +20,9 @@ class MainViewModel @Inject constructor(
         val PATH_CACHE_BEHAVIOR: String = "ui.main.path.cache.behavior"
         val PATH_PRIVATE_RESOURCE: String = "ui.main.path.private.resource"
         val PATH_PRIVATE_BEHAVIOR: String = "ui.main.path.private.behavior"
-//        val PATH_SD_RESOURCE: String = "ui.main.path.sd.resource"
+
+        val FLAG_ADMOB: String = "ui.main.flag.mob"
+        val FLAG_TRIAL: String = "ui.main.flag.trial"
 //        val PATH_SD_BEHAVIOR: String = "ui.main.path.sd.behavior"
     }
 
@@ -45,9 +47,9 @@ class MainViewModel @Inject constructor(
     fun setCachePathBehavior(path: String){ savedStateHandle.set(PATH_CACHE_BEHAVIOR, path) }
     fun getCachePathBehavior() = savedStateHandle.get<String>(PATH_CACHE_BEHAVIOR)
 
-//    fun setSdPathBehavior(path: String){ savedStateHandle.set(PATH_SD_BEHAVIOR, path) }
-//    fun getSdPathBehavior() = savedStateHandle.get<String>(PATH_SD_BEHAVIOR)
-//
-//    fun setSdPathResource(path: String){ savedStateHandle.set(PATH_SD_RESOURCE, path) }
-//    fun getSdPathResource() = savedStateHandle.get<String>(PATH_SD_RESOURCE)
+    fun setFlagAdMob(value: String){ savedStateHandle.set(FLAG_ADMOB, value) }
+    fun getFlagAdMob() = savedStateHandle.get<String>(FLAG_ADMOB)
+
+    fun setFlagTrial(flag: Boolean){ savedStateHandle.set(FLAG_TRIAL, flag) }
+    fun getFlagTrial() = savedStateHandle.get<Boolean>(FLAG_TRIAL)
 }

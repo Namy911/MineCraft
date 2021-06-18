@@ -14,6 +14,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager.widget.PagerAdapter
 import com.bumptech.glide.Glide
@@ -23,6 +24,12 @@ import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.FragmentDetailBinding
 import com.example.minecraft.ui.util.DownloadDialogUtil
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.rewarded.RewardedAd
+import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
@@ -40,6 +47,14 @@ class DetailFragment : DownloadDialogUtil() {
     private val args: DetailFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
 
+    var mRewardedAd: RewardedAd? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        loadAddReward()
+        viewModel.setFlagTrial(false)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -48,7 +63,6 @@ class DetailFragment : DownloadDialogUtil() {
         _binding = FragmentDetailBinding.inflate(inflater, container, false)
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
-
         return binding.root
     }
 
@@ -67,20 +81,41 @@ class DetailFragment : DownloadDialogUtil() {
             txtDesc.text = args.model.description
 
             btnShare.setOnClickListener {
-                checkFileExists(args.model)
-                shareFileCheck()
+                viewModel.setFlagAdMob(DownloadAddon.DIR_CACHE)
+                if (mRewardedAd != null) {
+                    mRewardedAd?.show(requireActivity()) { }
+                } else {
+                    // ????????????????
+                    checkFileExists(args.model)
+                    shareFileCheck()
+                }
 //                downloadShareFile(args.model)
             }
 
             btnDownload.setOnClickListener {
-                if (checkPermission()) {
-                    dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+                viewModel.setFlagAdMob(DownloadAddon.DIR_EXT_STORAGE)
+                if (mRewardedAd != null) {
+                    mRewardedAd?.show(requireActivity()) { }
+                } else {
+                    // ????????????????
+                    if (checkPermission()) {
+                        dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+                    }
+                    Log.d(TAG, "The rewarded ad wasn't ready yet.")
                 }
             }
+
             btnInstall.setOnClickListener {
-                if (checkPermission()){
-                    checkFileExists(args.model)
-                    dialogDownload(args.model, DownloadAddon.DIR_CACHE)
+                // open trial just once
+                val flagTrial = viewModel.getFlagTrial()
+                if (flagTrial == true){
+                    if (checkPermission()) {
+                        checkFileExists(args.model)
+                        dialogDownload(args.model, DownloadAddon.DIR_CACHE)
+                    }
+                }else{
+                    viewModel.setFlagTrial(true)
+                    findNavController().navigate(DetailFragmentDirections.trialFragment())
                 }
             }
         }
@@ -91,9 +126,46 @@ class DetailFragment : DownloadDialogUtil() {
         _binding = null
     }
 
+    private fun loadAddReward() {
+        val adRequest = AdRequest.Builder().build()
+        RewardedAd.load(requireActivity(), "ca-app-pub-3940256099942544/5224354917", adRequest, object : RewardedAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.d(TAG, adError.message)
+                mRewardedAd = null
+            }
+
+            override fun onAdLoaded(rewardedAd: RewardedAd) {
+                mRewardedAd = rewardedAd
+                mRewardedAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        when (viewModel.getFlagAdMob()) {
+                            DownloadAddon.DIR_EXT_STORAGE -> {
+                                if (checkPermission()) {
+                                    dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+                                }
+                            }
+                            DownloadAddon.DIR_CACHE -> {
+                                checkFileExists(args.model)
+                                shareFileCheck()
+                            }
+                        }
+                    }
+
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                        Log.d(TAG, "Ad failed to show.")
+                    }
+
+                    override fun onAdShowedFullScreenContent() {
+                        Log.d(TAG, "Ad showed fullscreen content.")
+                        mRewardedAd = null
+                    }
+                }
+            }
+            })
+    }
     fun setupToolBartTitle(title: String){ (activity as MainActivity?)!!.setupToolBartTitle(title) }
     // Initialisation, Check file exist from share file
-    fun checkFileExists(model: AddonModel){
+    private fun checkFileExists(model: AddonModel){
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
@@ -151,15 +223,6 @@ class DetailFragment : DownloadDialogUtil() {
             val shareIntent = Intent.createChooser(sendIntent, "null")
             requireActivity().startActivity(shareIntent)
         }
-//        else if (list[0] != null){
-//            sendIntent.putExtra(Intent.EXTRA_STREAM, list[0])
-//            sendIntent.action = Intent.ACTION_SEND
-//        } else if (list[1] != null){
-//            sendIntent.putExtra(Intent.EXTRA_STREAM, list[1])
-//            sendIntent.action = Intent.ACTION_SEND
-//        } else {  } // Toast file to share
-
-
     }
     //
     fun getPath(file: File) = try {

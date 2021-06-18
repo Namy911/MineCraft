@@ -21,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivitySplashscreenBinding
+import com.example.minecraft.ui.PremiumActivity
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -143,7 +144,8 @@ class SplashscreenActivity : AppCompatActivity() {
     }
 
     private fun navigateToMainScreen(){
-        val intent = Intent(this, MainActivity::class.java)
+//        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, PremiumActivity::class.java)
         startActivity(intent)
         finish()
     }

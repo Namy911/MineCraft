@@ -40,13 +40,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = MainActivityBinding.inflate(layoutInflater)
-
         setContentView(binding.root)
         MobileAds.initialize(this) {}
+
         mAdView = findViewById(R.id.adView)
         val adRequest = AdRequest.Builder().build()
-
         mAdView.loadAd(adRequest)
+
         // Setup Navigation
         setupToolBartTitle()
         val navHostFragment =
@@ -83,6 +83,11 @@ class MainActivity : AppCompatActivity() {
                 R.id.settingsDetailFragment -> {
                     binding.homeIndicator.visibility = View.VISIBLE
                     binding.colliderBackArrow.visibility = View.VISIBLE
+                }
+                R.id.trialFragment -> {
+                    binding.homeIndicator.visibility = View.VISIBLE
+                    binding.colliderBackArrow.visibility = View.VISIBLE
+                    binding.toolBarSettings.visibility = View.INVISIBLE
                 }
                 else -> { }
             }

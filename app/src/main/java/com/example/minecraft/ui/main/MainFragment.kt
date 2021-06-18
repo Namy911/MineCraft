@@ -1,21 +1,33 @@
 package com.example.minecraft.ui.main
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
+import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.ItemFooterBinding
+import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.MainFragmentBinding
 import com.example.minecraft.ui.util.DownloadDialogUtil
 import com.example.minecraft.ui.util.EventObserver
+import com.google.android.gms.ads.AdListener
+import com.google.android.gms.ads.AdLoader
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.nativead.MediaView
+import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdOptions
+import com.google.android.gms.ads.nativead.NativeAdView
 import dagger.hilt.android.AndroidEntryPoint
 
 
@@ -33,9 +45,12 @@ class MainFragment : DownloadDialogUtil(){
     private val PAGE_SIZE: Int = 10
     lateinit var adapter: PagingAdapter
 
+    lateinit var adLoader: AdLoader
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         adapter = PagingAdapter()
+
         // first in
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
@@ -73,16 +88,56 @@ class MainFragment : DownloadDialogUtil(){
         viewModel.list.observe(viewLifecycleOwner, EventObserver{
             val list = it.toMutableList()
             if (it.isNotEmpty()) {
-                adapter.addItems(list)
-            }else{
+                val temp: ArrayList<Any> = arrayListOf()
+//                adapter.addItems(temp.addAll(list))
+                temp.addAll(list)
+                adapter.addItems(temp)
+            } else {
                 binding.message.visibility = View.VISIBLE
             }
         })
+        setupAdMob()
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+    private fun setupAdMob() {
+//        val adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
+        adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
+            .forNativeAd { ad : NativeAd ->
+                val adView = layoutInflater.inflate(R.layout.item_recycler_adnative, null) as NativeAdView
+//                    val adView = binding as NativeAdView
+                populateNativeAdView(ad, adView)
+                if (adLoader.isLoading) {
+                    val list: MutableList<Any> = mutableListOf(ad)
+                    Log.d(TAG, "setupAdMob: ${list.size}")
+                    adapter.addItems(list)
+                }
+                if (requireActivity().isDestroyed) {
+                    ad.destroy()
+                    return@forNativeAd
+                }
+            }
+            .withAdListener(object : AdListener() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    // Handle the failure by logging, altering the UI, and so on.
+                }
+            })
+            .withNativeAdOptions(
+                NativeAdOptions.Builder().build()
+            ).build()
+//        adLoader.loadAd(AdRequest.Builder().build())
+        adLoader.loadAds(AdRequest.Builder().build(), 5)
+
+    }
+
+    private fun populateNativeAdView(ad: NativeAd, adView: NativeAdView, ){
+        adView.setNativeAd(ad)
+//        val item = adView.findViewById<LinearLayout>(R.id.ad_native_container)
+//        item.removeAllViews()
+//        item.addView(adView)
     }
 
     fun setupToolBartTitle(){ (activity as MainActivity?)!!.setupToolBartTitle() }
@@ -90,6 +145,7 @@ class MainFragment : DownloadDialogUtil(){
     inner class PagingAdapter(private val list: MutableList<Any> = arrayListOf()) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         val REGULAR_ITEM = 0
         val FOOTER_ITEM = 1
+        val AD_NATIVE_ITEM = 2
         // hide footer item
         var footerFlag = false
 
@@ -98,7 +154,12 @@ class MainFragment : DownloadDialogUtil(){
             val item = list[position]
             return if (item is AddonModel) {
                 REGULAR_ITEM
-            } else {
+            }
+//            else if (position > 1 && (position + 1) % 9 == 0) {
+            else if (item is NativeAd) {
+                AD_NATIVE_ITEM
+            }
+            else {
                 FOOTER_ITEM
             }
         }
@@ -110,6 +171,10 @@ class MainFragment : DownloadDialogUtil(){
                 }
                 FOOTER_ITEM -> {
                     FooterViewHolder(ItemFooterBinding.inflate(layoutInflater, parent, false))
+                }
+                AD_NATIVE_ITEM -> {
+//                    AdNativeViewHolder(ItemRecyclerAdnativeBinding.inflate(layoutInflater, parent, false))
+                    AdNativeViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_recycler_adnative, parent, false))
                 }
                 else -> {
                     throw RuntimeException("ItemArrayAdapter, The type has to be ONE or ZERO")
@@ -123,6 +188,10 @@ class MainFragment : DownloadDialogUtil(){
                     holder as TaskViewHolder
                     holder.bind(list[position] as AddonModel)
                 }
+                AD_NATIVE_ITEM -> {
+                    holder as AdNativeViewHolder
+//                    holder.bind()
+                }
                 // no data need to be assigned
                 FOOTER_ITEM -> {
                     holder as FooterViewHolder
@@ -134,10 +203,12 @@ class MainFragment : DownloadDialogUtil(){
 
         override fun getItemCount() = list.size + 1
 
-        fun addItems(items : MutableList<AddonModel>) {
+//        fun addItems(items : MutableList<AddonModel>) {
+        fun addItems(items : MutableList<Any>) {
             list.addAll(items)
             notifyDataSetChanged()
         }
+
         fun getItems(): Int{
             var count = 0
             for (item in list){
@@ -159,6 +230,27 @@ class MainFragment : DownloadDialogUtil(){
         }
     }
 
+    inner class AdNativeViewHolder(private val binding: ItemRecyclerBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun bind(model: NativeAd){
+            val title = model.
+
+            binding.apply {
+                Glide.with(requireActivity()).load(model.image).centerCrop().into(imageView)
+                txtInstall.setOnClickListener {
+                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title, false))
+                }
+                txtInstall.text = title
+                btnDownload.setOnClickListener {
+                    if (checkPermission()) { dialogDownload(model, DownloadAddon.DIR_CACHE) }
+                }
+                itemView.setOnClickListener {
+                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title, false))
+                }
+            }
+        }
+    }
+    }
+
     inner class TaskViewHolder(private val binding: ItemRecyclerBinding) : RecyclerView.ViewHolder(binding.root) {
         fun bind(model: AddonModel){
             val title = model.title
@@ -166,20 +258,20 @@ class MainFragment : DownloadDialogUtil(){
             binding.apply {
                 Glide.with(requireActivity()).load(model.image).centerCrop().into(imageView)
                 txtInstall.setOnClickListener {
-                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title))
+                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title, false))
                 }
                 txtInstall.text = title
                 btnDownload.setOnClickListener {
                     if (checkPermission()) { dialogDownload(model, DownloadAddon.DIR_CACHE) }
                 }
                 itemView.setOnClickListener {
-                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title))
+                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title, false))
                 }
             }
         }
     }
 }
-    class RecyclerScroller(private val layout: LinearLayoutManager, private val listener: ScrollListener) : RecyclerView.OnScrollListener() {
+class RecyclerScroller(private val layout: LinearLayoutManager, private val listener: ScrollListener) : RecyclerView.OnScrollListener() {
     private var previousTotal = 0
     private val visibleThreshold = 1
     private var loading = true

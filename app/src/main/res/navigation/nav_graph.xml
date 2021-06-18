@@ -30,6 +30,12 @@
         <argument
             android:name="title"
             app:argType="string" />
+        <action
+            android:id="@+id/trialFragment"
+            app:destination="@id/trialFragment" />
+        <argument
+            android:name="flagTrial"
+            app:argType="boolean" />
     </fragment>
 
     <fragment
@@ -55,5 +61,14 @@
         <argument
             android:name="title"
             app:argType="string" />
+    </fragment>
+    <fragment
+        android:id="@+id/trialFragment"
+        android:name="com.example.minecraft.ui.trial.TrialFragment"
+        android:label="fragment_trial"
+        tools:layout="@layout/fragment_trial" >
+        <action
+            android:id="@+id/blankFragment"
+            app:destination="@id/blankFragment" />
     </fragment>
 </navigation>

@@ -33,7 +33,7 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
 
         const val DIRECTORY = "ui.main.public"
         const val DIR_PUBLIC = "ui.main.public.directory"
-        const val DIR_EXT_STORAGE = "ui.main.private.directory"
+        const val DIR_EXT_STORAGE = "ui.main.public.external.directory"
         const val DIR_CACHE = "ui.main.cache.directory"
 
         const val DOWNLOAD_FLAG = "ui.main.download.flag.cache"

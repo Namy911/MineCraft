@@ -40,5 +40,8 @@
     <string name="msg_go_download_app">Please download  MineCraft to install addon </string>
     <string name="msg_empty_list">Empty list</string>
     <string name="btn_install_resource">Install Resource</string>
+    <string name="subscription_info">Subscription Info</string>
+    <string name="start_trial_an_plan">Start Trial and Plan</string>
+    <string name="title_fragment_trial">Premium Subscription</string>
 
 </resources>
