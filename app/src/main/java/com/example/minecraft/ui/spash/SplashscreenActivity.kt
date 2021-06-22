@@ -22,6 +22,7 @@ import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivitySplashscreenBinding
 import com.example.minecraft.ui.PremiumActivity
+import com.example.minecraft.ui.util.TrialManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,8 +42,11 @@ class SplashscreenActivity : AppCompatActivity() {
 
     private val motor: SplashScreenMotor by viewModels()
 
+    private lateinit var trialManager: TrialManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        trialManager = TrialManager(this)
         // Ful screen window
         @Suppress("DEPRECATION")
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
@@ -142,11 +146,18 @@ class SplashscreenActivity : AppCompatActivity() {
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
         return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
     }
-
+    // Check if user have trial and redirect
     private fun navigateToMainScreen(){
-//        val intent = Intent(this, MainActivity::class.java)
-        val intent = Intent(this, PremiumActivity::class.java)
-        startActivity(intent)
-        finish()
+        lifecycleScope.launchWhenCreated {
+            trialManager.trialFlow.collect { trial ->
+                val intent = if (trial == TrialManager.TRIAL_NOT_EXIST){
+                    Intent(this@SplashscreenActivity, PremiumActivity::class.java)
+                } else{
+                    Intent(this@SplashscreenActivity, MainActivity::class.java)
+                }
+                startActivity(intent)
+                finish()
+            }
+        }
     }
 }

@@ -32,10 +32,9 @@
             app:argType="string" />
         <action
             android:id="@+id/trialFragment"
-            app:destination="@id/trialFragment" />
-        <argument
-            android:name="flagTrial"
-            app:argType="boolean" />
+            app:destination="@id/trialFragment"
+            app:popUpTo="@id/detailFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment
@@ -67,8 +66,12 @@
         android:name="com.example.minecraft.ui.trial.TrialFragment"
         android:label="fragment_trial"
         tools:layout="@layout/fragment_trial" >
+        <argument
+            android:name="model"
+            app:argType="com.example.minecraft.data.model.AddonModel" />
         <action
-            android:id="@+id/blankFragment"
-            app:destination="@id/blankFragment" />
+            android:id="@+id/back_detailFragment"
+            app:destination="@id/detailFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 </navigation>

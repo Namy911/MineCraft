@@ -14,6 +14,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
+import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager.widget.PagerAdapter
@@ -23,7 +25,9 @@ import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.FragmentDetailBinding
+import com.example.minecraft.ui.PremiumActivity
 import com.example.minecraft.ui.util.DownloadDialogUtil
+import com.example.minecraft.ui.util.TrialManager
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -31,6 +35,8 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.io.File
 
 
@@ -47,12 +53,26 @@ class DetailFragment : DownloadDialogUtil() {
     private val args: DetailFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
 
+    private lateinit var trialManager: TrialManager
+    private var flagTrial = false
+
     var mRewardedAd: RewardedAd? = null
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        loadAddReward()
-        viewModel.setFlagTrial(false)
+
+        trialManager = TrialManager(requireActivity())
+        // check if trial exist
+        requireActivity().lifecycleScope.launchWhenCreated {
+            trialManager.trialFlow.collect { trial ->
+                flagTrial = trial != TrialManager.TRIAL_NOT_EXIST
+            }
+        }
+        // No ad, have trial
+        if (!flagTrial) {
+            loadAddReward()
+        }
     }
 
     override fun onCreateView(
@@ -71,6 +91,9 @@ class DetailFragment : DownloadDialogUtil() {
         setupToolBartTitle(getString(R.string.title_fragment_details))
         checkFileExists(args.model)
 
+        if (flagTrial) {
+            (activity as MainActivity?)!!.disableAd()
+        }
         binding.apply {
             val list: List<String> = args.model.preview
             imgContainer.adapter = DetailPageAdapter(list, args.title, requireActivity())
@@ -78,44 +101,42 @@ class DetailFragment : DownloadDialogUtil() {
                 count = list.size
                 selection = 0
             }
+
             txtDesc.text = args.model.description
 
             btnShare.setOnClickListener {
-                viewModel.setFlagAdMob(DownloadAddon.DIR_CACHE)
-                if (mRewardedAd != null) {
-                    mRewardedAd?.show(requireActivity()) { }
-                } else {
-                    // ????????????????
-                    checkFileExists(args.model)
-                    shareFileCheck()
-                }
-//                downloadShareFile(args.model)
+                    viewModel.setFlagAdMob(DownloadAddon.DIR_CACHE)
+                    if (mRewardedAd != null && !flagTrial) {
+                        mRewardedAd?.show(requireActivity()) { }
+                    } else {
+                        checkFileExists(args.model)
+                        shareFileCheck()
+                    }
             }
 
             btnDownload.setOnClickListener {
-                viewModel.setFlagAdMob(DownloadAddon.DIR_EXT_STORAGE)
-                if (mRewardedAd != null) {
-                    mRewardedAd?.show(requireActivity()) { }
-                } else {
-                    // ????????????????
-                    if (checkPermission()) {
-                        dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-                    }
-                    Log.d(TAG, "The rewarded ad wasn't ready yet.")
+                    viewModel.setFlagAdMob(DownloadAddon.DIR_EXT_STORAGE)
+                    if (mRewardedAd != null && !flagTrial) {
+                        mRewardedAd?.show(requireActivity()) { }
+                    } else {
+                        if (checkPermission()) {
+                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+                        }
+                        Log.d(TAG, "The rewarded ad wasn't ready yet.")
                 }
             }
 
-            btnInstall.setOnClickListener {
+            btnInstall.setOnClickListener { button ->
                 // open trial just once
-                val flagTrial = viewModel.getFlagTrial()
-                if (flagTrial == true){
-                    if (checkPermission()) {
-                        checkFileExists(args.model)
-                        dialogDownload(args.model, DownloadAddon.DIR_CACHE)
+                if (checkPermission()) {
+                    if (flagTrial) {
+                        if (checkPermission()) {
+                            checkFileExists(args.model)
+                            dialogDownload(args.model, DownloadAddon.DIR_CACHE)
+                        }
+                    } else {
+                        findNavController().navigate(DetailFragmentDirections.trialFragment(args.model))
                     }
-                }else{
-                    viewModel.setFlagTrial(true)
-                    findNavController().navigate(DetailFragmentDirections.trialFragment())
                 }
             }
         }
@@ -163,6 +184,7 @@ class DetailFragment : DownloadDialogUtil() {
             }
             })
     }
+
     fun setupToolBartTitle(title: String){ (activity as MainActivity?)!!.setupToolBartTitle(title) }
     // Initialisation, Check file exist from share file
     private fun checkFileExists(model: AddonModel){

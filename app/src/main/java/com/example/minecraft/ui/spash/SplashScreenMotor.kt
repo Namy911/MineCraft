@@ -26,8 +26,10 @@ class SplashScreenMotor @Inject constructor(
         private val repository: SplashScreenRepository,
         private val savedStateHandle: SavedStateHandle
     ): ViewModel() {
+
     private val stage1:Int = Random.nextInt(20, 65)
     private val stage2:Int = Random.nextInt(66, 85)
+
     companion object{
         const val LOADING_STATE = "ui.splash.loading"
         const val START_CONTENT_STATE = "ui.splash.content.start"
