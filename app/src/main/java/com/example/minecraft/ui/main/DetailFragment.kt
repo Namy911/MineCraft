@@ -36,6 +36,7 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -65,10 +66,12 @@ class DetailFragment : DownloadDialogUtil() {
         trialManager = TrialManager(requireActivity())
         // check if trial exist
         requireActivity().lifecycleScope.launchWhenCreated {
-            trialManager.trialFlow.collect { trial ->
+            trialManager.trialFlow.collectLatest { trial ->
                 flagTrial = trial != TrialManager.TRIAL_NOT_EXIST
             }
         }
+        //
+        viewModel.setFlagTrial(false)
         // No ad, have trial
         if (!flagTrial) {
             loadAddReward()
@@ -128,14 +131,16 @@ class DetailFragment : DownloadDialogUtil() {
 
             btnInstall.setOnClickListener { button ->
                 // open trial just once
+                val temp = viewModel.getFlagTrial()
                 if (checkPermission()) {
-                    if (flagTrial) {
+                    if (flagTrial || temp == true) {
                         if (checkPermission()) {
                             checkFileExists(args.model)
                             dialogDownload(args.model, DownloadAddon.DIR_CACHE)
                         }
                     } else {
                         findNavController().navigate(DetailFragmentDirections.trialFragment(args.model))
+                        viewModel.setFlagTrial(true) // trial fragment has been open
                     }
                 }
             }

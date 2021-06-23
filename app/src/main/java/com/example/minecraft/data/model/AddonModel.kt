@@ -3,6 +3,7 @@ package com.example.minecraft.data.model
 import android.os.Parcelable
 import androidx.room.*
 import com.example.minecraft.data.network.AddonEntity
+import com.example.minecraft.ui.util.RosterItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.parcelize.Parcelize
@@ -20,7 +21,7 @@ data class AddonModel(
     val preview: List<String>,
     val resource: String,
     val title: String,
-) : Parcelable {
+) : Parcelable, RosterItem(RosterItem.TYPE.ADDON) {
     fun convertToAddonEntity(model: AddonModel): AddonEntity{
         return AddonEntity(
             behavior  = model.behavior,
@@ -46,12 +47,14 @@ data class AddonModel(
         @Query("SELECT * FROM `addon` WHERE  `_id` = :id")
          suspend fun getOne(id: Int): AddonModel
 
+//        @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
+//        suspend fun getLimit(offset: Int, limit: Int): List<AddonModel>
         @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
-        suspend fun getLimit(offset: Int, limit: Int): List<AddonModel>
+        fun getLimit(offset: Int, limit: Int): Flow<List<AddonModel>>
 
-//        @Query("SELECT * FROM `addon` ")
-//        fun getAll(): Flow<List<AddonModel>>
-//        fun getAllDistinct() = getAll().distinctUntilChanged()
+        @Query("SELECT * FROM `addon` ")
+        fun getAll(): Flow<List<AddonModel>>
+        fun getAllDistinct() = getAll().distinctUntilChanged()
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         suspend fun insertAll(items: List<AddonModel>)

@@ -6,39 +6,33 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.ItemFooterBinding
-import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.MainFragmentBinding
-import com.example.minecraft.ui.util.DownloadDialogUtil
-import com.example.minecraft.ui.util.EventObserver
-import com.example.minecraft.ui.util.TrialManager
+import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdOptions
 import com.google.android.gms.ads.nativead.NativeAdView
-import com.google.android.gms.ads.rewarded.RewardedAd
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.random.Random
-
 
 @AndroidEntryPoint
 class MainFragment : DownloadDialogUtil(){
@@ -52,33 +46,36 @@ class MainFragment : DownloadDialogUtil(){
 
     private val viewModel: MainViewModel by viewModels()
 
-    private val PAGE_SIZE: Int = 10
+    private val PAGE_SIZE: Int = 12
     lateinit var adapter: PagingAdapter
 
-    lateinit var adLoader: AdLoader
+//    lateinit var adLoader: AdLoader
+//    private var flagAdLoading = true
+//    val temp: MutableList<RosterItem> = mutableListOf()
     var addCount: Int = 0
 
     private lateinit var trialManager: TrialManager
     private var flagTrial = false
 
-    var adList: MutableList<Any> = mutableListOf()
+//    var adList: MutableList<Any> = mutableListOf()
+    var fulList: MutableList<RosterItem> = mutableListOf()
+    var adList: MutableList<RosterItem> = mutableListOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         trialManager = TrialManager(requireActivity())
         // check if trial exist
         requireActivity().lifecycleScope.launchWhenCreated {
-            trialManager.trialFlow.collect { trial ->
+            trialManager.trialFlow.collectLatest { trial ->
                 flagTrial = trial != TrialManager.TRIAL_NOT_EXIST
             }
         }
         adapter = PagingAdapter()
+        viewModel.getLimit(0, PAGE_SIZE)
+        setupAdMob()
         // first in
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
-        setupAdMob()
-        viewModel.getLimit(adapter.getItems(), PAGE_SIZE)
     }
 
     override fun onCreateView(
@@ -98,33 +95,45 @@ class MainFragment : DownloadDialogUtil(){
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
+            setupAdMob()
             container.addOnScrollListener(
                 RecyclerScroller(manager, object : RecyclerScroller.ScrollListener{
                     override fun onLoadMore() {
+                        Log.d(TAG, "onLoadMore: ${adapter.getItems()}")
                         // setup list
+//                        setupAdMob()
                         viewModel.getLimit(adapter.getItems(), PAGE_SIZE)
                         setupAdMob()
+//                        viewModel.getLimit(viewModel.newOffset, PAGE_SIZE)
                         adapter.footerFlag = true
                     }
                 })
             )
-        }
 
-        viewModel.list.observe(viewLifecycleOwner, EventObserver{
-            val list = it.toMutableList()
-            if (it.isNotEmpty()) {
-                val temp: ArrayList<Any> = arrayListOf()
-                temp.addAll(list)
-                if (adList.size > addCount && !flagTrial) {
-                    addCount++
-                    temp.add(adList[Random.nextInt(0, COUNT_ADS - 1)])
-                }
-                adapter.addItems(temp)
-                binding.message.visibility = View.GONE
-            } else {
-                binding.message.visibility = View.VISIBLE
-            }
-        })
+//            lifecycleScope.launchWhenStarted {
+//                viewModel.list.collect {
+//                    setupAdMob()
+//                    temp.addAll(it)
+//                    Log.d(TAG, "launchWhenStarted: ${temp.size}")
+//                }
+//            }
+        }
+//        viewModel.list.observe(viewLifecycleOwner, EventObserver{
+//            val list = it.toMutableList()
+//            if (it.isNotEmpty()) {
+//                val temp: ArrayList<Any> = arrayListOf()
+//                temp.addAll(list)
+//                if (adList.size > addCount && !flagTrial) {
+//                    addCount++
+//                    temp.add(adList[Random.nextInt(0, COUNT_ADS - 1)])
+//                }
+//                adapter.addItems(temp)
+////                binding.message.visibility = View.GONE
+//            } else {
+////                binding.message.visibility = View.VISIBLE
+//            }
+//        })
+
     }
 
     override fun onDestroyView() {
@@ -132,14 +141,27 @@ class MainFragment : DownloadDialogUtil(){
         _binding = null
     }
 
-    private fun setupAdMob() {
-        adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
-            .forNativeAd { ad : NativeAd ->
-                adList.add(ad)
-                // ads initialization
-                if (adList.size == 1 && !flagTrial){
-                    adapter.addItems(mutableListOf(adList[0]))
+    private fun setupAdMob(): AdLoader {
+        val adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
+            .forNativeAd { ad: NativeAd ->
+                adList.add(AdsItem(ad))
+                if (adList.size == 4) {
+                    lifecycleScope.launchWhenCreated {
+                        viewModel.list.collectLatest {
+                            val temp = mutableListOf<RosterItem>()
+                            temp.addAll(it)
+                            temp.add(3, adList[0])
+                            temp.add(7, adList[1])
+                            temp.add(11, adList[2])
+                            temp.add(adList[3])
+                            fulList.addAll(temp)
+                            adapter.submitList(fulList)
+                            Log.d(TAG, "launchWhenStarted: ${fulList.size}")
+                        }
+                    }
                 }
+//                }
+                // ads initialization
                 if (requireActivity().isDestroyed) {
                     ad.destroy()
                     return@forNativeAd
@@ -147,31 +169,36 @@ class MainFragment : DownloadDialogUtil(){
             }
             .withAdListener(object : AdListener() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
-                    Log.d(TAG, "setupAdMob onAdFailedToLoad: ${adError.message}")
                 }
             }).build()
         adLoader.loadAds(AdRequest.Builder().build(), COUNT_ADS)
+        return adLoader
     }
 
     fun setupToolBartTitle(){ (activity as MainActivity?)!!.setupToolBartTitle() }
     // Helpers
-    inner class PagingAdapter(private val list: MutableList<Any> = arrayListOf()) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    abstract class BaseViewHolder<T>(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        abstract fun bind(item: T)
+    }
+    inner class PagingAdapter : ListAdapter<RosterItem, BaseViewHolder<*>>(diff) {
         val REGULAR_ITEM = 0
         val FOOTER_ITEM = 1
         val AD_NATIVE_ITEM = 2
+
+        var adapterDataList: MutableList<Any> = mutableListOf()
         // hide footer item
         var footerFlag = false
 
         override fun getItemViewType(position: Int): Int {
-            if (position == list.size) { return FOOTER_ITEM }
-            return when (list[position]) {
-                is AddonModel -> { REGULAR_ITEM }
-                is NativeAd -> { AD_NATIVE_ITEM }
+//            if (position == adapter.itemCount) { return FOOTER_ITEM }
+            return when (adapter.getItem(position).rosterType) {
+                RosterItem.TYPE.ADDON -> { REGULAR_ITEM }
+                RosterItem.TYPE.ADS -> { AD_NATIVE_ITEM }
                 else -> { FOOTER_ITEM }
             }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int):  RecyclerView.ViewHolder {
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int):  BaseViewHolder<*> {
             return when (viewType) {
                 REGULAR_ITEM -> {
                     TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false))
@@ -188,38 +215,33 @@ class MainFragment : DownloadDialogUtil(){
             }
         }
 
-        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        override fun onBindViewHolder(holder: BaseViewHolder<*>, position: Int) {
+            val element = adapter.getItem(position)
             when(holder.itemViewType){
                 REGULAR_ITEM -> {
                     holder as TaskViewHolder
-                    holder.bind(list[position] as AddonModel)
+                    holder.bind(element as AddonModel)
                 }
                 AD_NATIVE_ITEM -> {
-                    if (!flagTrial) {
+//                    if (!flagTrial) {
                         holder as AdNativeViewHolder
-                        holder.bind(list[position] as NativeAd)
-                    }
+                        holder.bind(element as AdsItem)
+//                    }
                 }
                 // no data need to be assigned
                 FOOTER_ITEM -> {
                     holder as FooterViewHolder
-                    holder.bind(footerFlag)
+//                    holder.bind(footerFlag)
+                    holder.bind(element as FooterItem)
                 }
                 else -> { }
             }
         }
 
-        override fun getItemCount() = list.size + 1
-
-        fun addItems(items : MutableList<Any>) {
-            list.addAll(items)
-            notifyDataSetChanged()
-        }
-
         fun getItems(): Int{
             var count = 0
-            for (item in list){
-                if (item is AddonModel){
+            for (item in adapter.currentList){
+                if (item.rosterType == RosterItem.TYPE.ADDON){
                     count++
                 }
             }
@@ -227,9 +249,9 @@ class MainFragment : DownloadDialogUtil(){
         }
     }
 
-    inner class FooterViewHolder(private val binding: ItemFooterBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(state: Boolean) {
-            if (state) {
+    inner class FooterViewHolder(private val binding: ItemFooterBinding) : BaseViewHolder<FooterItem>(binding.root) {
+       override fun bind(item: FooterItem) {
+            if (item.status) {
                 binding.progressBar2.visibility = View.VISIBLE
             } else {
                 binding.progressBar2.visibility = View.GONE
@@ -237,8 +259,9 @@ class MainFragment : DownloadDialogUtil(){
         }
     }
 
-    inner class AdNativeViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
-        fun bind(ad: NativeAd){
+    inner class AdNativeViewHolder(private val view: View) : BaseViewHolder<AdsItem>(view) {
+         override fun bind(item: AdsItem){
+            val ad = item.ads
             val adView = view as NativeAdView
 
             val headlineView = adView.findViewById<TextView>(R.id.txt_install)
@@ -247,6 +270,9 @@ class MainFragment : DownloadDialogUtil(){
 
             val list = ad.images
             val img = adView.findViewById<ImageView>(R.id.imageView)
+            img.setOnClickListener {
+                ad.callToAction
+            }
 
             Glide.with(requireActivity()).load(list[0].uri).into(img)
             adView.imageView =  img
@@ -255,26 +281,37 @@ class MainFragment : DownloadDialogUtil(){
         }
     }
 
-    inner class TaskViewHolder(private val binding: ItemRecyclerBinding) : RecyclerView.ViewHolder(binding.root) {
-        fun bind(model: AddonModel){
-            val title = model.title
+    inner class TaskViewHolder(private val binding: ItemRecyclerBinding) : BaseViewHolder<AddonModel>(binding.root) {
+       override fun bind(item: AddonModel){
+            val title = item.title
 
             binding.apply {
-                Glide.with(requireActivity()).load(model.image).centerCrop().into(imageView)
+                Glide.with(requireActivity()).load(item.image).centerCrop().into(imageView)
                 txtInstall.setOnClickListener {
-                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title))
+                    findNavController().navigate(MainFragmentDirections.detailFragment(item,title))
                 }
                 txtInstall.text = title
                 btnDownload.setOnClickListener {
-                    if (checkPermission()) { dialogDownload(model, DownloadAddon.DIR_CACHE) }
+                    if (checkPermission()) { dialogDownload(item, DownloadAddon.DIR_CACHE) }
                 }
                 itemView.setOnClickListener {
-                    findNavController().navigate(MainFragmentDirections.detailFragment(model,title))
+                    findNavController().navigate(MainFragmentDirections.detailFragment(item,title))
                 }
             }
         }
     }
+
+    internal val diff = object: DiffUtil.ItemCallback<RosterItem>() {
+        override fun areItemsTheSame(oldItem: RosterItem , newItem: RosterItem): Boolean {
+            return (oldItem as? AddonModel)?.id == (newItem as? AddonModel)?.id
+        }
+
+        override fun areContentsTheSame(oldItem: RosterItem, newItem: RosterItem): Boolean {
+            return (oldItem as? AddonModel) == (newItem as? AddonModel)
+        }
+    }
 }
+
 class RecyclerScroller(
     private val layout: LinearLayoutManager,
     private val listener: ScrollListener

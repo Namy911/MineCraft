@@ -6,6 +6,15 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.trial.TrialFragment">
+    <ImageView
+        android:id="@+id/gif_stub"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:src="@drawable/gif_stub"
+        android:scaleType="centerCrop"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideline2"
@@ -84,8 +93,6 @@
         android:layout_width="0dp"
         android:layout_height="75dp"
         android:background="@drawable/premium_button"
-        android:text="@string/start_trial_an_plan"
-        android:textAllCaps="false"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guideline3"
@@ -97,6 +104,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/white"
         android:textSize="16sp"
+        android:textAllCaps="false"
         android:fontFamily="@font/regular_alt"
         android:text="@string/start_trial_an_plan"
         app:layout_constraintBottom_toBottomOf="@+id/btn_premium"
@@ -109,7 +117,7 @@
         android:layout_width="0dp"
         app:layout_constraintWidth_percent="0.3"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="5dp"
         android:src="@drawable/cub_left"
         android:scaleType="centerCrop"
         app:layout_constraintStart_toStartOf="parent"
