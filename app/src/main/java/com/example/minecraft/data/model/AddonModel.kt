@@ -47,10 +47,10 @@ data class AddonModel(
         @Query("SELECT * FROM `addon` WHERE  `_id` = :id")
          suspend fun getOne(id: Int): AddonModel
 
-//        @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
-//        suspend fun getLimit(offset: Int, limit: Int): List<AddonModel>
         @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
-        fun getLimit(offset: Int, limit: Int): Flow<List<AddonModel>>
+        suspend fun getLimit(offset: Int, limit: Int): List<AddonModel>
+//        @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
+//        fun getLimit(offset: Int, limit: Int): Flow<List<AddonModel>>
 
         @Query("SELECT * FROM `addon` ")
         fun getAll(): Flow<List<AddonModel>>

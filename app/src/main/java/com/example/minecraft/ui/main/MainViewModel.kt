@@ -44,6 +44,8 @@ class MainViewModel @Inject constructor(
 
         val FLAG_ADMOB: String = "ui.main.flag.mob"
         val FLAG_TRIAL: String = "ui.main.flag.trial"
+
+        val FLAG_INIT: String = "ui.main.flag.init"
 //        val PATH_SD_BEHAVIOR: String = "ui.main.path.sd.behavior"
     }
 
@@ -53,10 +55,10 @@ class MainViewModel @Inject constructor(
 //    private val _list: MutableLiveData<List<AddonModel>> by lazy { MutableLiveData<List<AddonModel>>() }
 //    val list: LiveData<List<AddonModel>> = _list
 
-    private val _list = MutableSharedFlow<List<AddonModel>>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val _list = MutableSharedFlow<List<AddonModel>>(replay = 1,  onBufferOverflow = BufferOverflow.DROP_LATEST)
     val list: SharedFlow<List<AddonModel>> = _list.asSharedFlow()
 
-    val adLoad: MutableLiveData<AdLoadState> by lazy { MutableLiveData<AdLoadState>() }
+    val adList: MutableLiveData<List<NativeAd>> by lazy { MutableLiveData<List<NativeAd>>() }
 //    val adLoad: LiveData<AdLoadState> = _adLoad
 
     private val _allList: MutableLiveData<List<AddonModel>> by lazy { MutableLiveData<List<AddonModel>>() }
@@ -75,8 +77,8 @@ class MainViewModel @Inject constructor(
 //        }
 //    }
     fun getLimit(offset: Int, limit: Int){
-        viewModelScope.launch ( Dispatchers.Main ){
-                _list.emitAll(repository.getLimit(offset, limit))
+        viewModelScope.launch {
+                _list.emit(repository.getLimit(offset, limit))
         }
     }
 
@@ -94,7 +96,7 @@ class MainViewModel @Inject constructor(
     fun setPrivatePathResource(path: String){ savedStateHandle.set(PATH_PRIVATE_RESOURCE, path) }
     fun getPrivatePathResource() = savedStateHandle.get<String>(PATH_PRIVATE_RESOURCE)
 
-    fun setPrivatePathBehavior(path: String){ savedStateHandle.set(PATH_PRIVATE_BEHAVIOR, path) }
+    fun setInit(path: String){ savedStateHandle.set(PATH_PRIVATE_BEHAVIOR, path) }
     fun getPrivatePathBehavior() = savedStateHandle.get<String>(PATH_PRIVATE_BEHAVIOR)
 
     fun setCachePathBehavior(path: String){ savedStateHandle.set(PATH_CACHE_BEHAVIOR, path) }

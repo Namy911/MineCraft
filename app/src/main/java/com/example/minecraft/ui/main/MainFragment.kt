@@ -5,9 +5,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DiffUtil
@@ -25,10 +28,10 @@ import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -46,20 +49,17 @@ class MainFragment : DownloadDialogUtil(){
 
     private val viewModel: MainViewModel by viewModels()
 
-    private val PAGE_SIZE: Int = 12
+    private val PAGE_SIZE: Int = 4
     lateinit var adapter: PagingAdapter
 
-//    lateinit var adLoader: AdLoader
-//    private var flagAdLoading = true
-//    val temp: MutableList<RosterItem> = mutableListOf()
     var addCount: Int = 0
 
     private lateinit var trialManager: TrialManager
     private var flagTrial = false
 
-//    var adList: MutableList<Any> = mutableListOf()
-    var fulList: MutableList<RosterItem> = mutableListOf()
-    var adList: MutableList<RosterItem> = mutableListOf()
+    var isLoading = false
+
+    var fulList: MutableSet<RosterItem> = mutableSetOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,7 +72,7 @@ class MainFragment : DownloadDialogUtil(){
         }
         adapter = PagingAdapter()
         viewModel.getLimit(0, PAGE_SIZE)
-        setupAdMob()
+        setupListItem()
         // first in
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
@@ -92,48 +92,24 @@ class MainFragment : DownloadDialogUtil(){
         setupToolBartTitle()
         // Setup recycler
         binding.apply {
+            progressBar.visibility = View.VISIBLE
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
-            setupAdMob()
-            container.addOnScrollListener(
-                RecyclerScroller(manager, object : RecyclerScroller.ScrollListener{
-                    override fun onLoadMore() {
-                        Log.d(TAG, "onLoadMore: ${adapter.getItems()}")
-                        // setup list
-//                        setupAdMob()
-                        viewModel.getLimit(adapter.getItems(), PAGE_SIZE)
-                        setupAdMob()
-//                        viewModel.getLimit(viewModel.newOffset, PAGE_SIZE)
-                        adapter.footerFlag = true
+            container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    super.onScrolled(recyclerView, dx, dy)
+                    if (isLoading) {
+                        if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 1) {
+                            viewModel.getLimit(adapter.getItems(), PAGE_SIZE)
+                            setupListItem()
+                            isLoading = false
+                        }
                     }
-                })
-            )
-
-//            lifecycleScope.launchWhenStarted {
-//                viewModel.list.collect {
-//                    setupAdMob()
-//                    temp.addAll(it)
-//                    Log.d(TAG, "launchWhenStarted: ${temp.size}")
-//                }
-//            }
+                }
+            })
         }
-//        viewModel.list.observe(viewLifecycleOwner, EventObserver{
-//            val list = it.toMutableList()
-//            if (it.isNotEmpty()) {
-//                val temp: ArrayList<Any> = arrayListOf()
-//                temp.addAll(list)
-//                if (adList.size > addCount && !flagTrial) {
-//                    addCount++
-//                    temp.add(adList[Random.nextInt(0, COUNT_ADS - 1)])
-//                }
-//                adapter.addItems(temp)
-////                binding.message.visibility = View.GONE
-//            } else {
-////                binding.message.visibility = View.VISIBLE
-//            }
-//        })
-
+        adapter.getFooter()
     }
 
     override fun onDestroyView() {
@@ -141,37 +117,44 @@ class MainFragment : DownloadDialogUtil(){
         _binding = null
     }
 
-    private fun setupAdMob(): AdLoader {
+    fun itemConfig(item : RosterItem){
+        binding.progressBar.visibility = View.GONE
+        lifecycleScope.launch {
+            viewModel.list
+                .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                .collectLatest {
+                    if (it.isNotEmpty()) {
+                        val temp = mutableSetOf<RosterItem>()
+                        temp.addAll(it)
+                        temp.add(item)
+                        Log.d(TAG, "itemConfig: ${temp.size}")
+                        fulList.addAll(temp)
+//                        fulList.add(FooterItem(true))
+                    }
+                        adapter.submitList(fulList.toMutableList())
+                        isLoading = true
+                }
+        }
+    }
+
+    private fun setupListItem(): AdLoader {
+        var adList: RosterItem? =  null
         val adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
             .forNativeAd { ad: NativeAd ->
-                adList.add(AdsItem(ad))
-                if (adList.size == 4) {
-                    lifecycleScope.launchWhenCreated {
-                        viewModel.list.collectLatest {
-                            val temp = mutableListOf<RosterItem>()
-                            temp.addAll(it)
-                            temp.add(3, adList[0])
-                            temp.add(7, adList[1])
-                            temp.add(11, adList[2])
-                            temp.add(adList[3])
-                            fulList.addAll(temp)
-                            adapter.submitList(fulList)
-                            Log.d(TAG, "launchWhenStarted: ${fulList.size}")
-                        }
-                    }
-                }
-//                }
-                // ads initialization
+                adList = AdsItem(ad)
                 if (requireActivity().isDestroyed) {
                     ad.destroy()
                     return@forNativeAd
                 }
             }
             .withAdListener(object : AdListener() {
-                override fun onAdFailedToLoad(adError: LoadAdError) {
+                override fun onAdLoaded() {
+                    super.onAdLoaded()
+                    itemConfig(adList!!)
+//                    adapter.getFooter()
                 }
             }).build()
-        adLoader.loadAds(AdRequest.Builder().build(), COUNT_ADS)
+        adLoader.loadAd(AdRequest.Builder().build())
         return adLoader
     }
 
@@ -180,17 +163,16 @@ class MainFragment : DownloadDialogUtil(){
     abstract class BaseViewHolder<T>(itemView: View) : RecyclerView.ViewHolder(itemView) {
         abstract fun bind(item: T)
     }
+
     inner class PagingAdapter : ListAdapter<RosterItem, BaseViewHolder<*>>(diff) {
         val REGULAR_ITEM = 0
         val FOOTER_ITEM = 1
         val AD_NATIVE_ITEM = 2
-
-        var adapterDataList: MutableList<Any> = mutableListOf()
         // hide footer item
         var footerFlag = false
 
         override fun getItemViewType(position: Int): Int {
-//            if (position == adapter.itemCount) { return FOOTER_ITEM }
+            if (position == adapter.itemCount) { return FOOTER_ITEM }
             return when (adapter.getItem(position).rosterType) {
                 RosterItem.TYPE.ADDON -> { REGULAR_ITEM }
                 RosterItem.TYPE.ADS -> { AD_NATIVE_ITEM }
@@ -238,6 +220,7 @@ class MainFragment : DownloadDialogUtil(){
             }
         }
 
+
         fun getItems(): Int{
             var count = 0
             for (item in adapter.currentList){
@@ -246,6 +229,15 @@ class MainFragment : DownloadDialogUtil(){
                 }
             }
             return count
+        }
+
+        fun getFooter(){
+            for (item in adapter.currentList){
+                 if (item.rosterType == RosterItem.TYPE.FOOTER){
+                    fulList.remove(item)
+                }
+            }
+            adapter.submitList(fulList.toMutableList())
         }
     }
 
@@ -271,11 +263,16 @@ class MainFragment : DownloadDialogUtil(){
             val list = ad.images
             val img = adView.findViewById<ImageView>(R.id.imageView)
             img.setOnClickListener {
-                ad.callToAction
+                ad.enableCustomClickGesture()
             }
 
             Glide.with(requireActivity()).load(list[0].uri).into(img)
             adView.imageView =  img
+
+            val buttonView = adView.findViewById<Button>(R.id.btn_download)
+            buttonView.text = ad.callToAction
+            adView.callToActionView  = buttonView
+//            adView.setClickConfirmingView(buttonView)
 
             adView.setNativeAd(ad)
         }
@@ -301,7 +298,7 @@ class MainFragment : DownloadDialogUtil(){
         }
     }
 
-    internal val diff = object: DiffUtil.ItemCallback<RosterItem>() {
+    val diff = object: DiffUtil.ItemCallback<RosterItem>() {
         override fun areItemsTheSame(oldItem: RosterItem , newItem: RosterItem): Boolean {
             return (oldItem as? AddonModel)?.id == (newItem as? AddonModel)?.id
         }
@@ -312,32 +309,32 @@ class MainFragment : DownloadDialogUtil(){
     }
 }
 
-class RecyclerScroller(
-    private val layout: LinearLayoutManager,
-    private val listener: ScrollListener
-) : RecyclerView.OnScrollListener() {
-    private var previousTotal = 0
-    private val visibleThreshold = 1
-    private var loading = true
-
-    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-        super.onScrolled(recyclerView, dx, dy)
-        val visibleItemCount = recyclerView.childCount
-        val totalItemCount: Int = layout.itemCount
-        val firstVisibleItem: Int = layout.findFirstVisibleItemPosition()
-
-        if (loading) {
-            if (totalItemCount > previousTotal) {
-                loading = false
-                previousTotal = totalItemCount
-            }
-        }
-
-        if (!loading && totalItemCount - visibleItemCount <= firstVisibleItem + visibleThreshold) {
-            if (totalItemCount > 1) listener.onLoadMore()
-            loading = true
-        }
-    }
-
-    interface ScrollListener { fun onLoadMore() }
-}
+//class RecyclerScroller(
+//    private val layout: LinearLayoutManager,
+//    private val listener: ScrollListener
+//) : RecyclerView.OnScrollListener() {
+//    private var previousTotal = 0
+//    private val visibleThreshold = 1
+//    private var loading = true
+//
+//    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+//        super.onScrolled(recyclerView, dx, dy)
+//        val visibleItemCount = recyclerView.childCount
+//        val totalItemCount: Int = layout.itemCount
+//        val firstVisibleItem: Int = layout.findFirstVisibleItemPosition()
+//
+//        if (loading) {
+//            if (totalItemCount > previousTotal) {
+//                loading = false
+//                previousTotal = totalItemCount
+//            }
+//        }
+//
+//        if (!loading && totalItemCount - visibleItemCount <= firstVisibleItem + visibleThreshold) {
+//            if (totalItemCount > 1) listener.onLoadMore()
+//            loading = true
+//        }
+//    }
+//
+//    interface ScrollListener { fun onLoadMore() }
+//}
