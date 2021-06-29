@@ -336,7 +336,13 @@ abstract class DownloadDialogUtil : Fragment(){
             show()
         }
     }
+    fun checkFileExists(model: AddonModel){
+        val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
+        val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
+        if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink) }
+        if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
+    }
     private fun isAppInstalled(): Boolean {
         return try {
             val packageManager = requireActivity().packageManager

@@ -1,11 +1,13 @@
 package com.example.minecraft.ui.trial
 
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.animation.AnimationUtils
 import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -15,6 +17,7 @@ import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
+import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentTrialBinding
@@ -63,6 +66,12 @@ class TrialFragment : Fragment() {
                 button.findNavController().popBackStack()
             }
         }
+        Glide.with(requireActivity()).load("https://media.giphy.com/media/QGnhDpnrr7qhy/giphy.gif").into(binding.gifStub)
+
+        val animBtn = AnimationUtils.loadAnimation(requireActivity(), R.anim.btn_premium)
+        val animTxt = AnimationUtils.loadAnimation(requireActivity(), R.anim.txt_premium)
+        binding.btnPremium.animation = animBtn
+        binding.txtBtnTrial.animation = animTxt
     }
 
     override fun onDestroyView() {

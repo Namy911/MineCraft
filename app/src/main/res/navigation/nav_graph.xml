@@ -12,6 +12,9 @@
         <action
             android:id="@+id/detailFragment"
             app:destination="@id/detailFragment" />
+        <action
+            android:id="@+id/trialFragment"
+            app:destination="@id/trialFragment" />
     </fragment>
     <fragment
         android:id="@+id/blankFragment"
@@ -73,5 +76,8 @@
             android:id="@+id/back_detailFragment"
             app:destination="@id/detailFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/back_mainFragment"
+            app:destination="@id/mainFragment" />
     </fragment>
 </navigation>

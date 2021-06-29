@@ -1,31 +1,20 @@
 package com.example.minecraft.ui
 
-import android.app.Activity
-import android.content.Context
+import android.animation.ValueAnimator
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.AttributeSet
-import android.view.View
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.intPreferencesKey
+import android.view.animation.AnimationUtils
+import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.NavController
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
+import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivityPremiumBinding
 import com.example.minecraft.ui.util.TrialManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+
 
 @AndroidEntryPoint
 class PremiumActivity : AppCompatActivity() {
@@ -52,6 +41,18 @@ class PremiumActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+
+       val animBtn = AnimationUtils.loadAnimation(this, R.anim.btn_premium)
+       val animTxt = AnimationUtils.loadAnimation(this, R.anim.txt_premium)
+       binding.btnPremium.animation = animBtn
+       binding.txtBtnTrial.animation = animTxt
+
+        binding.imgClose.setOnClickListener {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+        Glide.with(this).load("https://media.giphy.com/media/QGnhDpnrr7qhy/giphy.gif").into(binding.gifStub)
     }
 
     override fun onBackPressed() {

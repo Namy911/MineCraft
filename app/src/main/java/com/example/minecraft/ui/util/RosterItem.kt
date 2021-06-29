@@ -14,6 +14,6 @@ abstract class RosterItem(
         }
     }
 }
-class FooterItem(val status: Boolean): RosterItem(TYPE.FOOTER)
+class FooterItem: RosterItem(TYPE.FOOTER)
 
 class AdsItem(val ads: NativeAd): RosterItem(TYPE.ADS)
