@@ -1,7 +1,6 @@
 package com.example.minecraft.ui.main
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -31,16 +30,18 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.util.*
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 @AndroidEntryPoint
 class MainFragment : DownloadDialogUtil(){
     companion object{
         const val TAG = "MainFragment"
         const val COUNT_ADS = 1
-        val PAGE_SIZE: Int = 4
+        const val PAGE_SIZE: Int = 4
     }
 
     private var _binding: MainFragmentBinding? = null
@@ -56,8 +57,8 @@ class MainFragment : DownloadDialogUtil(){
     private var flagTrial = false
 
     var isLoading = false
-    var adsState: Boolean = false
-    var adsItem: RosterItem? = null
+    var itemAd: RosterItem? = null
+
     var fulList: MutableSet<RosterItem> = mutableSetOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,19 +71,14 @@ class MainFragment : DownloadDialogUtil(){
             }
         }
         viewModel.setFlagTrial(false)
-//        setupListItem()
-//        viewModel.getItem(0, PAGE_SIZE)
+
         adapter = PagingAdapter()
         // first in
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = MainFragmentBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -92,18 +88,20 @@ class MainFragment : DownloadDialogUtil(){
         setupToolBartTitle()
         // Setup recycler
         binding.apply {
-//            progressBar.visibility = View.VISIBLE
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
             container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                     super.onScrolled(recyclerView, dx, dy)
+                    val visibleItemCount = recyclerView.childCount
+                    val totalItemCount: Int = manager.itemCount
+                    val firstVisibleItem: Int = manager.findFirstVisibleItemPosition()
                     if (isLoading) {
                         if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 1) {
+//                        if (totalItemCount - visibleItemCount <= firstVisibleItem + 1) {
                             viewModel.getItem(adapter.getItems(), PAGE_SIZE)
                             isLoading = false
-                            setupListItem()
                         }
                     }
                 }
@@ -114,16 +112,25 @@ class MainFragment : DownloadDialogUtil(){
                 .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
                 .collectLatest { state ->
                     when(state){
-                        RosterItemLoadState.Loading -> {
+                        RosterItemLoadState.InitSate -> {
                             viewModel.getItem(adapter.getItems(), PAGE_SIZE)
-                            setupListItem()
-                            binding.progressBar.visibility = View.GONE
                         }
                         is RosterItemLoadState.LoadComplete -> {
+                            val prev = fulList.size
                             fulList.addAll(state.content)
+                            val newList = fulList.size
+                            if (newList - prev  == PAGE_SIZE) {
+                                fulList.add(getItemAd())
+                            }
                             adapter.deleteFooter()
                             fulList.add(FooterItem())
-
+                            adapter.submitList(fulList.toMutableList())
+                            binding.progressBar.visibility = View.GONE
+                            isLoading = true
+                        }
+                        is RosterItemLoadState.LoadLast -> {
+                            fulList.addAll(state.content)
+                            adapter.deleteFooter()
                             adapter.submitList(fulList.toMutableList())
                             binding.progressBar.visibility = View.GONE
                         }
@@ -139,32 +146,22 @@ class MainFragment : DownloadDialogUtil(){
         super.onDestroyView()
         _binding = null
     }
-
-    private fun setupListItem(): AdLoader {
-        var item: RosterItem? = null
-        val adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
-            .forNativeAd { ad: NativeAd ->
-                item = AdsItem(ad)
-
-                if (requireActivity().isDestroyed) {
-                    ad.destroy()
-                    return@forNativeAd
+    //Convert callback in to coroutine
+    private suspend fun getItemAd()  =
+        suspendCoroutine<RosterItem> {cont ->
+            var item: RosterItem? = null
+            val adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
+                .forNativeAd { ad: NativeAd ->
+                    item = AdsItem(ad)
                 }
-            }
-            .withAdListener(object : AdListener() {
-                override fun onAdLoaded() {
-                    super.onAdLoaded()
-                    val state = viewModel.list.value
-                    if (state !is RosterItemLoadState.Error){
-                        viewModel.setItem(item)
-                        Log.d(TAG, "onAdLoaded: g")
-                        isLoading = true
+                .withAdListener(object : AdListener() {
+                    override fun onAdLoaded() {
+                        super.onAdLoaded()
+                        cont.resume((item!!))
                     }
-                }
-            }).build()
-        adLoader.loadAd(AdRequest.Builder().build())
-        return  adLoader
-    }
+                }).build()
+            adLoader.loadAd(AdRequest.Builder().build())
+        }
 
     fun setupToolBartTitle(){ (activity as MainActivity?)!!.setupToolBartTitle() }
     // Helpers
@@ -177,43 +174,23 @@ class MainFragment : DownloadDialogUtil(){
         val FOOTER_ITEM = 1
         val AD_NATIVE_ITEM = 2
 
-        // hide footer item
-        var footerFlag = false
-
         override fun getItemViewType(position: Int): Int {
-            if (position == adapter.itemCount) {
-                return FOOTER_ITEM
-            }
             return when (adapter.getItem(position).rosterType) {
-                RosterItem.TYPE.ADDON -> {
-                    REGULAR_ITEM
-                }
-                RosterItem.TYPE.ADS -> {
-                    AD_NATIVE_ITEM
-                }
-                else -> {
-                    FOOTER_ITEM
-                }
+                RosterItem.TYPE.ADDON -> { REGULAR_ITEM }
+                RosterItem.TYPE.ADS -> { AD_NATIVE_ITEM }
+                else -> { FOOTER_ITEM }
             }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseViewHolder<*> {
             return when (viewType) {
-                REGULAR_ITEM -> {
-                    TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false))
-                }
-                FOOTER_ITEM -> {
-                    FooterViewHolder(ItemFooterBinding.inflate(layoutInflater, parent, false))
-                }
+                REGULAR_ITEM -> { TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false)) }
+                FOOTER_ITEM -> { FooterViewHolder(ItemFooterBinding.inflate(layoutInflater, parent, false)) }
                 AD_NATIVE_ITEM -> {
-                    AdNativeViewHolder(
-                        LayoutInflater.from(parent.context)
-                            .inflate(R.layout.item_recycler_adnative, parent, false)
-                    )
+                    AdNativeViewHolder(LayoutInflater.from(parent.context)
+                            .inflate(R.layout.item_recycler_adnative, parent, false))
                 }
-                else -> {
-                    throw RuntimeException("ItemArrayAdapter, The type has to be ONE or ZERO")
-                }
+                else -> { throw RuntimeException("ItemArrayAdapter, The type has to be ONE or ZERO") }
             }
         }
 
@@ -240,7 +217,6 @@ class MainFragment : DownloadDialogUtil(){
             }
         }
 
-
         fun getItems(): Int {
             var count = 0
             for (item in adapter.currentList) {
@@ -252,26 +228,16 @@ class MainFragment : DownloadDialogUtil(){
         }
 
         fun deleteFooter() {
-            for (item in adapter.currentList) {
+            val list = fulList.toList().takeLast(PAGE_SIZE + 2)
+            for (item in list) {
                 if (item.rosterType == RosterItem.TYPE.FOOTER) {
                     fulList.remove(item)
                 }
             }
-//            adapter.submitList(fulList.toMutableList())
-        }
-
-        fun getFooter(): Boolean {
-            var result = false
-            for (item in adapter.currentList) {
-                result = item.rosterType == RosterItem.TYPE.FOOTER
-            }
-            return result
         }
     }
-        inner class FooterViewHolder(private val binding: ItemFooterBinding) :
-            BaseViewHolder<FooterItem>(binding.root) {
-            override fun bind(item: FooterItem) {
-            }
+        inner class FooterViewHolder(private val binding: ItemFooterBinding) : BaseViewHolder<FooterItem>(binding.root) {
+            override fun bind(item: FooterItem) { }
         }
 
         inner class AdNativeViewHolder(private val view: View) : BaseViewHolder<AdsItem>(view) {
@@ -295,14 +261,20 @@ class MainFragment : DownloadDialogUtil(){
                 val buttonView = adView.findViewById<Button>(R.id.btn_download)
                 buttonView.text = ad.callToAction
                 adView.callToActionView = buttonView
-//            adView.setClickConfirmingView(buttonView)
-
+//                if (ad.callToAction == null) {
+//                    adView.callToActionView.visibility = View.INVISIBLE
+//                } else {
+//                    adView.callToActionView.visibility = View.VISIBLE
+//                }
+//                adView.setClickConfirmingView(buttonView)
+//                adView.advertiserView = buttonView
+//                buttonView.callOnClick()
+                ad.recordCustomClickGesture()
                 adView.setNativeAd(ad)
             }
         }
 
-        inner class TaskViewHolder(private val binding: ItemRecyclerBinding) :
-            BaseViewHolder<AddonModel>(binding.root) {
+        inner class TaskViewHolder(private val binding: ItemRecyclerBinding) : BaseViewHolder<AddonModel>(binding.root) {
             override fun bind(item: AddonModel) {
                 val title = item.title
 
