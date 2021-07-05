@@ -1,39 +1,126 @@
 package com.example.minecraft.ui.util
 
+import android.app.Activity
 import android.content.Context
-import android.widget.Toast
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
-import androidx.datastore.preferences.preferencesDataStore
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import com.example.minecraft.ui.PremiumActivity
-import com.example.minecraft.ui.spash.SplashScreenState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.withContext
-import java.io.IOException
+import android.util.Log
+import com.android.billingclient.api.*
+import com.android.billingclient.api.Purchase.PurchasesResult
+
 
 class TrialManager(val context: Context) {
     companion object {
-        const val TRIAL_EXIST = "ui.util.trial.exist"
-        const val TRIAL_NOT_EXIST = "ui.util.trial.not.exist"
-        const val TRIAL_NAME = "ui.util.trial.name"
-        val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = TRIAL_NAME)
+        private const val TAG = "TrialManager"
+        const val TRIAL_PRODUCT = "ui.util.trial.exist"
+        const val TRIAL_PRODUCT_MONTH = "ui.util.trial.not.exist"
+        const val TRIAL_PRODUCT_YEAR = "ui.util.trial.name"
+        const val PRODUCT_TYPE = BillingClient.SkuType.INAPP
     }
 
-    val trialFlow: Flow<String> = context.dataStore.data
-        .map { preferences ->
-            preferences[PremiumActivity.TRIAL_BOUGHT] ?: TRIAL_NOT_EXIST
+    private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
+            // realizarea cumparaturii
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+                for (purchase in purchases){
+                    handlePurchase(purchase)
+                    Log.d(TAG, "purchasesUpdatedListener: ")
+                }
+            } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
+                // Handle an error caused by a user cancelling the purchase flow.
+            } else {
+                // Handle any other error codes.
+            }
         }
 
-    suspend fun setTrial() {
-        context.dataStore.edit {
-                trialSetting -> trialSetting[PremiumActivity.TRIAL_BOUGHT] = TRIAL_EXIST
+    private val acknowledgePurchaseResponseListener = AcknowledgePurchaseResponseListener { billingResult ->
+        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK){
+            //cumparat, redirect
+            Log.d(TAG, "acknowledgePurchaseResponseListener: ")
         }
     }
+
+
+    private val consumeResponseListener =  ConsumeResponseListener { billingResult, s ->
+        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK){
+            //cumparat, redirect
+            Log.d(TAG, "ConsumeResponseListener: ")
+        }
+    }
+
+
+
+    var billingClient = BillingClient.newBuilder(context)
+        .setListener(purchasesUpdatedListener)
+        .enablePendingPurchases()
+        .build()
+//        .startConnection(object : BillingClientStateListener {
+//            override fun onBillingSetupFinished(billingResult: BillingResult) {
+//                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+//                    querySkuDetails()
+//                }
+//            }
+//            override fun onBillingServiceDisconnected() {
+//            }
+//        })
+
+    fun startConnection() {
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    querySkuDetails()
+                }
+            }
+            override fun onBillingServiceDisconnected() {
+//                billingClient.startConnection(this)
+            }
+        })
+    }
+
+    private fun handlePurchase(purchase: Purchase) {
+        if (purchase.isAcknowledged) {
+            if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                val acknowledgePurchaseParams = AcknowledgePurchaseParams.newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+                billingClient.acknowledgePurchase(
+                    acknowledgePurchaseParams, acknowledgePurchaseResponseListener
+                )
+            }
+        }
+        if (!purchase.isAcknowledged) {
+                if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                    val consumeParams = ConsumeParams.newBuilder()
+                        .setPurchaseToken(purchase.purchaseToken)
+                        .build()
+                    billingClient.consumeAsync(
+                            consumeParams, consumeResponseListener
+                    )
+                }
+            }
+    }
+    // onClick ??????
+    fun querySkuDetails() {
+        val skuList = ArrayList<String>()
+        skuList.add(TRIAL_PRODUCT)
+        skuList.add(TRIAL_PRODUCT_MONTH)
+        skuList.add(TRIAL_PRODUCT_YEAR)
+
+        val params = SkuDetailsParams.newBuilder()
+            .setSkusList(skuList)
+            .setType(PRODUCT_TYPE)
+
+//        withContext(Dispatchers.IO) {
+            billingClient.querySkuDetailsAsync(params.build()) { responseCode, skuDetailsList ->
+                if (skuDetailsList != null) {
+                    for(skuDetails in skuDetailsList) {
+//                        buyItem(skuDetails)
+                    }
+                }
+            }
+        }
+
+//    fun buyItem(skuDetails: SkuDetails) {
+//        val flowParams = BillingFlowParams.newBuilder()
+//            .setSkuDetails(skuDetails)
+//            .build()
+//            billingClient.launchBillingFlow(context as Activity, flowParams).responseCode
+//    }
 }

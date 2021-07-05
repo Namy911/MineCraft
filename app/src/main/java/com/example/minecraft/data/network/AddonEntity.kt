@@ -16,26 +16,15 @@ data class AddonEntity(
     val resource: String,
     @PrimaryKey
     val title: String
-) : Parcelable {
-    fun convertToAddonEntity(model: AddonModel): AddonEntity {
-        return AddonEntity(
-            behavior = model.behavior,
-            description = model.description,
-            image = model.image,
-            preview = model.preview,
-            resource = model.resource,
-            title = model.title
-        )
-    }
+) : Parcelable
 
-    fun convertToAddonModel(model: AddonEntity): AddonModel {
-        return AddonModel(
-            behavior = model.behavior,
-            description = model.description,
-            image = model.image,
-            preview = model.preview,
-            resource = model.resource,
-            title = model.title
-        )
-    }
+fun AddonEntity.toAddonModel (): AddonModel {
+    return AddonModel(
+        behavior = this.behavior,
+        description = this.description,
+        image = this.image,
+        preview = this.preview,
+        resource = this.resource,
+        title = this.title
+    )
 }

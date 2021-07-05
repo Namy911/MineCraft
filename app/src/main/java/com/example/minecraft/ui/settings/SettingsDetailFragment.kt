@@ -13,6 +13,10 @@ import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentSettingsBinding
 import com.example.minecraft.databinding.FragmentSettingsDetailBinding
 import dagger.hilt.android.AndroidEntryPoint
+import java.io.BufferedReader
+import java.io.IOException
+import java.io.InputStream
+import java.io.InputStreamReader
 
 @AndroidEntryPoint
 class SettingsDetailFragment : Fragment() {
@@ -45,4 +49,5 @@ class SettingsDetailFragment : Fragment() {
     fun setupToolBartTitle(title: String){
         (activity as MainActivity?)!!.setupToolBartTitle(title)
     }
+
 }

@@ -1,11 +1,9 @@
 package com.example.minecraft.ui.spash
 
 import android.animation.ValueAnimator
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.Bundle
@@ -13,26 +11,20 @@ import android.provider.Settings
 import android.util.Log
 import android.view.WindowInsets
 import android.view.WindowManager
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivitySplashscreenBinding
 import com.example.minecraft.ui.PremiumActivity
-import com.example.minecraft.ui.util.TrialManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import okhttp3.Dispatcher
 import java.lang.Exception
-import java.sql.ResultSetMetaData
-import kotlin.random.Random
 
 
 private const val TAG = "SplashscreenActivity"
@@ -42,11 +34,8 @@ class SplashscreenActivity : AppCompatActivity() {
 
     private val motor: SplashScreenMotor by viewModels()
 
-    private lateinit var trialManager: TrialManager
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        trialManager = TrialManager(this)
         // Ful screen window
         @Suppress("DEPRECATION")
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
@@ -60,12 +49,8 @@ class SplashscreenActivity : AppCompatActivity() {
         binding = ActivitySplashscreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Dialog chooser, if don't internet connection
-        if (getConnection()) {
-            observeState()
-        }
-        else {
-            dialogNoInternet()
-        }
+        if (getConnection()) { observeState() }
+        else { dialogNoInternet() }
 
         binding.lottie.apply {
             imageAssetsFolder = "images/"
@@ -88,29 +73,31 @@ class SplashscreenActivity : AppCompatActivity() {
     }
     // Progress bar config, main logic
     private fun observeState(){
-        motor.fulList.observe(this) { viewState ->
-            when (viewState) {
-                SplashScreenState.Loading -> {
-                    motor.setLoadingNumber()
-                    binding.progressBar.progress = motor.getLoadingNumber()!!
-                    binding.textView3.text = "${motor.getLoadingNumber()!!} %"
-                    Log.d(TAG, "Loading Data... ")
+    lifecycleScope.launch {
+        motor.fulList.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+            .collectLatest { viewState ->
+                when (viewState) {
+                    SplashScreenState.Loading -> {
+                        motor.setLoadingNumber()
+                        binding.progressBar.progress = motor.getLoadingNumber()!!
+                        binding.textView3.text = "${motor.getLoadingNumber()!!} %"
+                    }
+                    SplashScreenState.LoadComplete -> {
+                        motor.setStartContentNumber()
+                        binding.progressBar.progress = motor.getStartContentNumber()!!
+                        binding.textView3.text = "${motor.getStartContentNumber()!!} %"
+                        navigateToMainScreen()
+                        binding.progressBar.progress = 100
+                        binding.textView3.text = "100 %"
+                    }
+                    is SplashScreenState.Error -> { }
                 }
-                SplashScreenState.LoadComplete -> {
-                    motor.setStartContentNumber()
-                    binding.progressBar.progress = motor.getStartContentNumber()!!
-                    binding.textView3.text = "${motor.getStartContentNumber()!!} %"
-                    navigateToMainScreen()
-                    binding.progressBar.progress = 100
-                    binding.textView3.text = "100 %"
-                }
-                is SplashScreenState.Error -> { }
             }
         }
     }
     // Dialog chooser
     private fun dialogNoInternet(){
-        AlertDialog.Builder(this).apply {
+        val builder = AlertDialog.Builder(this).apply {
             setTitle(getString(R.string.dialog_title_no_internet))
             setMessage(R.string.msg_no_internet)
             setPositiveButton(R.string.btn_snack_connect) { _, _ ->
@@ -121,25 +108,37 @@ class SplashscreenActivity : AppCompatActivity() {
             }
             setNegativeButton(getString(R.string.dialog_no_internet_go_next)) { _, _ -> navigateToMainScreen() }
             setNeutralButton(getString(R.string.dialog_no_internet_leave)) { _, _ -> finish() }
-            show()
         }
-        checkInternetConnection()
-        Log.d(TAG, "checkInternetConnection: no connect")
-    }
-    // Check if user connect internet self
-    private fun checkInternetConnection(){
-        lifecycleScope.launchWhenStarted {
-            repeat(15) {
-                delay(2000)
-                val connected2 = getConnection()
-                if (connected2) {
-                    observeState()
-                    return@launchWhenStarted
-                }
-            }
+
+        val dialog = builder.create()
+
+        try {
+            builder.create().show()
+        } catch (e : Exception){
+            Log.d(TAG, "dialogNoInternet: ")
         }
+//        if (!this.isFinishing){
+//            dialog.show()
+//        }
+        networkState(dialog)
     }
 
+    private fun networkState(dialog: AlertDialog) {
+        val connectivityManager = this.getSystemService(ConnectivityManager::class.java)
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+            connectivityManager.registerDefaultNetworkCallback(object :
+                ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    observeState()
+                    dialog.dismiss()
+                }
+                override fun onLost(network: Network) {
+                    dialogNoInternet()
+                }
+            })
+        }
+    }
+    //
     private fun getConnection(): Boolean{
         val connectivityManager = this@SplashscreenActivity.getSystemService(ConnectivityManager::class.java)
         val currentNetwork = connectivityManager.activeNetwork
@@ -147,17 +146,9 @@ class SplashscreenActivity : AppCompatActivity() {
         return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
     }
     // Check if user have trial and redirect
-    private fun navigateToMainScreen(){
-        lifecycleScope.launchWhenCreated {
-            trialManager.trialFlow.collect { trial ->
-                val intent = if (trial == TrialManager.TRIAL_NOT_EXIST){
-                    Intent(this@SplashscreenActivity, PremiumActivity::class.java)
-                } else{
-                    Intent(this@SplashscreenActivity, MainActivity::class.java)
-                }
-                startActivity(intent)
-                finish()
-            }
-        }
+    private fun navigateToMainScreen() {
+        val intent = Intent(this@SplashscreenActivity, PremiumActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 }

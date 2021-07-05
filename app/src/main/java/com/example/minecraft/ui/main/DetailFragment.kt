@@ -2,7 +2,10 @@ package com.example.minecraft.ui.main
 
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -23,13 +26,10 @@ import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentDetailBinding
 import com.example.minecraft.ui.util.DownloadDialogUtil
-import com.example.minecraft.ui.util.TrialManager
 import com.google.android.gms.ads.*
-import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 
 
@@ -46,27 +46,16 @@ class DetailFragment : DownloadDialogUtil() {
     private val args: DetailFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
 
-    private lateinit var trialManager: TrialManager
-    private var flagTrial = false
-
     var mRewardedAd: RewardedAd? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        trialManager = TrialManager(requireActivity())
-        // check if trial exist
-        requireActivity().lifecycleScope.launchWhenCreated {
-            trialManager.trialFlow.collectLatest { trial ->
-                flagTrial = trial != TrialManager.TRIAL_NOT_EXIST
-            }
-        }
         //
         viewModel.setFlagTrial(false)
         viewModel.setFlagRewardDownload(false)
         viewModel.setFlagRewardShare(false)
-        // No ad, have trial
-        if (!flagTrial) {
+        //
+        if (checkInternetConnection()) {
             MobileAds.initialize(requireContext()){
                 loadAddReward()
             }
@@ -89,9 +78,6 @@ class DetailFragment : DownloadDialogUtil() {
         setupToolBartTitle(getString(R.string.title_fragment_details))
         checkFileExists(args.model)
 
-        if (flagTrial) {
-            (activity as MainActivity?)!!.disableAd()
-        }
         binding.apply {
             val list: List<String> = args.model.preview
             imgContainer.adapter = DetailPageAdapter(list, args.title, requireActivity())
@@ -100,21 +86,27 @@ class DetailFragment : DownloadDialogUtil() {
                 selection = 0
             }
 
+            buttonInitTitle()
+
             txtDesc.text = args.model.description
 
             btnShare.setOnClickListener {
-                val temp = viewModel.getFlagRewardShare()
-                if (temp == false) {
-                    adSeen(DownloadAddon.DIR_CACHE)
+                if (checkInternetConnection()) {
+                    val temp = viewModel.getFlagRewardShare()
+                    if (temp == false) {
+                        adSeen(DownloadAddon.DIR_CACHE)
+                    } else{
+                        checkFileExists(args.model)
+                        shareFileCheck()
+                    }
                 } else {
-                    checkFileExists(args.model)
-                    shareFileCheck()
+                    Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
                 }
             }
 
             btnDownload.setOnClickListener {
                 val temp = viewModel.getFlagRewardDownload()
-                if (temp == false) {
+                if (temp == false && checkInternetConnection()) {
                     adSeen(DownloadAddon.DIR_EXT_STORAGE)
                 } else {
                     if (checkPermission()) {
@@ -124,18 +116,18 @@ class DetailFragment : DownloadDialogUtil() {
             }
 
             btnInstall.setOnClickListener { button ->
-                val temp = viewModel.getFlagTrial()
-                if (checkPermission()) {
-                    if (flagTrial && temp == true) {
-                        if (checkPermission()) {
-                            checkFileExists(args.model)
-                            dialogDownload(args.model, DownloadAddon.DIR_CACHE)
-                        }
-                    } else {
+//                val temp = viewModel.getFlagTrial()
+//                if (checkPermission()) {
+//                    if (temp == true) {
+//                        if (checkPermission()) {
+//                            checkFileExists(args.model)
+//                            dialogDownload(args.model, DownloadAddon.DIR_CACHE)
+//                        }
+//                    } else {
                         findNavController().navigate(DetailFragmentDirections.trialFragment(args.model))
                         viewModel.setFlagTrial(true) // trial fragment has been open
-                    }
-                }
+//                    }
+//                }
             }
         }
     }
@@ -145,6 +137,52 @@ class DetailFragment : DownloadDialogUtil() {
         _binding = null
     }
 
+    private fun readyAdsButtonsConf(){
+        binding.apply {
+            btnDownload.text = getString(R.string.btn_download)
+            btnShare.text = getString(R.string.btn_share)
+        }
+    }
+
+    fun buttonInitTitle(){
+        if (checkInternetConnection()) {
+            if (mRewardedAd != null) {
+                readyAdsButtonsConf()
+            } else {
+                binding.apply {
+                    btnDownload.text = getString(R.string.btn_prepay)
+                    btnShare.text = getString(R.string.btn_prepay)
+                }
+            }
+        } else {
+            binding.apply {
+                btnDownload.text = getString(R.string.btn_download)
+                btnShare.text = getString(R.string.btn_share)
+            }
+        }
+    }
+    fun networkSate(){
+        val connectivityManager = requireActivity().applicationContext
+            .getSystemService(ConnectivityManager::class.java)
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+            connectivityManager.registerDefaultNetworkCallback(object :
+                ConnectivityManager.NetworkCallback() {
+                override fun onAvailable(network: Network) {
+                    binding.apply {
+                        btnDownload.text = getString(R.string.btn_download)
+                        btnShare.text = getString(R.string.btn_share)
+                    }
+                }
+
+                override fun onLost(network: Network) {
+                    binding.apply {
+                        btnDownload.text = getString(R.string.btn_download)
+                        btnShare.text = getString(R.string.btn_share)
+                    }
+                }
+            })
+        }
+    }
     private fun loadAddReward() {
         val adRequest = AdRequest.Builder().build()
         RewardedAd.load(
@@ -156,6 +194,7 @@ class DetailFragment : DownloadDialogUtil() {
 
                 override fun onAdLoaded(rewardedAd: RewardedAd) {
                     mRewardedAd = rewardedAd
+                    readyAdsButtonsConf()
                     mRewardedAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
                         override fun onAdDismissedFullScreenContent() {
                            loadAddReward()
@@ -168,7 +207,7 @@ class DetailFragment : DownloadDialogUtil() {
     private fun adSeen(flag: String){
         if (mRewardedAd != null) {
             mRewardedAd?.show(requireActivity()) {
-                fun onUserEarnedReward(rewardItem: RewardItem) {
+                fun onUserEarnedReward() {
                     if (flag == DownloadAddon.DIR_CACHE){
                         viewModel.setFlagRewardShare(true)
                     }else {
@@ -176,7 +215,7 @@ class DetailFragment : DownloadDialogUtil() {
                     }
                     loadAddReward()
                 }
-                onUserEarnedReward(it)
+                onUserEarnedReward()
             }
         } else {
             Log.d(TAG, "The rewarded ad wasn't ready yet.")
@@ -184,17 +223,8 @@ class DetailFragment : DownloadDialogUtil() {
     }
 
     fun setupToolBartTitle(title: String){ (activity as MainActivity?)!!.setupToolBartTitle(title) }
-    // Initialisation, Check file exist from share file
-//    private fun checkFileExists(model: AddonModel){
-//        val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
-//        val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
-//
-//        if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink) }
-//        if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
-//    }
     // Button share logic
     fun shareFileCheck() {
-//        checkFileExists(args.model)
         val temp1 = viewModel.getCachePathBehavior()
         val temp2 = viewModel.getCachePathResource()
 

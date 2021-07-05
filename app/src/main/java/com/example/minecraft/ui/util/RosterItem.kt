@@ -1,6 +1,5 @@
 package com.example.minecraft.ui.util
 
-import com.example.minecraft.data.model.AddonModel
 import com.google.android.gms.ads.nativead.NativeAd
 
 abstract class RosterItem(

@@ -3,7 +3,6 @@ package com.example.minecraft.ui.main
 import android.app.DownloadManager
 import android.content.ContentValues
 import android.content.Context
-import android.content.Intent
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -11,19 +10,15 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import androidx.annotation.RequiresApi
-import androidx.core.content.FileProvider
-import androidx.core.net.toFile
 import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
-import com.example.minecraft.BuildConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import java.io.File
 import java.io.IOException
-
 
 private const val TAG = "DownloadAddon"
 class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : CoroutineWorker(context, workerParameters) {
