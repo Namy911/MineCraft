@@ -29,7 +29,7 @@ class SplashScreenRepository @Inject constructor( private val service: TaskServi
         }
     }
 
-    private suspend fun insertFulData(list: List<AddonModel>) = withContext(Dispatchers.IO) {
+    suspend fun insertFulData(list: List<AddonModel>) = withContext(Dispatchers.IO) {
         taskStore.initialization(list)
     }
 }

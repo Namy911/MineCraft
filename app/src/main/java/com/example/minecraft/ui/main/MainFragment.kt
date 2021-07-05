@@ -1,6 +1,5 @@
 package com.example.minecraft.ui.main
 
-import android.app.AlertDialog
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
@@ -13,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
@@ -30,16 +30,16 @@ import com.example.minecraft.databinding.ItemFooterBinding
 import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.MainFragmentBinding
-import com.example.minecraft.ui.spash.SplashscreenActivity
 import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.nativead.NativeAd
+import com.google.android.gms.ads.nativead.NativeAdView
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.lang.Exception
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -64,14 +64,14 @@ class MainFragment : DownloadDialogUtil(){
 
     var isLoading = false
     var itemAd: RosterItem? = null
+
     var fulList: MutableSet<RosterItem> = mutableSetOf()
-//    var fulList = mutableListOf<RosterItem>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // check if trial exist
+//        viewModel.setFlagTrial(false)
 
-        viewModel.setFlagTrial(false)
-//        network()
         adapter = PagingAdapter()
         // first in
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
@@ -239,7 +239,7 @@ class MainFragment : DownloadDialogUtil(){
         adapter.submitList(fulList.toMutableList())
     }
     //Convert callback in to coroutine
-    suspend fun getItemAd()  =
+    private suspend fun getItemAd()  =
         suspendCoroutine<RosterItem> {cont ->
             var item: RosterItem? = null
             val adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
@@ -321,7 +321,6 @@ class MainFragment : DownloadDialogUtil(){
             }
         }
     }
-
     inner class FooterViewHolder(private val binding: ItemFooterBinding) : RecyclerView.ViewHolder(binding.root)
 
     inner class AdNativeViewHolder(private val binding: ItemRecyclerAdnativeBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -376,14 +375,14 @@ class MainFragment : DownloadDialogUtil(){
                     txtInstall.text = title
 
                     btnDownload.setOnClickListener {
-                        val temp = viewModel.getFlagTrial()
+//                        val temp = viewModel.getFlagTrial()
 //                        if (checkPermission()) {
 //                            if (temp == true) {
 //                                checkFileExists(item)
 //                                dialogDownload(item, DownloadAddon.DIR_CACHE)
 //                            } else {
                                 findNavController().navigate(MainFragmentDirections.trialFragment(item))
-                                viewModel.setFlagTrial(true) // trial fragment has been open
+//                                viewModel.setFlagTrial(true) // trial fragment has been open
 //                            }
 //                        }
                     }
