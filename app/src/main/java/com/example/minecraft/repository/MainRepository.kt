@@ -13,5 +13,5 @@ class MainRepository @Inject constructor(private val taskStore: AddonModel.Store
 
     suspend fun getLimit( offset: Int, limit: Int) =  withContext(Dispatchers.IO){ taskStore.getLimit(offset, limit) }
 //    fun getLimit( offset: Int, limit: Int) =   taskStore.getLimit(offset, limit)
-    fun getAll() =  taskStore.getAllDistinct()
+    suspend fun getAll() =  withContext(Dispatchers.IO){ taskStore.getAll() }
 }

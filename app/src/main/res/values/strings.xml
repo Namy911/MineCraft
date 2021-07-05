@@ -56,5 +56,13 @@
         Letraset sheets containing Lorem Ipsum passages,\n
         and more recently with desktop publishing software \n\n\n
         like Aldus PageMaker including versions of Lorem Ipsum.</string>
+    <string name="alert_btn_continue">Continue</string>
+    <string name="alert_btn_leave">Leave</string>
+    <string name="alert_btn_reload">Reload</string>
+    <string name="alert_network_title">Network State</string>
+    <string name="alert_no_network_msg">No internet connection reload App offline or exit?</string>
+    <string name="alert_network_msg">You have internet connection reload App with new content or Continue with offline version?</string>
+    <string name="btn_share">Share</string>
+    <string name="btn_prepay">Prepay</string>
 
 </resources>

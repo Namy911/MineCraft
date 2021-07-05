@@ -12,6 +12,7 @@
     <color name="splash_stroke">#3434A0</color>
     <color name="black_bg">#99000000</color>
     <color name="txt_share_bg">#0E0E66</color>
+    <color name="txt_settings_bg">#400E0E66</color>
 
     <color name="btn_privacy">#49DCE5</color>
     <color name="btn_terms">#AA49E5</color>

@@ -49,12 +49,9 @@ data class AddonModel(
 
         @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
         suspend fun getLimit(offset: Int, limit: Int): List<AddonModel>
-//        @Query("SELECT * FROM `addon`  LIMIT :limit  OFFSET :offset  ")
-//        fun getLimit(offset: Int, limit: Int): Flow<List<AddonModel>>
 
         @Query("SELECT * FROM `addon` ")
-        fun getAll(): Flow<List<AddonModel>>
-        fun getAllDistinct() = getAll().distinctUntilChanged()
+        suspend fun getAll(): List<AddonModel>
 
         @Insert(onConflict = OnConflictStrategy.REPLACE)
         suspend fun insertAll(items: List<AddonModel>)

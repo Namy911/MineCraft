@@ -5,6 +5,7 @@ import android.app.DownloadManager
 import android.content.*
 import android.content.pm.PackageManager
 import android.net.ConnectivityManager
+import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Build
@@ -35,6 +36,7 @@ import com.google.android.gms.ads.OnUserEarnedRewardListener
 import com.google.android.gms.ads.rewarded.RewardItem
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+import com.google.gson.annotations.Until
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
@@ -224,6 +226,8 @@ abstract class DownloadDialogUtil : Fragment(){
         // Button resource on dialog config
         if (behaviorLink != null) {
             val behavior = dialogView.findViewById<Button>(R.id.btn_behavior)
+            val stubView = dialogView.findViewById<View>(R.id.view2)
+            stubView.visibility = View.VISIBLE
             behavior.apply {
                 visibility = View.VISIBLE
                 if(flagDir == DownloadAddon.DIR_CACHE) {
@@ -248,6 +252,8 @@ abstract class DownloadDialogUtil : Fragment(){
         // Button behavior on dialog config
         if (resourceLink != null) {
             val resource = dialogView.findViewById<Button>(R.id.btn_pack)
+            val stubView = dialogView.findViewById<View>(R.id.view)
+            stubView.visibility = View.VISIBLE
             resource.apply {
                 visibility = View.VISIBLE
                 if(flagDir == DownloadAddon.DIR_CACHE) {
@@ -336,6 +342,7 @@ abstract class DownloadDialogUtil : Fragment(){
             show()
         }
     }
+
     fun checkFileExists(model: AddonModel){
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
@@ -343,6 +350,7 @@ abstract class DownloadDialogUtil : Fragment(){
         if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink) }
         if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
     }
+
     private fun isAppInstalled(): Boolean {
         return try {
             val packageManager = requireActivity().packageManager
@@ -351,11 +359,5 @@ abstract class DownloadDialogUtil : Fragment(){
         } catch (e: PackageManager.NameNotFoundException) {
             false
         }
-    }
-
-    inline fun <T> sdk29(sdk29: () -> T): T? {
-        return  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            sdk29()
-        } else return null
     }
 }

@@ -5,6 +5,7 @@ import androidx.lifecycle.*
 import com.example.minecraft.repository.MainRepository
 import com.example.minecraft.ui.util.RosterItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -17,6 +18,11 @@ sealed class RosterItemLoadState {
     data class LoadComplete(val content: List<RosterItem>) : RosterItemLoadState()
     data class LoadLast(val content: List<RosterItem>): RosterItemLoadState()
     data class Error(val error: String) : RosterItemLoadState()
+}
+sealed class RosterItemOffLineState {
+    object InitSate : RosterItemOffLineState()
+    data class LoadComplete(val content: List<RosterItem>) : RosterItemOffLineState()
+    data class Error(val error: String) : RosterItemOffLineState()
 }
 
 @HiltViewModel
@@ -34,17 +40,14 @@ class MainViewModel @Inject constructor(
 
         val FLAG_INIT: String = "ui.main.flag.init"
     }
-//    private val _list = MutableSharedFlow<List<RosterItem>>(replay = 1,  onBufferOverflow = BufferOverflow.DROP_LATEST)
-//    val list: SharedFlow<List<RosterItem>> = _list.asSharedFlow()
+
+    private val _offLineList = MutableStateFlow<RosterItemOffLineState>(RosterItemOffLineState.InitSate)
+    val offLineList: StateFlow<RosterItemOffLineState> = _offLineList.asStateFlow()
 
     private val _list = MutableStateFlow<RosterItemLoadState>(RosterItemLoadState.InitSate)
     val list: StateFlow<RosterItemLoadState> = _list.asStateFlow()
 
-//    private val _ad = MutableStateFlow<RosterItem?>(null)
-//    val ad: StateFlow<RosterItem?> = _ad.asStateFlow()
-
     fun getItem(offset: Int, limit: Int) {
-        Log.d(TAG, "getItem: ddddd")
         viewModelScope.launch {
             val result = repository.getLimit(offset, limit)
 //            delay(1500)
@@ -53,7 +56,18 @@ class MainViewModel @Inject constructor(
             }else if (result.isNotEmpty() && result.size < MainFragment.PAGE_SIZE) {
                 RosterItemLoadState.LoadLast(result)
             } else {
-                RosterItemLoadState.Error("somme error")
+                RosterItemLoadState.Error("Empty list RosterItemLoadState")
+            }
+        }
+    }
+
+    fun getAll(){
+        viewModelScope.launch {
+            val result = repository.getAll()
+            _offLineList.value = if (result.isNotEmpty()){
+                RosterItemOffLineState.LoadComplete(result)
+            }else {
+                RosterItemOffLineState.Error("Empty list RosterItemOffLineState")
             }
         }
     }
