@@ -98,10 +98,22 @@ class MainFragment : DownloadDialogUtil(){
                         .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
                         .collectLatest { state ->
                             when(state){
-                                RosterItemLoadState.Loading -> { viewModel.getItem(adapter.getItems(), PAGE_SIZE) }
-                                is RosterItemLoadState.LoadComplete -> { insertRosterIem(state.content) }
-                                is RosterItemLoadState.LoadLast -> { insertLastItem(state.content) }
-                                is RosterItemLoadState.Error -> { Log.d(TAG, "flowWithLifecycle list: ${state.error}")}
+                                RosterItemLoadState.Loading -> {
+                                    progressBar.visibility = View.VISIBLE
+                                    viewModel.getItem(adapter.getItems(), PAGE_SIZE)
+                                }
+                                is RosterItemLoadState.LoadComplete -> {
+                                    insertRosterIem(state.content)
+                                    progressBar.visibility = View.GONE
+                                }
+                                is RosterItemLoadState.LoadLast -> {
+                                    insertLastItem(state.content)
+                                    progressBar.visibility = View.GONE
+                                }
+                                is RosterItemLoadState.Error -> {
+                                    progressBar.visibility = View.GONE
+                                    Log.d(TAG, "flowWithLifecycle list: ${state.error}")
+                                }
                             }
                         }
                 }
@@ -219,14 +231,12 @@ class MainFragment : DownloadDialogUtil(){
         adapter.deleteFooter()
         fulList.add(FooterItem())
         adapter.submitList(fulList.toMutableList())
-        binding.progressBar.visibility = View.GONE
     }
 
     private fun insertLastItem(list: List<RosterItem>){
         adapter.deleteFooter()
         fulList.addAll(list)
         adapter.submitList(fulList.toMutableList())
-        binding.progressBar.visibility = View.GONE
     }
     //Convert callback in to coroutine
     suspend fun getItemAd()  =
