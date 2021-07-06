@@ -20,12 +20,12 @@ import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
-class TrialFragment : Fragment() {
-    private val TAG = "TrialFragment"
+class BillingFragment : Fragment() {
+    private val TAG = "BillingFragment"
     private var _binding: LayoutPremiumBinding? = null
     private val binding get() = _binding!!
 
-    private val args: TrialFragmentArgs by navArgs()
+    private val args: BillingFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreateView(

@@ -23,13 +23,14 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.ItemFooterBinding
 import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.MainFragmentBinding
+import com.example.minecraft.MainActivity
+import com.example.minecraft.ui.spash.SplashscreenActivity
 import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
@@ -60,8 +61,6 @@ class MainFragment : DownloadDialogUtil(){
 
     var addCount: Int = 0
 
-    private var flagTrial = false
-
     var isLoading = false
     var itemAd: RosterItem? = null
 
@@ -71,7 +70,6 @@ class MainFragment : DownloadDialogUtil(){
         super.onCreate(savedInstanceState)
         // check if trial exist
 //        viewModel.setFlagTrial(false)
-
         adapter = PagingAdapter()
         // first in
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)

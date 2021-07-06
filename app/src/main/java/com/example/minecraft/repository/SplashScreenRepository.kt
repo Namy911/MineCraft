@@ -6,9 +6,6 @@ import com.example.minecraft.data.services.TaskService
 import com.example.minecraft.ui.spash.SplashScreenState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -16,6 +13,7 @@ class SplashScreenRepository @Inject constructor( private val service: TaskServi
 
     fun getDataFromServer() = flow {
         val response = service.getData()
+
         if (response.isSuccessful) {
             response.body()?.let { entity ->
                 // Insert, from initialization screen
@@ -29,7 +27,8 @@ class SplashScreenRepository @Inject constructor( private val service: TaskServi
         }
     }
 
-    suspend fun insertFulData(list: List<AddonModel>) = withContext(Dispatchers.IO) {
-        taskStore.initialization(list)
-    }
+    private suspend fun insertFulData(list: List<AddonModel>) =
+        withContext(Dispatchers.IO) {
+            taskStore.initialization(list)
+        }
 }

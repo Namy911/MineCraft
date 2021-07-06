@@ -8,10 +8,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
-import com.example.minecraft.MainActivity
 import com.example.minecraft.R
-import com.example.minecraft.databinding.FragmentSettingsBinding
 import com.example.minecraft.databinding.FragmentSettingsDetailBinding
+import com.example.minecraft.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.BufferedReader
 import java.io.IOException

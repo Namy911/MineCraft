@@ -6,8 +6,8 @@ import androidx.annotation.RawRes
 import androidx.fragment.app.Fragment
 import com.example.minecraft.databinding.FragmentSettingsBinding
 import androidx.navigation.fragment.findNavController
-import com.example.minecraft.MainActivity
 import com.example.minecraft.R
+import com.example.minecraft.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.InputStream
 

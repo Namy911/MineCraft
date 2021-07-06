@@ -22,9 +22,9 @@ import androidx.navigation.fragment.navArgs
 import androidx.viewpager.widget.PagerAdapter
 import com.bumptech.glide.Glide
 import com.example.minecraft.BuildConfig
-import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentDetailBinding
+import com.example.minecraft.MainActivity
 import com.example.minecraft.ui.util.DownloadDialogUtil
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.rewarded.RewardedAd
@@ -51,7 +51,7 @@ class DetailFragment : DownloadDialogUtil() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         //
-        viewModel.setFlagTrial(false)
+//        viewModel.setFlagTrial(false)
         viewModel.setFlagRewardDownload(false)
         viewModel.setFlagRewardShare(false)
         //
@@ -125,7 +125,7 @@ class DetailFragment : DownloadDialogUtil() {
 //                        }
 //                    } else {
                         findNavController().navigate(DetailFragmentDirections.trialFragment(args.model))
-                        viewModel.setFlagTrial(true) // trial fragment has been open
+//                        viewModel.setFlagTrial(true) // trial fragment has been open
 //                    }
 //                }
             }

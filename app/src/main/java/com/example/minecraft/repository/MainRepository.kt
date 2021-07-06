@@ -10,13 +10,12 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-
-@Singleton
 class MainRepository @Inject constructor(private val taskStore: AddonModel.Store) {
 
     suspend fun getLimit(offset: Int, limit: Int) = withContext(Dispatchers.IO) {
 //            delay(1500)
         val result = taskStore.getLimit(offset, limit)
+
         if (result.isNotEmpty() && result.size == MainFragment.PAGE_SIZE) {
             RosterItemLoadState.LoadComplete(result)
         } else if (result.isNotEmpty() && result.size < MainFragment.PAGE_SIZE) {
@@ -28,6 +27,7 @@ class MainRepository @Inject constructor(private val taskStore: AddonModel.Store
 
     suspend fun getAll() =  withContext(Dispatchers.IO){
         val result = taskStore.getAll()
+
         if (result.isNotEmpty()){
             RosterItemOffLineState.LoadComplete(result)
         }else {

@@ -2,19 +2,22 @@ package com.example.minecraft
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import com.example.minecraft.NavGraphDirections
+import com.example.minecraft.R
 import com.example.minecraft.databinding.MainActivityBinding
+import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 private const val TAG = "MainActivity"
 @AndroidEntryPoint
@@ -25,7 +28,7 @@ class MainActivity : AppCompatActivity() {
 
     lateinit var mAdView : AdView
 
-    private var flagTrial = false
+    lateinit var appSharedPrefManager: AppSharedPreferencesManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,13 +44,21 @@ class MainActivity : AppCompatActivity() {
             setDisplayShowTitleEnabled(false)
             setDisplayShowHomeEnabled(false)
         }
+        appSharedPrefManager = AppSharedPreferencesManager(this)
 
-        if (!flagTrial){
-            MobileAds.initialize(this) {}
-            mAdView = findViewById(R.id.adView)
-            val adRequest = AdRequest.Builder().build()
-            mAdView.loadAd(adRequest)
+        lifecycleScope.launch {
+            appSharedPrefManager.billingAdsSate.collectLatest { state ->
+                if (!state){
+                    MobileAds.initialize(this@MainActivity) {}
+                    mAdView = findViewById(R.id.adView)
+                    val adRequest = AdRequest.Builder().build()
+                    mAdView.loadAd(adRequest)
+                } else{
+                    disableAd()
+                }
+            }
         }
+
         // Setup navigation with colliders
         binding.colliderBackArrow.setOnClickListener { super.onBackPressed() }
         binding.colliderSettings.setOnClickListener { setActionBarSettings() }

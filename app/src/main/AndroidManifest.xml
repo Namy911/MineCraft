@@ -18,7 +18,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.MineCraft"
         android:usesCleartextTraffic="true">
-        <activity android:name=".ui.PremiumActivity"></activity>
+        <activity
+            android:name=".PremiumActivity"
+            android:screenOrientation="portrait">
+        </activity>
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"

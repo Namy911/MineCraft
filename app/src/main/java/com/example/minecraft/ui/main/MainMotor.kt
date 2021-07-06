@@ -45,11 +45,7 @@ class MainViewModel @Inject constructor(
     private val _list = MutableStateFlow<RosterItemLoadState>(RosterItemLoadState.Loading)
     val list: StateFlow<RosterItemLoadState> = _list.asStateFlow()
 
-//    private val _ad = MutableStateFlow<RosterItem?>(null)
-//    val ad: StateFlow<RosterItem?> = _ad.asStateFlow()
-
     fun getItem(offset: Int, limit: Int) {
-        Log.d(TAG, "getItem: ddddd")
         viewModelScope.launch {
             _list.value = repository.getLimit(offset, limit)
         }

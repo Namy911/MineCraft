@@ -84,13 +84,13 @@ abstract class DownloadDialogUtil : Fragment(){
                     // install packs
                     if (File(cacheResourceLink).exists()) {
                         viewModel.setCachePathResource(cacheResourceLink)
-                        installAddon(File(cacheResourceLink), DownloadAddon.DIR_CACHE)
+                        installAddon(File(cacheResourceLink))
                     } else {
                         Log.d(TAG, "checkInstallation: No $cacheResourceLink")
                     }
                     if (File(cacheBehaviorLink).exists()) {
                         viewModel.setCachePathBehavior(cacheBehaviorLink)
-                        installAddon(File(cacheBehaviorLink), DownloadAddon.DIR_CACHE)
+                        installAddon(File(cacheBehaviorLink))
                     } else {
                         Log.d(TAG, "checkInstallation: No $cacheBehaviorLink")
                     }
@@ -129,7 +129,7 @@ abstract class DownloadDialogUtil : Fragment(){
         }
     }
 
-    private fun installAddon(path: File, flagDir: String) {
+    private fun installAddon(path: File) {
         val uri = try {
                 FileProvider.getUriForFile(
                     requireContext().applicationContext,

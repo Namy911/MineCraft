@@ -20,8 +20,9 @@ import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivitySplashscreenBinding
-import com.example.minecraft.ui.PremiumActivity
+import com.example.minecraft.PremiumActivity
 import dagger.hilt.android.AndroidEntryPoint
+
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.lang.Exception
@@ -147,7 +148,7 @@ class SplashscreenActivity : AppCompatActivity() {
     }
     // Check if user have trial and redirect
     private fun navigateToMainScreen() {
-        val intent = Intent(this@SplashscreenActivity, PremiumActivity::class.java)
+        val intent = Intent(this, PremiumActivity::class.java)
         startActivity(intent)
         finish()
     }
