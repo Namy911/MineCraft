@@ -25,7 +25,7 @@ class BillingFragment : Fragment() {
     private var _binding: LayoutPremiumBinding? = null
     private val binding get() = _binding!!
 
-    private val args: BillingFragmentArgs by navArgs()
+//    private val args: BillingFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
 
     override fun onCreateView(

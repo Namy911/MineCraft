@@ -112,9 +112,10 @@ class BillingManager @Inject constructor(
                 for (sku in purchase.skus) {
                     if (sku == TRIAL_PRODUCT_YEAR) {
                         setAcknowledgePurchase(purchase)
-                    } else {
-                        setConsumePurchase(purchase)
                     }
+//                    else {
+//                        setConsumePurchase(purchase)
+//                    }
                 }
             }
         }
@@ -129,14 +130,14 @@ class BillingManager @Inject constructor(
         )
     }
 
-    private fun setConsumePurchase(purchase: Purchase) {
-        val consumeParams = ConsumeParams.newBuilder()
-            .setPurchaseToken(purchase.purchaseToken)
-            .build()
-        billingClient.consumeAsync(
-            consumeParams, consumeResponseListener
-        )
-    }
+//    private fun setConsumePurchase(purchase: Purchase) {
+//        val consumeParams = ConsumeParams.newBuilder()
+//            .setPurchaseToken(purchase.purchaseToken)
+//            .build()
+//        billingClient.consumeAsync(
+//            consumeParams, consumeResponseListener
+//        )
+//    }
 
     //
     fun querySkuDetails() {
@@ -147,10 +148,12 @@ class BillingManager @Inject constructor(
             .setSkusList(skuList)
             .setType(PRODUCT_TYPE)
 
-        billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
-            if (skuDetailsList != null) {
-                for (skuDetails in skuDetailsList) {
-                    buyItem(skuDetails)
+        CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
+            billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
+                if (skuDetailsList != null) {
+                    for (skuDetails in skuDetailsList) {
+                        buyItem(skuDetails)
+                    }
                 }
             }
         }

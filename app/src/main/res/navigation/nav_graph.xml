@@ -69,9 +69,6 @@
         android:name="com.example.minecraft.ui.trial.BillingFragment"
         android:label="fragment_trial"
         tools:layout="@layout/fragment_trial" >
-        <argument
-            android:name="model"
-            app:argType="com.example.minecraft.data.model.AddonModel" />
         <action
             android:id="@+id/back_detailFragment"
             app:destination="@id/detailFragment"

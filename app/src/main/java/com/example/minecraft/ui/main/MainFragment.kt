@@ -12,6 +12,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -64,14 +65,17 @@ class MainFragment : DownloadDialogUtil(){
     var isLoading = false
     var itemAd: RosterItem? = null
 
+    lateinit var appSharedPrefManager: AppSharedPreferencesManager
+
     var fulList: MutableSet<RosterItem> = mutableSetOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // check if trial exist
-//        viewModel.setFlagTrial(false)
+
         adapter = PagingAdapter()
-        // first in
+
+        appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
+
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
     }
@@ -89,67 +93,56 @@ class MainFragment : DownloadDialogUtil(){
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
-            if (checkInternetConnection()) {
-                // Online list
-                lifecycleScope.launch {
-                    viewModel.list
-                        .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-                        .collectLatest { state ->
-                            when(state){
-                                RosterItemLoadState.Loading -> {
-                                    progressBar.visibility = View.VISIBLE
-                                    viewModel.getItem(adapter.getItems(), PAGE_SIZE)
+
+            lifecycleScope.launch {
+                appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+                    if (!prefState) {
+                        if (checkInternetConnection()) {
+                            // Online list
+                            viewModel.list
+                                .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                                .collectLatest { state ->
+                                    when (state) {
+                                        RosterItemLoadState.Loading -> {
+                                            progressBar.visibility = View.VISIBLE
+                                            viewModel.getItem(adapter.getItems(), PAGE_SIZE)
+                                        }
+                                        is RosterItemLoadState.LoadComplete -> {
+                                            insertRosterIem(state.content)
+                                            progressBar.visibility = View.GONE
+                                        }
+                                        is RosterItemLoadState.LoadLast -> {
+                                            insertLastItem(state.content)
+                                            progressBar.visibility = View.GONE
+                                        }
+                                        is RosterItemLoadState.Error -> {
+                                            progressBar.visibility = View.GONE
+                                            Log.d(TAG, "flowWithLifecycle list: ${state.error}")
+                                        }
+                                    }
                                 }
-                                is RosterItemLoadState.LoadComplete -> {
-                                    insertRosterIem(state.content)
-                                    progressBar.visibility = View.GONE
-                                }
-                                is RosterItemLoadState.LoadLast -> {
-                                    insertLastItem(state.content)
-                                    progressBar.visibility = View.GONE
-                                }
-                                is RosterItemLoadState.Error -> {
-                                    progressBar.visibility = View.GONE
-                                    Log.d(TAG, "flowWithLifecycle list: ${state.error}")
-                                }
-                            }
-                        }
-                }
-                container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                        super.onScrolled(recyclerView, dx, dy)
-                        if (isLoading) {
-                            if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
+                            container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                                    super.onScrolled(recyclerView, dx, dy)
+                                    if (isLoading) {
+                                        if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
 //                                networkState()
-                                if (!checkInternetConnection()){
-                                    dialogNetwork(false)
+                                            if (!checkInternetConnection()) {
+                                                dialogNetwork(false)
+                                            }
+                                            viewModel.getItem(adapter.getItems(), PAGE_SIZE)
+                                            isLoading = false
+                                        }
+                                    }
                                 }
-                                viewModel.getItem(adapter.getItems(), PAGE_SIZE)
-                                isLoading = false
-                            }
+                            })
+                        } else {
+                            networkState()
+                            offlineList()
                         }
+                    } else {
+                        offlineList()
                     }
-                })
-            } else {
-                networkState()
-                // Offline list
-                viewModel.getAll()
-                lifecycleScope.launch {
-                    viewModel.offLineList
-                        .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-                        .collectLatest { state ->
-                            when(state){
-                                is RosterItemOffLineState.Error -> {
-                                    binding.progressBar.visibility = View.GONE
-                                    Log.d(TAG, "flowWithLifecycle offLineList: ${state.error}")
-                                }
-                                RosterItemOffLineState.InitSate -> { binding.progressBar.visibility = View.VISIBLE }
-                                is RosterItemOffLineState.LoadComplete -> {
-                                    binding.progressBar.visibility = View.GONE
-                                    adapter.submitList(state.content.toMutableList())
-                                }
-                            }
-                        }
                 }
             }
         }
@@ -158,6 +151,27 @@ class MainFragment : DownloadDialogUtil(){
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+    //
+    private fun offlineList(){
+        viewModel.getAll()
+        lifecycleScope.launch {
+            viewModel.offLineList
+                .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                .collectLatest { state ->
+                    when(state){
+                        is RosterItemOffLineState.Error -> {
+                            binding.progressBar.visibility = View.GONE
+                            Log.d(TAG, "flowWithLifecycle offLineList: ${state.error}")
+                        }
+                        RosterItemOffLineState.InitSate -> { binding.progressBar.visibility = View.VISIBLE }
+                        is RosterItemOffLineState.LoadComplete -> {
+                            binding.progressBar.visibility = View.GONE
+                            adapter.submitList(state.content.toMutableList())
+                        }
+                    }
+                }
+        }
     }
     //
     private fun networkState(){
@@ -209,9 +223,6 @@ class MainFragment : DownloadDialogUtil(){
         }
 
         val dialog = builder.create()
-//        if (!requireActivity().isFinishing){
-//            dialog.show()
-//        }
         try {
             dialog.show()
         } catch (e : Exception){
@@ -277,7 +288,7 @@ class MainFragment : DownloadDialogUtil(){
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder{
             return when (viewType) {
-                REGULAR_ITEM -> { TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false)) }
+                REGULAR_ITEM -> { TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false)      ) }
                 FOOTER_ITEM -> { FooterViewHolder(ItemFooterBinding.inflate(layoutInflater, parent, false)) }
                 AD_NATIVE_ITEM -> { AdNativeViewHolder(ItemRecyclerAdnativeBinding.inflate(layoutInflater, parent, false)) }
                 else -> { throw RuntimeException("ItemArrayAdapter, The type has to be ONE or ZERO") }
@@ -292,10 +303,8 @@ class MainFragment : DownloadDialogUtil(){
                     holder.bind(element as AddonModel)
                 }
                 AD_NATIVE_ITEM -> {
-//                    if (!flagTrial) {
                     holder as AdNativeViewHolder
                     holder.bind(element as AdsItem)
-//                    }
                 }
             }
         }
@@ -372,17 +381,19 @@ class MainFragment : DownloadDialogUtil(){
                     }
                     txtInstall.text = title
 
-                    btnDownload.setOnClickListener {
-//                        val temp = viewModel.getFlagTrial()
-//                        if (checkPermission()) {
-//                            if (temp == true) {
-//                                checkFileExists(item)
-//                                dialogDownload(item, DownloadAddon.DIR_CACHE)
-//                            } else {
-                                findNavController().navigate(MainFragmentDirections.trialFragment(item))
-//                                viewModel.setFlagTrial(true) // trial fragment has been open
-//                            }
-//                        }
+                    lifecycleScope.launch {
+                        appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+                            btnDownload.setOnClickListener {
+                                if (!prefState) {
+                                    findNavController().navigate(MainFragmentDirections.trialFragment())
+                                } else {
+                                    if (checkPermission()) {
+                                        checkFileExists(item)
+                                        dialogDownload(item, DownloadAddon.DIR_CACHE)
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     itemView.setOnClickListener {

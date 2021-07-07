@@ -38,11 +38,10 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="16dp"
         android:text="@string/btn_prepay"
         app:layout_constraintBottom_toTopOf="@+id/scrollView2"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/btn_install"
         app:layout_constraintTop_toBottomOf="@+id/img_container" />
 
@@ -54,12 +53,11 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/btn_default"
         android:text="@string/btn_install"
         app:layout_constraintBottom_toTopOf="@+id/scrollView2"
         app:layout_constraintEnd_toStartOf="@+id/btn_share"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/btn_download"
         app:layout_constraintTop_toBottomOf="@+id/img_container" />
 
@@ -71,12 +69,11 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="10dp"
         android:layout_marginEnd="8dp"
-        android:layout_marginBottom="24dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/btn_default"
         android:text="@string/btn_prepay"
         app:layout_constraintBottom_toTopOf="@+id/scrollView2"
         app:layout_constraintEnd_toStartOf="@+id/btn_install"
-        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/img_container" />
 
@@ -84,43 +81,40 @@
         android:id="@+id/barrier"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="16dp"
         app:barrierDirection="bottom"
-        app:constraint_referenced_ids="btn_download"
-        tools:layout_editor_absoluteY="300dp" />
+        app:constraint_referenced_ids="btn_download" />
 
     <ScrollView
         android:id="@+id/scrollView2"
         android:layout_width="match_parent"
-        android:layout_height="300dp"
-        android:layout_marginTop="16dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/barrier"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintTop_toBottomOf="@id/barrier">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:orientation="horizontal"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/txt_desc"
-            style="@style/CustomStyleText"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginStart="8dp"
-            android:layout_marginEnd="8dp"
-            android:layout_marginBottom="8dp"
-            android:background="@color/txt_share_bg"
-            android:ems="10"
-            android:gravity="start|top"
-            android:inputType="textMultiLine"
-            android:padding="16dp"
-            android:scrollbars="vertical"
-            tools:text="@string/appbar_scrolling_view_behavior"
-            tools:visibility="visible" />
+            <TextView
+                android:id="@+id/txt_desc"
+                style="@style/CustomStyleText"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginBottom="8dp"
+                android:background="@color/txt_share_bg"
+                android:ems="10"
+                android:gravity="start|top"
+                android:padding="16dp"
+                android:scrollbars="vertical"
+                tools:text="@string/appbar_scrolling_view_behavior"
+                tools:visibility="visible" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
