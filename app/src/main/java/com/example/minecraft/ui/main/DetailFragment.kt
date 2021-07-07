@@ -51,6 +51,7 @@ class DetailFragment : DownloadDialogUtil() {
     var mRewardedAd: RewardedAd? = null
 
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
+    private var prefState = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,6 +75,12 @@ class DetailFragment : DownloadDialogUtil() {
         _binding = FragmentDetailBinding.inflate(inflater, container, false)
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
+
+        lifecycleScope.launch {
+            appSharedPrefManager.billingAdsSate.collectLatest { state ->
+                prefState = state
+            }
+        }
         return binding.root
     }
 
@@ -91,63 +98,61 @@ class DetailFragment : DownloadDialogUtil() {
             }
 
             txtDesc.text = args.model.description
-            lifecycleScope.launch {
-                appSharedPrefManager.billingAdsSate.collectLatest { state ->
-                    //
-                    if (!state) {
-                        buttonInitTitle()
-                    }else{
-                        readyAdsButtonsConf()
-                    }
-                    btnShare.setOnClickListener {
-                        if (!state) {
-                            if (checkInternetConnection()) {
-                                val temp = viewModel.getFlagRewardShare()
-                                if (temp == false) {
-                                    adSeen(DownloadAddon.DIR_CACHE)
-                                } else {
-                                    checkFileExists(args.model)
-                                    shareFileCheck()
-                                }
-                            } else {
-                                Toast.makeText(
-                                    requireActivity(),
-                                    getString(R.string.msg_no_internet),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+            if (!prefState) {
+                buttonInitTitle()
+            } else {
+                readyAdsButtonsConf()
+            }
+            btnShare.setOnClickListener {
+                if (!prefState) {
+                    if (checkInternetConnection()) {
+                        val temp = viewModel.getFlagRewardShare()
+                        if (temp == false) {
+                            adSeen(DownloadAddon.DIR_CACHE)
                         } else {
                             checkFileExists(args.model)
                             shareFileCheck()
                         }
+                    } else {
+                        Toast.makeText(
+                            requireActivity(),
+                            getString(R.string.msg_no_internet),
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
-                    btnDownload.setOnClickListener {
-                        if (!state) {
-                            val temp = viewModel.getFlagRewardDownload()
-                            if (temp == false && checkInternetConnection()) {
-                                adSeen(DownloadAddon.DIR_EXT_STORAGE)
-                            } else {
-                                if (checkPermission()) {
-                                    dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-                                }
-                            }
-                        } else {
-                            if (checkPermission()) {
-                                dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-                            }
+                } else {
+                    checkFileExists(args.model)
+                    shareFileCheck()
+                }
+            }
+            btnDownload.setOnClickListener {
+                if (!prefState) {
+                    val temp = viewModel.getFlagRewardDownload()
+                    if (temp == false && checkInternetConnection()) {
+                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
+                        Log.d(TAG, "onViewCreated: 1")
+                    } else {
+                        if (checkPermission()) {
+                            Log.d(TAG, "onViewCreated: 2")
+                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
                         }
                     }
+                } else {
+                    if (checkPermission()) {
+                        Log.d(TAG, "onViewCreated: 3")
+                        dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+                    }
+                }
+            }
 
-                    btnInstall.setOnClickListener { button ->
-                        if (state) {
-                            if (checkPermission()) {
-                                checkFileExists(args.model)
-                                dialogDownload(args.model, DownloadAddon.DIR_CACHE)
-                            }
-                        } else {
-                            findNavController().navigate(DetailFragmentDirections.trialFragment())
-                        }
+            btnInstall.setOnClickListener { button ->
+                if (prefState) {
+                    if (checkPermission()) {
+                        checkFileExists(args.model)
+                        dialogDownload(args.model, DownloadAddon.DIR_CACHE)
                     }
+                } else {
+                    findNavController().navigate(DetailFragmentDirections.trialFragment(2))
                 }
             }
         }

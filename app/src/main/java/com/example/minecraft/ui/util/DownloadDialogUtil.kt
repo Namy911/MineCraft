@@ -1,6 +1,7 @@
 package com.example.minecraft.ui.util
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.DownloadManager
 import android.content.*
 import android.content.pm.PackageManager
@@ -46,8 +47,6 @@ private const val TAG = "DownloadDialogUtil"
 @AndroidEntryPoint
 abstract class DownloadDialogUtil : Fragment(){
     companion object{
-        val FILE_Q = "Q"
-//        val URI_DOWNLOAD = "uri.download"
         val TAG_RESOURCE = "resource"
         val TAG_BEHAVIOR = "behavior"
 
@@ -55,9 +54,9 @@ abstract class DownloadDialogUtil : Fragment(){
         const val packageName = "com.mojang.minecraftpe"
     }
 
-
-
     private val viewModel: MainViewModel by viewModels()
+    var showToast: Toast? = null
+
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
         var term = ".mcpack"
@@ -75,7 +74,7 @@ abstract class DownloadDialogUtil : Fragment(){
     private fun checkInstallation(model: AddonModel, tag: String) {
             if (tag == DownloadAddon.DIR_CACHE) {
                 if (isAppInstalled()) {
-                    Log.d(TAG, "checkInstallation: Cache")
+
                     // Cache Dir
                     val cacheResourceLink =
                         requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
@@ -209,11 +208,12 @@ abstract class DownloadDialogUtil : Fragment(){
     }
     // Dialog download Addon
     fun dialogDownload(model: AddonModel, flagDir: String ){
+        Log.d(TAG, "dialogDownload: hhhhhh")
         val dialogView = layoutInflater.inflate(R.layout.item_dialog, null)
         val builder = AlertDialog.Builder(requireActivity()).apply { setView(dialogView) }
         val dialog = builder.create()
         dialog.show()
-        Log.d(TAG, "dialogDownload: ")
+
         val closeView = dialogView.findViewById<ImageView>(R.id.img_close)
         closeView.setOnClickListener { dialog.cancel() }
 
@@ -222,7 +222,6 @@ abstract class DownloadDialogUtil : Fragment(){
         // Check if link is not empty
         val resourceLink: String? = if (model.resource.isNotBlank()){ getPackFileName(model.resource, TAG_RESOURCE)} else { null }
         val behaviorLink: String? = if (model.behavior.isNotBlank()){ getPackFileName(model.behavior, TAG_BEHAVIOR) } else { null }
-        Log.d(TAG, "dialogDownload: $temp1")
         // Button resource on dialog config
         if (behaviorLink != null) {
             val behavior = dialogView.findViewById<Button>(R.id.btn_behavior)
@@ -241,6 +240,7 @@ abstract class DownloadDialogUtil : Fragment(){
                     }
                     if (checkInternetConnection()) {
                         workDownloadAddon(model.behavior, behaviorLink, flagDir, model, false)
+                        Log.d(TAG, "dialogDownload: hhhhhh 1")
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
                     }
@@ -266,6 +266,7 @@ abstract class DownloadDialogUtil : Fragment(){
                         return@setOnClickListener
                     }
                     if (checkInternetConnection()) {
+                        Log.d(TAG, "dialogDownload: hhhhhh 1")
                         workDownloadAddon(model.resource, resourceLink, flagDir, model, false)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -282,6 +283,7 @@ abstract class DownloadDialogUtil : Fragment(){
             override fun onReceive(context: Context?, intent: Intent?) {
                 val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
                 if (id == idEnqueue){
+                    Log.d(TAG, "onReceive: ")
                     // check if needed install, yes = install, no = button share
                     if (flagBtnShare){
                         downloadShareFile(model)
@@ -290,7 +292,9 @@ abstract class DownloadDialogUtil : Fragment(){
                     }
                     // check if needed toast message, from cache do not needed
                     if (flagDir == DownloadAddon.DIR_EXT_STORAGE){
-                        Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT).show()
+//                        Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT).show()
+                        showToast = Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT)
+                        showToast?.show()
                     }
                 }
             }
@@ -359,5 +363,10 @@ abstract class DownloadDialogUtil : Fragment(){
         } catch (e: PackageManager.NameNotFoundException) {
             false
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        showToast?.cancel()
     }
 }

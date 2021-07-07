@@ -12,7 +12,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -24,22 +23,20 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.ItemFooterBinding
 import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.MainFragmentBinding
-import com.example.minecraft.MainActivity
 import com.example.minecraft.ui.spash.SplashscreenActivity
 import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdLoader
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.coroutines.resume
@@ -66,15 +63,15 @@ class MainFragment : DownloadDialogUtil(){
     var itemAd: RosterItem? = null
 
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
+    var prefState = false
 
     var fulList: MutableSet<RosterItem> = mutableSetOf()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
 
         adapter = PagingAdapter()
-
-        appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
 
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
@@ -82,6 +79,11 @@ class MainFragment : DownloadDialogUtil(){
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = MainFragmentBinding.inflate(inflater, container, false)
+        lifecycleScope.launch {
+            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+                this@MainFragment.prefState = prefState
+            }
+        }
         return binding.root
     }
 
@@ -95,54 +97,52 @@ class MainFragment : DownloadDialogUtil(){
             container.layoutManager = manager
 
             lifecycleScope.launch {
-                appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
-                    if (!prefState) {
-                        if (checkInternetConnection()) {
-                            // Online list
-                            viewModel.list
-                                .flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-                                .collectLatest { state ->
-                                    when (state) {
-                                        RosterItemLoadState.Loading -> {
-                                            progressBar.visibility = View.VISIBLE
-                                            viewModel.getItem(adapter.getItems(), PAGE_SIZE)
-                                        }
-                                        is RosterItemLoadState.LoadComplete -> {
-                                            insertRosterIem(state.content)
-                                            progressBar.visibility = View.GONE
-                                        }
-                                        is RosterItemLoadState.LoadLast -> {
-                                            insertLastItem(state.content)
-                                            progressBar.visibility = View.GONE
-                                        }
-                                        is RosterItemLoadState.Error -> {
-                                            progressBar.visibility = View.GONE
-                                            Log.d(TAG, "flowWithLifecycle list: ${state.error}")
-                                        }
+                if (!prefState) {
+                    if (checkInternetConnection()) {
+                        // Online list
+                        viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                            .collectLatest { state ->
+                                when (state) {
+                                    RosterItemLoadState.Loading -> {
+                                        progressBar.visibility = View.VISIBLE
+                                        viewModel.getItem(adapter.getItems(), PAGE_SIZE)
+                                    }
+                                    is RosterItemLoadState.LoadComplete -> {
+                                        insertRosterIem(state.content)
+                                        progressBar.visibility = View.GONE
+                                    }
+                                    is RosterItemLoadState.LoadLast -> {
+                                        insertLastItem(state.content)
+                                        progressBar.visibility = View.GONE
+                                    }
+                                    is RosterItemLoadState.Error -> {
+                                        progressBar.visibility = View.GONE
+                                        Log.d(TAG, "flowWithLifecycle list: ${state.error}")
                                     }
                                 }
-                            container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                                    super.onScrolled(recyclerView, dx, dy)
-                                    if (isLoading) {
-                                        if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
+
+                                container.addOnScrollListener(object :
+                                    RecyclerView.OnScrollListener() { override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                                        super.onScrolled(recyclerView, dx, dy)
+                                        if (isLoading) {
+                                            if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
 //                                networkState()
-                                            if (!checkInternetConnection()) {
-                                                dialogNetwork(false)
+                                                if (!checkInternetConnection()) {
+                                                    dialogNetwork(false)
+                                                }
+                                                viewModel.getItem(adapter.getItems(), PAGE_SIZE)
+                                                isLoading = false
                                             }
-                                            viewModel.getItem(adapter.getItems(), PAGE_SIZE)
-                                            isLoading = false
                                         }
                                     }
-                                }
-                            })
-                        } else {
-                            networkState()
-                            offlineList()
-                        }
+                                })
+                            }
                     } else {
+                        networkState()
                         offlineList()
                     }
+                }else{
+                    offlineList()
                 }
             }
         }
@@ -381,17 +381,13 @@ class MainFragment : DownloadDialogUtil(){
                     }
                     txtInstall.text = title
 
-                    lifecycleScope.launch {
-                        appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
-                            btnDownload.setOnClickListener {
-                                if (!prefState) {
-                                    findNavController().navigate(MainFragmentDirections.trialFragment())
-                                } else {
-                                    if (checkPermission()) {
-                                        checkFileExists(item)
-                                        dialogDownload(item, DownloadAddon.DIR_CACHE)
-                                    }
-                                }
+                    btnDownload.setOnClickListener {
+                        if (!prefState) {
+                            findNavController().navigate(MainFragmentDirections.trialFragment(1))
+                        } else {
+                            if (checkPermission()) {
+                                checkFileExists(item)
+                                dialogDownload(item, DownloadAddon.DIR_CACHE)
                             }
                         }
                     }

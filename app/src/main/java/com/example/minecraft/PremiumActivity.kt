@@ -32,7 +32,12 @@ class PremiumActivity : AppCompatActivity() {
         val animBtn = AnimationUtils.loadAnimation(this, R.anim.btn_premium)
         val animTxt = AnimationUtils.loadAnimation(this, R.anim.txt_premium)
 
-        billingManager = BillingManager(this)
+        billingManager = BillingManager(this){
+            finish()
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+        }
+
         binding.apply {
             btnPremium.animation = animBtn
             txtBtnTrial.animation = animTxt
@@ -45,9 +50,6 @@ class PremiumActivity : AppCompatActivity() {
 
             btnPremium.setOnClickListener {
                 initBilling()
-//            val intent = Intent(this, MainActivity::class.java)
-//            startActivity(intent)
-//            finish()
             }
         }
 
@@ -58,7 +60,7 @@ class PremiumActivity : AppCompatActivity() {
 
     }
 
-    fun initBilling(){
+    private fun initBilling(){
         billingManager.startConnection()
     }
 

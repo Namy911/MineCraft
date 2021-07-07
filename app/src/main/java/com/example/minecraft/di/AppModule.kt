@@ -18,12 +18,12 @@ import javax.inject.Singleton
 @Module
 object AppModule {
 
-    @Provides
-    @ActivityScoped
+//    @Provides
+//    @ActivityScoped
 //    fun provideTrialManager(@ApplicationContext context: Context, @ApplicationContext scope: CoroutineScope): BillingManager{
-    fun provideTrialManager(@ApplicationContext context: Context): BillingManager{
-        return BillingManager(context)
-    }
+//    fun provideTrialManager(@ApplicationContext context: Context): BillingManager{
+//        return BillingManager(context)
+//    }
 
     @Provides
     @Singleton

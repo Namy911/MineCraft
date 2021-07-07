@@ -12,6 +12,7 @@ import com.example.minecraft.NavGraphDirections
 import com.example.minecraft.R
 import com.example.minecraft.databinding.MainActivityBinding
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
+import com.example.minecraft.ui.util.BillingManager
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
@@ -100,7 +101,7 @@ class MainActivity : AppCompatActivity() {
             navController.navigate(action)
     }
 
-    fun disableAd(){
+    private fun disableAd(){
         binding.adView.visibility = View.GONE
     }
 

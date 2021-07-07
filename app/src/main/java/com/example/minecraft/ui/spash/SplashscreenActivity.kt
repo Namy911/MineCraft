@@ -18,9 +18,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
+import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivitySplashscreenBinding
 import com.example.minecraft.PremiumActivity
+import com.example.minecraft.ui.util.AppSharedPreferencesManager
+import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
 
 import kotlinx.coroutines.flow.collectLatest
@@ -35,8 +38,12 @@ class SplashscreenActivity : AppCompatActivity() {
 
     private val motor: SplashScreenMotor by viewModels()
 
+    lateinit var appSharedPrefManager: AppSharedPreferencesManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        appSharedPrefManager = AppSharedPreferencesManager(this)
         // Ful screen window
         @Suppress("DEPRECATION")
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
@@ -118,9 +125,6 @@ class SplashscreenActivity : AppCompatActivity() {
         } catch (e : Exception){
             Log.d(TAG, "dialogNoInternet: ")
         }
-//        if (!this.isFinishing){
-//            dialog.show()
-//        }
         networkState(dialog)
     }
 
@@ -148,8 +152,16 @@ class SplashscreenActivity : AppCompatActivity() {
     }
     // Check if user have trial and redirect
     private fun navigateToMainScreen() {
-        val intent = Intent(this, PremiumActivity::class.java)
-        startActivity(intent)
-        finish()
+        lifecycleScope.launch {
+            appSharedPrefManager.billingAdsSate.collectLatest { state ->
+                val intent = if (!state) {
+                    Intent(this@SplashscreenActivity, PremiumActivity::class.java)
+                }else {
+                    Intent(this@SplashscreenActivity, MainActivity::class.java)
+                }
+                startActivity(intent)
+                finish()
+            }
+        }
     }
 }

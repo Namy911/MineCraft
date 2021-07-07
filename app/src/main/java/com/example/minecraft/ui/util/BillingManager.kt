@@ -2,19 +2,18 @@ package com.example.minecraft.ui.util
 
 import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.android.billingclient.api.*
-import com.example.minecraft.di.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 
-class BillingManager @Inject constructor(
-    private val activity: Context
+//class BillingManager @Inject constructor(
+class BillingManager (
+    private val activity: Context,
+    private val redirect: () -> Unit
 //    @ApplicationScope private val scope: CoroutineScope
 ) {
     companion object {
@@ -28,6 +27,7 @@ class BillingManager @Inject constructor(
 
         const val PRODUCT_TYPE = BillingClient.SkuType.INAPP
         const val SUBS_TYPE = BillingClient.SkuType.SUBS
+
     }
 
     private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
@@ -35,6 +35,7 @@ class BillingManager @Inject constructor(
             for (purchase in purchases) {
                 handlePurchase(purchase)
             }
+            redirect.invoke()
         }
 //        else if (billingResult.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED && purchases != null) {
 //            Log.d(TAG, "BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED: ")
@@ -63,7 +64,6 @@ class BillingManager @Inject constructor(
                 CoroutineScope(SupervisorJob()).launch {
                     sharedPreferencesManager.setBillingAdsSate(true)
                 }
-                Log.d(TAG, "acknowledgePurchaseResponseListener: ")
             }
         }
 
@@ -92,6 +92,11 @@ class BillingManager @Inject constructor(
                         querySkuDetails()
                     } else {
                         Log.d(TAG, "onBillingSetupFinished: Exist item")
+                        CoroutineScope(SupervisorJob()).launch {
+                            sharedPreferencesManager.setBillingAdsSate(true)
+                        }
+                        redirect.invoke()
+//                        productYearState = true
                     }
                 }
 //                else if (billingResult.responseCode != BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED ) {
