@@ -57,7 +57,7 @@ class MainViewModel @Inject constructor(
         }
     }
 
-    fun setCachePathResource(path: String){ savedStateHandle.set(PATH_CACHE_RESOURCE, path) }
+    fun setCachePathResource(path: String){savedStateHandle.set(PATH_CACHE_RESOURCE, path) }
     fun getCachePathResource() = savedStateHandle.get<String>(PATH_CACHE_RESOURCE)
 
     fun setCachePathBehavior(path: String){ savedStateHandle.set(PATH_CACHE_BEHAVIOR, path) }

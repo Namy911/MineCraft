@@ -74,7 +74,6 @@ abstract class DownloadDialogUtil : Fragment(){
     private fun checkInstallation(model: AddonModel, tag: String) {
             if (tag == DownloadAddon.DIR_CACHE) {
                 if (isAppInstalled()) {
-
                     // Cache Dir
                     val cacheResourceLink =
                         requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
@@ -120,6 +119,7 @@ abstract class DownloadDialogUtil : Fragment(){
         workManager.enqueue(request)
         workManager.getWorkInfoByIdLiveData(request.id).observe(viewLifecycleOwner){
             if (it.state.isFinished){
+                Log.d(TAG, "workDownloadAddon: isFinished")
                 // Download addon type(resource or behavior)
                 val result = it.outputData
                 val id = result.getLong(DownloadAddon.DOWNLOAD_FLAG, -3)
@@ -187,6 +187,7 @@ abstract class DownloadDialogUtil : Fragment(){
             RECORD_REQUEST_CODE)
     }
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         when(requestCode){
             RECORD_REQUEST_CODE -> {
                 if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
@@ -195,6 +196,7 @@ abstract class DownloadDialogUtil : Fragment(){
             }
         }
     }
+
     // Dialog Info about permission
     private fun dialogRequest(){
         val builder = AlertDialog.Builder(requireActivity())
@@ -208,7 +210,6 @@ abstract class DownloadDialogUtil : Fragment(){
     }
     // Dialog download Addon
     fun dialogDownload(model: AddonModel, flagDir: String ){
-        Log.d(TAG, "dialogDownload: hhhhhh")
         val dialogView = layoutInflater.inflate(R.layout.item_dialog, null)
         val builder = AlertDialog.Builder(requireActivity()).apply { setView(dialogView) }
         val dialog = builder.create()
@@ -240,7 +241,6 @@ abstract class DownloadDialogUtil : Fragment(){
                     }
                     if (checkInternetConnection()) {
                         workDownloadAddon(model.behavior, behaviorLink, flagDir, model, false)
-                        Log.d(TAG, "dialogDownload: hhhhhh 1")
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
                     }
@@ -266,7 +266,6 @@ abstract class DownloadDialogUtil : Fragment(){
                         return@setOnClickListener
                     }
                     if (checkInternetConnection()) {
-                        Log.d(TAG, "dialogDownload: hhhhhh 1")
                         workDownloadAddon(model.resource, resourceLink, flagDir, model, false)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -278,12 +277,13 @@ abstract class DownloadDialogUtil : Fragment(){
         }
     }
     // Receiver, check download completed by id and install addon
-    private fun receiverComplete(idEnqueue: Long, model:AddonModel, flagDir: String, flagBtnShare: Boolean){
+    private fun receiverComplete(idEnqueue: Long, model: AddonModel, flagDir: String, flagBtnShare: Boolean){
         val receiver = object : BroadcastReceiver(){
             override fun onReceive(context: Context?, intent: Intent?) {
                 val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
+                Log.d(TAG, "receiverComplete")
                 if (id == idEnqueue){
-                    Log.d(TAG, "onReceive: ")
+                    Log.d(TAG, "id == idEnqueue")
                     // check if needed install, yes = install, no = button share
                     if (flagBtnShare){
                         downloadShareFile(model)
@@ -292,9 +292,9 @@ abstract class DownloadDialogUtil : Fragment(){
                     }
                     // check if needed toast message, from cache do not needed
                     if (flagDir == DownloadAddon.DIR_EXT_STORAGE){
-//                        Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT).show()
-                        showToast = Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT)
-                        showToast?.show()
+                        Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT).show()
+//                        showToast = Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT)
+//                        showToast?.show()
                     }
                 }
             }
@@ -367,6 +367,6 @@ abstract class DownloadDialogUtil : Fragment(){
 
     override fun onStop() {
         super.onStop()
-        showToast?.cancel()
+//        showToast?.cancel()
     }
 }

@@ -8,8 +8,6 @@ import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
@@ -19,7 +17,6 @@ import com.example.minecraft.databinding.LayoutPremiumBinding
 import com.example.minecraft.ui.main.MainViewModel
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint
@@ -35,7 +32,7 @@ class BillingFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        billingManager = BillingManager(requireActivity()){
+        billingManager = BillingManager(requireActivity()) {
             val destId = args.flagDest
             if (destId == 1){
                 requireActivity().finish()

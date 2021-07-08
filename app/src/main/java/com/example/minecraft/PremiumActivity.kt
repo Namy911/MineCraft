@@ -2,19 +2,12 @@ package com.example.minecraft
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import android.view.animation.AnimationUtils
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
-import com.example.minecraft.R
 import com.example.minecraft.databinding.LayoutPremiumBinding
-import com.example.minecraft.MainActivity
-import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
-import javax.inject.Inject
 
 private const val TAG = "PremiumActivity"
 @AndroidEntryPoint

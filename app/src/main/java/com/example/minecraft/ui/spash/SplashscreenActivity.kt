@@ -14,7 +14,6 @@ import android.view.WindowManager
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
@@ -25,6 +24,9 @@ import com.example.minecraft.PremiumActivity
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.collect
 
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -39,9 +41,17 @@ class SplashscreenActivity : AppCompatActivity() {
     private val motor: SplashScreenMotor by viewModels()
 
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
+    lateinit var billingManager: BillingManager
+    private var prefState = false
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        billingManager = BillingManager(this){
+//            finish()
+//            startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
+        }
+        billingManager.startConnection()
 
         appSharedPrefManager = AppSharedPreferencesManager(this)
         // Ful screen window
@@ -57,8 +67,11 @@ class SplashscreenActivity : AppCompatActivity() {
         binding = ActivitySplashscreenBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Dialog chooser, if don't internet connection
-        if (getConnection()) { observeState() }
-        else { dialogNoInternet() }
+        if (getConnection()) {
+            observeState()
+        } else {
+            dialogNoInternet()
+        }
 
         binding.lottie.apply {
             imageAssetsFolder = "images/"
@@ -152,16 +165,28 @@ class SplashscreenActivity : AppCompatActivity() {
     }
     // Check if user have trial and redirect
     private fun navigateToMainScreen() {
-        lifecycleScope.launch {
-            appSharedPrefManager.billingAdsSate.collectLatest { state ->
-                val intent = if (!state) {
-                    Intent(this@SplashscreenActivity, PremiumActivity::class.java)
-                }else {
-                    Intent(this@SplashscreenActivity, MainActivity::class.java)
-                }
-                startActivity(intent)
-                finish()
-            }
+
+        val result = billingManager.checkItemAvailability()
+        Log.d(TAG, "navigateToMainScreen: ${result} kk")
+//        lifecycleScope.launchWhenCreated {
+//            appSharedPrefManager.billingAdsSate.collect {
+//                if (!it) {
+//                    startActivity(Intent(this@SplashscreenActivity, PremiumActivity::class.java))
+//                } else {
+//                    startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
+//                }
+//            }
+//        }
+
+        if (result) {
+//        if (BillingManager.BILLING_FLAG_STATE) {
+            finish()
+            startActivity(Intent(this@SplashscreenActivity, PremiumActivity::class.java))
+            CoroutineScope(SupervisorJob()).launch { appSharedPrefManager.setBillingAdsSate(false) }
+        } else {
+            finish()
+            CoroutineScope(SupervisorJob()).launch { appSharedPrefManager.setBillingAdsSate(true) }
+            startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
         }
     }
 }

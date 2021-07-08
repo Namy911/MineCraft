@@ -17,7 +17,7 @@ class BillingManager (
 //    @ApplicationScope private val scope: CoroutineScope
 ) {
     companion object {
-        private const val TAG = "BillingFragment"
+        private const val TAG = "BillingManager"
 
         const val TRIAL_PRODUCT_YEAR = "android.test.purchased"
         const val TRIAL_PRODUCT_YEAR2 = "android.test.purchased"
@@ -27,7 +27,7 @@ class BillingManager (
 
         const val PRODUCT_TYPE = BillingClient.SkuType.INAPP
         const val SUBS_TYPE = BillingClient.SkuType.SUBS
-
+        var BILLING_FLAG_STATE = false
     }
 
     private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
@@ -69,34 +69,33 @@ class BillingManager (
 
 
 
-    private val consumeResponseListener = ConsumeResponseListener { billingResult, s: String ->
-        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-            //cumparat, redirect
-            Log.d(TAG, "ConsumeResponseListener: ")
-        }
-    }
+//    private val consumeResponseListener = ConsumeResponseListener { billingResult, s: String ->
+//        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+//            //cumparat, redirect
+//            Log.d(TAG, "ConsumeResponseListener: ")
+//        }
+//    }
 
     var billingClient = BillingClient.newBuilder(activity)
         .setListener(purchasesUpdatedListener)
         .enablePendingPurchases()
         .build()
 
+
     fun startConnection() {
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
 //                billingClient.queryPurchasesAsync(PRODUCT_TYPE, purchasesResponseListener)
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    val list = billingClient.queryPurchases(PRODUCT_TYPE)
-                    val result = checkItemAvailability(list)
+                    val result = checkItemAvailability()
                     if (result) {
                         querySkuDetails()
                     } else {
-                        Log.d(TAG, "onBillingSetupFinished: Exist item")
-                        CoroutineScope(SupervisorJob()).launch {
-                            sharedPreferencesManager.setBillingAdsSate(true)
-                        }
-                        redirect.invoke()
-//                        productYearState = true
+                        Log.d(TAG, "onBillingSetupFinished: Item Exist")
+//                        CoroutineScope(SupervisorJob()).launch {
+//                            sharedPreferencesManager.setBillingAdsSate(true)
+//                        }
+//                        redirect.invoke()
                     }
                 }
 //                else if (billingResult.responseCode != BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED ) {
@@ -164,15 +163,17 @@ class BillingManager (
         }
     }
 
-    private fun checkItemAvailability(purchase: Purchase.PurchasesResult): Boolean {
-        val items: MutableList<Purchase>? = purchase.purchasesList
+    fun checkItemAvailability(): Boolean {
+        val items = billingClient.queryPurchases(PRODUCT_TYPE).purchasesList
         if (items != null) {
             for (item in items) {
                 if (item.skus.contains(TRIAL_PRODUCT_YEAR)) {
+//                    BILLING_FLAG_STATE = false
                     return false
                 }
             }
         }
+//        BILLING_FLAG_STATE = true
         return true
     }
 

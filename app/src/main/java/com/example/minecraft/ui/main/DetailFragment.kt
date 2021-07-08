@@ -63,8 +63,10 @@ class DetailFragment : DownloadDialogUtil() {
         lifecycleScope.launch {
             appSharedPrefManager.billingAdsSate.collectLatest { state ->
                 if (checkInternetConnection() && !state) {
-                    MobileAds.initialize(requireContext()) {
-                        loadAddReward()
+                    if (checkInternetConnection()) {
+                        MobileAds.initialize(requireContext()) {
+                            loadAddReward()
+                        }
                     }
                 }
             }
@@ -104,26 +106,28 @@ class DetailFragment : DownloadDialogUtil() {
                 readyAdsButtonsConf()
             }
             btnShare.setOnClickListener {
-                if (!prefState) {
-                    if (checkInternetConnection()) {
-                        val temp = viewModel.getFlagRewardShare()
-                        if (temp == false) {
-                            adSeen(DownloadAddon.DIR_CACHE)
-                        } else {
-                            checkFileExists(args.model)
-                            shareFileCheck()
-                        }
-                    } else {
-                        Toast.makeText(
-                            requireActivity(),
-                            getString(R.string.msg_no_internet),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } else {
-                    checkFileExists(args.model)
-                    shareFileCheck()
-                }
+                checkFileExists(args.model)
+                shareFileCheck()
+//                if (!prefState) {
+//                    if (checkInternetConnection()) {
+//                        val temp = viewModel.getFlagRewardShare()
+//                        if (temp == false) {
+//                            adSeen(DownloadAddon.DIR_CACHE)
+//                        } else {
+//                            checkFileExists(args.model)
+//                            shareFileCheck()
+//                        }
+//                    } else {
+//                        Toast.makeText(
+//                            requireActivity(),
+//                            getString(R.string.msg_no_internet),
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                    }
+//                } else {
+//                    checkFileExists(args.model)
+//                    shareFileCheck()
+//                }
             }
             btnDownload.setOnClickListener {
                 if (!prefState) {
@@ -158,7 +162,6 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
 
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -171,7 +174,7 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
 
-    fun buttonInitTitle() {
+    private fun buttonInitTitle() {
         if (checkInternetConnection()) {
             if (mRewardedAd != null) {
                 readyAdsButtonsConf()

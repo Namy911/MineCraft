@@ -47,12 +47,8 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             // Check download directory
             if (uri != null && title != null) {
                 when (directory) {
-                    DIR_EXT_STORAGE -> {
-                        outputId = downloadPublicDir(uri, title)
-                    }
-                    DIR_CACHE -> {
-                        outputId = downloadCacheDir(uri, title)
-                    }
+                    DIR_EXT_STORAGE -> { outputId = downloadPublicDir(uri, title) }
+                    DIR_CACHE -> { outputId = downloadCacheDir(uri, title) }
                 }
             }
 
@@ -103,7 +99,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun makeDirAddons() {
         val f = File(
-//            MediaStore.Downloads.EXTERNAL_CONTENT_URI.path,
             MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY).path,
             FOLDER_DOWNLOAD_ADDONS
         )
@@ -113,14 +108,12 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
     @RequiresApi(Build.VERSION_CODES.Q)
     private suspend fun downloadPublicMediaDir(fileUri: String, fileName: String) {
         withContext(Dispatchers.IO) {
-            makeDirAddons()
+//            makeDirAddons()
             val request = Request.Builder()
                 .url(fileUri)
                 .build()
-            val client = OkHttpClient.Builder()
-                .build()
-            val collection =
-            MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
+            val client = OkHttpClient.Builder().build()
+            val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
 
             client.newCall(request).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
@@ -131,10 +124,7 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                     response.use {
                         if (response.isSuccessful) {
                             val values = ContentValues().apply {
-//                            put(MediaStore.DownloadColumns.DISPLAY_NAME, fileName)
                                 put(MediaStore.DownloadColumns.TITLE, fileName)
-//                                put(MediaStore.DownloadColumns.DISPLAY_NAME, fileName)
-//                                put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download/$FOLDER_DOWNLOAD_ADDONS")
                                 put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
                                 put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
                                 put(MediaStore.DownloadColumns.IS_PENDING, 1)
@@ -144,7 +134,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                             val fileByte = response.body?.byteStream()
 
                             val insert = resolver.insert(
-//                                MediaStore.Downloads.EXTERNAL_CONTENT_URI,
                                 collection,
                                 values
                             )
@@ -156,21 +145,7 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                                 values.clear()
                                 values.put(MediaStore.DownloadColumns.IS_PENDING, 0)
                                 values.put(MediaStore.DownloadColumns.DISPLAY_NAME, fileName)
-//                                val segments = uri.pathSegments
-//                                val path = "${segments[0]}${File.separator}${segments[1]}${File.separator}$FOLDER_DOWNLOAD_ADDONS${File.separator}${segments[2]}"
-//                                Log.d(TAG, "onResponse: $path")
-//                                scanMedia( File(path).path )
-//                                scanMedia(uri)
-//                                val temp = FileProvider.getUriForFile(
-//                                    context,
-//                                    BuildConfig.APPLICATION_ID + ".fileProvider",
-//                                    File(insert.path)
-//                                )
-////                                Log.d(TAG, "onResponse: $temp")
-//                                resolver.notifyChange(
-//                                   temp,
-//                                    null
-//                                )
+
                                 try {
                                     resolver.update(insert, values, null, null)
                                 }catch (e: Exception){
