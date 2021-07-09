@@ -55,7 +55,8 @@ abstract class DownloadDialogUtil : Fragment(){
     }
 
     private val viewModel: MainViewModel by viewModels()
-    var showToast: Toast? = null
+
+    var receiver : BroadcastReceiver? = null
 
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
@@ -278,7 +279,7 @@ abstract class DownloadDialogUtil : Fragment(){
     }
     // Receiver, check download completed by id and install addon
     private fun receiverComplete(idEnqueue: Long, model: AddonModel, flagDir: String, flagBtnShare: Boolean){
-        val receiver = object : BroadcastReceiver(){
+        receiver = object : BroadcastReceiver(){
             override fun onReceive(context: Context?, intent: Intent?) {
                 val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
                 Log.d(TAG, "receiverComplete")
@@ -293,8 +294,6 @@ abstract class DownloadDialogUtil : Fragment(){
                     // check if needed toast message, from cache do not needed
                     if (flagDir == DownloadAddon.DIR_EXT_STORAGE){
                         Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT).show()
-//                        showToast = Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT)
-//                        showToast?.show()
                     }
                 }
             }
@@ -365,8 +364,9 @@ abstract class DownloadDialogUtil : Fragment(){
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-//        showToast?.cancel()
-    }
+//    override fun onStop() {
+//        super.onStop()
+//        if (receiver != null)
+//            requireActivity().unregisterReceiver(receiver)
+//    }
 }

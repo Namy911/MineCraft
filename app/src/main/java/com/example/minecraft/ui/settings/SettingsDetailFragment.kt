@@ -54,5 +54,4 @@ class SettingsDetailFragment : Fragment() {
             (activity as PremiumActivity).setupToolBartTitle(title)
         }
     }
-
 }

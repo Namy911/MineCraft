@@ -29,7 +29,7 @@ import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.ItemFooterBinding
 import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
-import com.example.minecraft.databinding.MainFragmentBinding
+import com.example.minecraft.databinding.FragmentMainBinding
 import com.example.minecraft.ui.spash.SplashscreenActivity
 import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.*
@@ -44,11 +44,10 @@ import kotlin.coroutines.suspendCoroutine
 class MainFragment : DownloadDialogUtil(){
     companion object{
         const val TAG = "MainFragment"
-        const val COUNT_ADS = 1
         const val PAGE_SIZE: Int = 4
     }
 
-    private var _binding: MainFragmentBinding? = null
+    private var _binding: FragmentMainBinding? = null
     private val binding get() = _binding!!
 
     private val viewModel: MainViewModel by viewModels()
@@ -76,7 +75,7 @@ class MainFragment : DownloadDialogUtil(){
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = MainFragmentBinding.inflate(inflater, container, false)
+        _binding = FragmentMainBinding.inflate(inflater, container, false)
         lifecycleScope.launch {
             appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
                 this@MainFragment.prefState = prefState
@@ -188,12 +187,10 @@ class MainFragment : DownloadDialogUtil(){
                 ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     if (checkInternetConnection()){ dialogNetwork(true) }
-//                    dialogNetwork(true)
                 }
 
                 override fun onLost(network: Network) {
                     if (!checkInternetConnection()) { dialogNetwork(false) }
-//                    dialogNetwork(false)
                 }
             })
         }
@@ -340,7 +337,6 @@ class MainFragment : DownloadDialogUtil(){
         fun bind(item: AdsItem) {
             val ad = item.ads
             val adView = binding.container
-//            val adView = view as NativeAdView
 
             adView.iconView = adView.findViewById(R.id.ad_app_icon)
 

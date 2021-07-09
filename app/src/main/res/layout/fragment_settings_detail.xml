@@ -19,7 +19,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:paddingHorizontal="20dp"
-            android:paddingVertical="80dp">
+            android:paddingVertical="30dp">
 
             <TextView
                 style="@style/CustomStyleText"

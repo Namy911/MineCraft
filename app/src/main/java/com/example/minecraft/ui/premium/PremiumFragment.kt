@@ -2,7 +2,6 @@ package com.example.minecraft.ui.premium
 
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -13,9 +12,6 @@ import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.LayoutPremiumBinding
-import com.example.minecraft.ui.settings.SettingsDetailFragmentDirections
-import com.example.minecraft.ui.settings.SettingsFragment
-import com.example.minecraft.ui.settings.SettingsFragmentDirections
 import com.example.minecraft.ui.util.AppUtil
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,6 +29,11 @@ class PremiumFragment : Fragment() {
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
 
+        billingManager = BillingManager(requireActivity()){
+            requireActivity().finish()
+            val intent = Intent(requireActivity(), MainActivity::class.java)
+            startActivity(intent)
+        }
         appUtil = AppUtil()
     }
 
@@ -46,11 +47,6 @@ class PremiumFragment : Fragment() {
         val animBtn = AnimationUtils.loadAnimation(requireActivity(), R.anim.btn_premium)
         val animTxt = AnimationUtils.loadAnimation(requireActivity(), R.anim.txt_premium)
 
-        billingManager = BillingManager(requireActivity()){
-            requireActivity().finish()
-            val intent = Intent(requireActivity(), MainActivity::class.java)
-            startActivity(intent)
-        }
 
         binding.apply {
             btnPremium.animation = animBtn

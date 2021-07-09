@@ -8,20 +8,17 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.LayoutPremiumBinding
-import com.example.minecraft.ui.main.MainViewModel
-import com.example.minecraft.ui.settings.SettingsFragment
 import com.example.minecraft.ui.settings.SettingsFragmentDirections
 import com.example.minecraft.ui.util.AppUtil
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+
 
 
 @AndroidEntryPoint
@@ -31,12 +28,11 @@ class BillingFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val args: BillingFragmentArgs by navArgs()
-    private val viewModel: MainViewModel by viewModels()
 
-//    @Inject
     lateinit var appUtil: AppUtil
 
     lateinit var billingManager: BillingManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         appUtil = AppUtil()
@@ -93,8 +89,6 @@ class BillingFragment : Fragment() {
                 findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.policy), getString(R.string.txt_privacy_policy)))
             }
         }
-
-//        (activity as MainActivity).disableAd()
     }
 
     override fun onDestroyView() {

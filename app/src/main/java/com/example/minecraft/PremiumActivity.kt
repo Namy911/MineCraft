@@ -11,7 +11,7 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.bumptech.glide.Glide
 import com.example.minecraft.databinding.LayoutPremiumBinding
-import com.example.minecraft.databinding.PremiumActivityBinding
+import com.example.minecraft.databinding.ActivityPremiumBinding
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -21,15 +21,12 @@ private const val TAG = "PremiumActivity"
 @AndroidEntryPoint
 class PremiumActivity : AppCompatActivity() {
 
-    private lateinit var binding: PremiumActivityBinding
+    private lateinit var binding: ActivityPremiumBinding
     private lateinit var navController: NavController
-
-    //    @Inject
-    lateinit var billingManager: BillingManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = PremiumActivityBinding.inflate(layoutInflater)
+        binding = ActivityPremiumBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val navHostFragment =
@@ -49,13 +46,14 @@ class PremiumActivity : AppCompatActivity() {
             when (destination.id) {
                 R.id.premiumFragment -> {
                     binding.apply {
-                        txtBar.text = ""
+                        toolbar.visibility = View.GONE
                         homeIndicator.visibility = View.INVISIBLE
                         colliderBackArrow.visibility = View.INVISIBLE
                     }
                 }
                 R.id.settingsPremiumDetailFragment -> {
                     binding.apply {
+                        toolbar.visibility = View.VISIBLE
                         homeIndicator.visibility = View.VISIBLE
                         colliderBackArrow.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.INVISIBLE
