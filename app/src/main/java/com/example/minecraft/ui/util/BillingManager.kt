@@ -85,21 +85,37 @@ class BillingManager (
     fun startConnection() {
         billingClient.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(billingResult: BillingResult) {
-//                billingClient.queryPurchasesAsync(PRODUCT_TYPE, purchasesResponseListener)
                 if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
                     val result = checkItemAvailability()
                     if (result) {
                         querySkuDetails()
-                    } else {
-                        Log.d(TAG, "onBillingSetupFinished: Item Exist")
-//                        CoroutineScope(SupervisorJob()).launch {
-//                            sharedPreferencesManager.setBillingAdsSate(true)
-//                        }
-//                        redirect.invoke()
                     }
                 }
-//                else if (billingResult.responseCode != BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED ) {
-//                }
+            }
+
+            override fun onBillingServiceDisconnected() {
+//                this@BillingManager.startConnection() //???
+            }
+        })
+    }
+
+    fun setSubsState() {
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    val result = checkItemAvailability()
+                    if (result) {
+                        BILLING_FLAG_STATE = true
+                        CoroutineScope(SupervisorJob()).launch {
+                            sharedPreferencesManager.setBillingAdsSate(false)
+                        }
+                    }else{
+                        BILLING_FLAG_STATE = false
+                        CoroutineScope(SupervisorJob()).launch {
+                            sharedPreferencesManager.setBillingAdsSate(true)
+                        }
+                    }
+                }
             }
 
             override fun onBillingServiceDisconnected() {

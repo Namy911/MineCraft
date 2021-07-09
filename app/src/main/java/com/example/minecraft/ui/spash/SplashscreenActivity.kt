@@ -42,17 +42,11 @@ class SplashscreenActivity : AppCompatActivity() {
 
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
     lateinit var billingManager: BillingManager
-    private var prefState = false
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        billingManager = BillingManager(this){
-//            finish()
-//            startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
-        }
-        billingManager.startConnection()
-
+        billingManager = BillingManager(this){ }
+        billingManager.setSubsState()
         appSharedPrefManager = AppSharedPreferencesManager(this)
         // Ful screen window
         @Suppress("DEPRECATION")
@@ -133,11 +127,9 @@ class SplashscreenActivity : AppCompatActivity() {
 
         val dialog = builder.create()
 
-        try {
-            builder.create().show()
-        } catch (e : Exception){
-            Log.d(TAG, "dialogNoInternet: ")
-        }
+        try { builder.create().show() }
+        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
+
         networkState(dialog)
     }
 
@@ -165,27 +157,11 @@ class SplashscreenActivity : AppCompatActivity() {
     }
     // Check if user have trial and redirect
     private fun navigateToMainScreen() {
-
-        val result = billingManager.checkItemAvailability()
-        Log.d(TAG, "navigateToMainScreen: ${result} kk")
-//        lifecycleScope.launchWhenCreated {
-//            appSharedPrefManager.billingAdsSate.collect {
-//                if (!it) {
-//                    startActivity(Intent(this@SplashscreenActivity, PremiumActivity::class.java))
-//                } else {
-//                    startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
-//                }
-//            }
-//        }
-
-        if (result) {
-//        if (BillingManager.BILLING_FLAG_STATE) {
+        if (BillingManager.BILLING_FLAG_STATE) {
             finish()
             startActivity(Intent(this@SplashscreenActivity, PremiumActivity::class.java))
-            CoroutineScope(SupervisorJob()).launch { appSharedPrefManager.setBillingAdsSate(false) }
         } else {
             finish()
-            CoroutineScope(SupervisorJob()).launch { appSharedPrefManager.setBillingAdsSate(true) }
             startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
         }
     }
