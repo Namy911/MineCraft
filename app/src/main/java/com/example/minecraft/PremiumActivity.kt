@@ -41,18 +41,25 @@ class PremiumActivity : AppCompatActivity() {
             setDisplayShowHomeEnabled(false)
         }
         // Setup navigation with colliders
-        binding.colliderBackArrow.setOnClickListener { super.onBackPressed() }
-        binding.colliderSettings.setOnClickListener { setActionBarSettings() }
+        binding.apply {
+            colliderBackArrow.setOnClickListener { super.onBackPressed() }
+            colliderSettings.setOnClickListener { setActionBarSettings() }
+        }
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.premiumFragment -> {
-                    binding.homeIndicator.visibility = View.INVISIBLE
-                    binding.colliderBackArrow.visibility = View.INVISIBLE
+                    binding.apply {
+                        txtBar.text = ""
+                        homeIndicator.visibility = View.INVISIBLE
+                        colliderBackArrow.visibility = View.INVISIBLE
+                    }
                 }
                 R.id.settingsPremiumDetailFragment -> {
-                    binding.homeIndicator.visibility = View.VISIBLE
-                    binding.colliderBackArrow.visibility = View.VISIBLE
-                    binding.toolBarSettings.visibility = View.INVISIBLE
+                    binding.apply {
+                        homeIndicator.visibility = View.VISIBLE
+                        colliderBackArrow.visibility = View.VISIBLE
+                        toolBarSettings.visibility = View.INVISIBLE
+                    }
                 }
                 else -> {
                 }

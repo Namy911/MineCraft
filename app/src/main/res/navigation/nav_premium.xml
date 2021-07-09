@@ -22,5 +22,9 @@
         <argument
             android:name="title"
             app:argType="string" />
+        <argument
+            android:name="flag"
+            app:argType="boolean"
+            android:defaultValue="false" />
     </fragment>
 </navigation>

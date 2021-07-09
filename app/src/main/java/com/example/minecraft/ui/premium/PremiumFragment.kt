@@ -18,7 +18,9 @@ import com.example.minecraft.ui.settings.SettingsFragment
 import com.example.minecraft.ui.settings.SettingsFragmentDirections
 import com.example.minecraft.ui.util.AppUtil
 import com.example.minecraft.ui.util.BillingManager
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class PremiumFragment : Fragment() {
     private var _binding: LayoutPremiumBinding? = null
     val binding get() = _binding!!

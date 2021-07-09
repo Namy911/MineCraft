@@ -12,6 +12,7 @@ import androidx.navigation.fragment.navArgs
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentSettingsDetailBinding
 import com.example.minecraft.MainActivity
+import com.example.minecraft.PremiumActivity
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.BufferedReader
 import java.io.IOException
@@ -47,7 +48,11 @@ class SettingsDetailFragment : Fragment() {
     }
 
     fun setupToolBartTitle(title: String){
-//        (activity as MainActivity).setupToolBartTitle(title)
+        if (args.flag) {
+            (activity as MainActivity).setupToolBartTitle(title)
+        } else {
+            (activity as PremiumActivity).setupToolBartTitle(title)
+        }
     }
 
 }
