@@ -20,13 +20,8 @@ class BillingManager (
         private const val TAG = "BillingManager"
 
         const val TRIAL_PRODUCT_YEAR = "android.test.purchased"
-        const val TRIAL_PRODUCT_YEAR2 = "android.test.purchased"
-        const val TRIAL_PRODUCT_CANCEL = "android.test.canceled"
-        const val TRIAL_PRODUCT_REFUNDED = "android.test.refunded"
-        const val TRIAL_PRODUCT_NO_ADVAILABLE = "android.test.item_unavailable"
-
         const val PRODUCT_TYPE = BillingClient.SkuType.INAPP
-        const val SUBS_TYPE = BillingClient.SkuType.SUBS
+
         var BILLING_FLAG_STATE = false
     }
 
@@ -37,25 +32,8 @@ class BillingManager (
             }
             redirect.invoke()
         }
-//        else if (billingResult.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED && purchases != null) {
-//            Log.d(TAG, "BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED: ")
-//        }
-//        Log.d(TAG, "purchasesUpdatedListener: ${billingResult.responseCode}")
     }
 
-//    private val purchasesResponseListener = PurchasesResponseListener { billingResult, purchases ->
-//        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-//        Log.d(TAG, "purchasesResponseListener: {${purchases.size}}")
-//            for (item in purchases) {
-//                if (!item.skus.contains(TRIAL_PRODUCT_YEAR)) {
-//                    querySkuDetails()
-//                } else {
-//                    Log.d(TAG, "purchasesResponseListener")
-//                }
-//            }
-//        }
-//    }
-//    @Inject
     var sharedPreferencesManager = AppSharedPreferencesManager(activity)
 
     private val acknowledgePurchaseResponseListener =
@@ -66,15 +44,6 @@ class BillingManager (
                 }
             }
         }
-
-
-
-//    private val consumeResponseListener = ConsumeResponseListener { billingResult, s: String ->
-//        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-//            //cumparat, redirect
-//            Log.d(TAG, "ConsumeResponseListener: ")
-//        }
-//    }
 
     var billingClient = BillingClient.newBuilder(activity)
         .setListener(purchasesUpdatedListener)
@@ -94,7 +63,7 @@ class BillingManager (
             }
 
             override fun onBillingServiceDisconnected() {
-//                this@BillingManager.startConnection() //???
+                this@BillingManager.startConnection() //???
             }
         })
     }
@@ -119,7 +88,7 @@ class BillingManager (
             }
 
             override fun onBillingServiceDisconnected() {
-//                this@BillingManager.startConnection() //???
+                this@BillingManager.startConnection() //???
             }
         })
     }
@@ -133,9 +102,6 @@ class BillingManager (
                     if (sku == TRIAL_PRODUCT_YEAR) {
                         setAcknowledgePurchase(purchase)
                     }
-//                    else {
-//                        setConsumePurchase(purchase)
-//                    }
                 }
             }
         }
@@ -149,16 +115,6 @@ class BillingManager (
             acknowledgePurchaseParams, acknowledgePurchaseResponseListener
         )
     }
-
-//    private fun setConsumePurchase(purchase: Purchase) {
-//        val consumeParams = ConsumeParams.newBuilder()
-//            .setPurchaseToken(purchase.purchaseToken)
-//            .build()
-//        billingClient.consumeAsync(
-//            consumeParams, consumeResponseListener
-//        )
-//    }
-
     //
     fun querySkuDetails() {
         val skuList = ArrayList<String>()
@@ -184,12 +140,10 @@ class BillingManager (
         if (items != null) {
             for (item in items) {
                 if (item.skus.contains(TRIAL_PRODUCT_YEAR)) {
-//                    BILLING_FLAG_STATE = false
                     return false
                 }
             }
         }
-//        BILLING_FLAG_STATE = true
         return true
     }
 

@@ -32,9 +32,7 @@ import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.MainFragmentBinding
 import com.example.minecraft.ui.spash.SplashscreenActivity
 import com.example.minecraft.ui.util.*
-import com.google.android.gms.ads.AdListener
-import com.google.android.gms.ads.AdLoader
-import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.*
 import com.google.android.gms.ads.nativead.NativeAd
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -90,6 +88,14 @@ class MainFragment : DownloadDialogUtil(){
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupToolBartTitle()
+
+        if (!prefState) {
+            MobileAds.initialize(requireActivity()) {}
+            val adRequest = AdRequest.Builder().build()
+            binding.adView.loadAd(adRequest)
+        } else {
+            binding.adView.visibility = View.GONE
+        }
         // Setup recycler
         binding.apply {
             container.adapter = adapter
@@ -264,7 +270,7 @@ class MainFragment : DownloadDialogUtil(){
             adLoader.loadAd(AdRequest.Builder().build())
         }
 
-    fun setupToolBartTitle(){ (activity as MainActivity?)!!.setupToolBartTitle() }
+    fun setupToolBartTitle(){ (activity as MainActivity).setupToolBartTitle() }
 
     // ==========================   Helpers  ==============================================
 

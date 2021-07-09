@@ -46,6 +46,7 @@ class SplashscreenActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         billingManager = BillingManager(this){ }
+//        billingManager.setSubsState()
         billingManager.setSubsState()
         appSharedPrefManager = AppSharedPreferencesManager(this)
         // Ful screen window
@@ -164,5 +165,10 @@ class SplashscreenActivity : AppCompatActivity() {
             finish()
             startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        billingManager.endConnection()
     }
 }

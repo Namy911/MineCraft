@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.minecraft.R
@@ -46,7 +47,7 @@ class SettingsDetailFragment : Fragment() {
     }
 
     fun setupToolBartTitle(title: String){
-        (activity as MainActivity?)!!.setupToolBartTitle(title)
+//        (activity as MainActivity).setupToolBartTitle(title)
     }
 
 }

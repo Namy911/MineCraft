@@ -18,16 +18,9 @@
             app:popUpTo="@id/mainFragment" />
     </fragment>
     <fragment
-        android:id="@+id/blankFragment"
-        android:name="com.example.minecraft.ui.util.BlankFragment"
-        tools:layout="@layout/fragment_blank" />
-    <fragment
         android:id="@+id/detailFragment"
         android:name="com.example.minecraft.ui.main.DetailFragment"
         tools:layout="@layout/fragment_detail" >
-        <action
-            android:id="@+id/blankFragment"
-            app:destination="@id/blankFragment" />
         <argument
             android:name="model"
             app:argType="com.example.minecraft.data.model.AddonModel" />
@@ -47,15 +40,13 @@
         <action
             android:id="@+id/settingsDetailFragment"
             app:destination="@id/settingsDetailFragment" />
-        <action
-            android:id="@+id/blankFragment"
-            app:destination="@id/blankFragment" />
     </fragment>
     <action
         android:id="@+id/global_settingsFragment"
         app:destination="@id/settingsFragment"/>
     <fragment
         android:id="@+id/settingsDetailFragment"
+        tools:layout="@layout/fragment_settings_detail"
         android:name="com.example.minecraft.ui.settings.SettingsDetailFragment">
         <argument
             android:name="text"
@@ -66,10 +57,13 @@
     </fragment>
     <fragment
         android:id="@+id/trialFragment"
-        android:name="com.example.minecraft.ui.trial.BillingFragment"
+        android:name="com.example.minecraft.ui.billing.BillingFragment"
         android:label="fragment_trial"
         tools:layout="@layout/fragment_trial" >
         <argument android:name="flag_Dest"
             app:argType="integer" />
+        <action
+            android:id="@+id/settingsDetailFragment"
+            app:destination="@id/settingsDetailFragment" />
     </fragment>
 </navigation>

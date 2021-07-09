@@ -77,7 +77,7 @@ class DetailFragment : DownloadDialogUtil() {
         _binding = FragmentDetailBinding.inflate(inflater, container, false)
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
-
+//        (activity as  MainActivity).enableAd()
         lifecycleScope.launch {
             appSharedPrefManager.billingAdsSate.collectLatest { state ->
                 prefState = state
@@ -90,6 +90,14 @@ class DetailFragment : DownloadDialogUtil() {
         super.onViewCreated(view, savedInstanceState)
         setupToolBartTitle(getString(R.string.title_fragment_details))
         checkFileExists(args.model)
+
+        if (!prefState) {
+            MobileAds.initialize(requireActivity()) {}
+            val adRequest = AdRequest.Builder().build()
+            binding.adView.loadAd(adRequest)
+        } else {
+            binding.adView.visibility = View.GONE
+        }
 
         binding.apply {
             val list: List<String> = args.model.preview

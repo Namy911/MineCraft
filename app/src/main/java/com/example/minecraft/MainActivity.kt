@@ -27,8 +27,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: MainActivityBinding
     private lateinit var navController: NavController
 
-    lateinit var mAdView : AdView
-
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,20 +44,6 @@ class MainActivity : AppCompatActivity() {
             setDisplayShowHomeEnabled(false)
         }
         appSharedPrefManager = AppSharedPreferencesManager(this)
-
-        lifecycleScope.launch {
-            appSharedPrefManager.billingAdsSate.collectLatest { state ->
-                if (!state){
-                    MobileAds.initialize(this@MainActivity) {}
-                    mAdView = findViewById(R.id.adView)
-                    val adRequest = AdRequest.Builder().build()
-                    mAdView.loadAd(adRequest)
-                } else{
-                    disableAd()
-                }
-            }
-        }
-
         // Setup navigation with colliders
         binding.colliderBackArrow.setOnClickListener { super.onBackPressed() }
         binding.colliderSettings.setOnClickListener { setActionBarSettings() }
@@ -99,10 +83,6 @@ class MainActivity : AppCompatActivity() {
     private fun setActionBarSettings(){
             val action = NavGraphDirections.globalSettingsFragment()
             navController.navigate(action)
-    }
-
-    private fun disableAd(){
-        binding.adView.visibility = View.GONE
     }
 
     fun setupToolBartTitle(title: String = getString(R.string.app_name)){
