@@ -17,9 +17,10 @@ private const val TAG = "MainActivity"
 class MainActivity : AppCompatActivity() {
     companion object{
         const val FLAG_DEST_BILLING_FRAGMENT = 2
-        const val FLAG_DEST_BILLING_MAIN = 1
+        const val FLAG_DEST_MAIN_FRAGMENT = 1
         const val EXTRA_FLAG_DIR_NAME = "activity.main.flag"
     }
+
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
 

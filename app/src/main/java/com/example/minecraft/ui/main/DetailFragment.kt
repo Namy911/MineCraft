@@ -232,14 +232,13 @@ class DetailFragment : DownloadDialogUtil() {
         (activity as MainActivity?)!!.setupToolBartTitle(title)
     }
     // Button share logic
-    fun shareFileCheck(view: View) {
+    private fun shareFileCheck(view: View) {
         val temp1 = viewModel.getCachePathBehavior()
         val temp2 = viewModel.getCachePathResource()
 
-        if (temp1 == null || temp2 == null){
-            Snackbar.make(view, getString(R.string.snack_msg_wait), Snackbar.LENGTH_LONG).show()
+        if ((temp1 == null || temp2 == null) && checkPermission()){
+            binding.progressBar3.visibility = View.VISIBLE
         }
-
         val sendIntent: Intent = Intent().apply {
             putExtra(Intent.EXTRA_TEXT, "Share Addon")
             type = "file/*"
@@ -284,6 +283,7 @@ class DetailFragment : DownloadDialogUtil() {
         }
         // Intent share config, multiple or single
             if (list[0] != null && list[1] != null) {
+                binding.progressBar3.visibility = View.GONE
                 sendIntent.action = Intent.ACTION_SEND_MULTIPLE
                 sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
                 val shareIntent = Intent.createChooser(sendIntent, "")

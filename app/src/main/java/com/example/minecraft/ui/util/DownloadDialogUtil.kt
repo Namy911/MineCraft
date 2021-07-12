@@ -56,7 +56,6 @@ abstract class DownloadDialogUtil : Fragment(){
 
     private val viewModel: MainViewModel by viewModels()
 
-    var receiver : BroadcastReceiver? = null
     var toast: Toast? = null
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
@@ -244,6 +243,7 @@ abstract class DownloadDialogUtil : Fragment(){
                 setOnClickListener {
                     if (temp1 != null && flagDir == DownloadAddon.DIR_CACHE) {
                         checkInstallation(model, flagDir)
+                        dialog.dismiss()
                         return@setOnClickListener
                     }
                     if (checkInternetConnection()) {
@@ -251,6 +251,7 @@ abstract class DownloadDialogUtil : Fragment(){
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
                     }
+                    dialog.dismiss()
                 }
             }
         } else {
@@ -269,6 +270,7 @@ abstract class DownloadDialogUtil : Fragment(){
 
                 setOnClickListener {
                     if (temp2 != null && flagDir == DownloadAddon.DIR_CACHE) {
+                        dialog.dismiss()
                         checkInstallation(model, flagDir)
                         return@setOnClickListener
                     }
@@ -277,6 +279,7 @@ abstract class DownloadDialogUtil : Fragment(){
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
                     }
+                    dialog.dismiss()
                 }
             }
         } else {

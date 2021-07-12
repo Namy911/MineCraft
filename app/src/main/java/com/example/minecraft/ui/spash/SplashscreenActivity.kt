@@ -20,14 +20,9 @@ import androidx.lifecycle.lifecycleScope
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivitySplashscreenBinding
-import com.example.minecraft.PremiumActivity
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.collect
-
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.lang.Exception
@@ -165,7 +160,7 @@ class SplashscreenActivity : AppCompatActivity() {
             startActivity(intent)
         } else {
             finish()
-            intent.putExtra(MainActivity.EXTRA_FLAG_DIR_NAME, MainActivity.FLAG_DEST_BILLING_MAIN)
+            intent.putExtra(MainActivity.EXTRA_FLAG_DIR_NAME, MainActivity.FLAG_DEST_MAIN_FRAGMENT)
             startActivity(intent)
         }
     }

@@ -3,21 +3,13 @@ package com.example.minecraft.ui.settings
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
-import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
-import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentSettingsDetailBinding
 import com.example.minecraft.MainActivity
-import com.example.minecraft.PremiumActivity
 import dagger.hilt.android.AndroidEntryPoint
-import java.io.BufferedReader
-import java.io.IOException
-import java.io.InputStream
-import java.io.InputStreamReader
 
 @AndroidEntryPoint
 class SettingsDetailFragment : Fragment() {
@@ -48,10 +40,6 @@ class SettingsDetailFragment : Fragment() {
     }
 
     fun setupToolBartTitle(title: String){
-        if (args.flag) {
-            (activity as MainActivity).setupToolBartTitle(title)
-        } else {
-            (activity as PremiumActivity).setupToolBartTitle(title)
-        }
+        (activity as MainActivity).setupToolBartTitle(title)
     }
 }
