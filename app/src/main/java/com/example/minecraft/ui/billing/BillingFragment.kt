@@ -72,7 +72,6 @@ class BillingFragment : Fragment() {
             }
             btnPremium.animation = animBtn
             txtBtnTrial.animation = animTxt
-            imgClose.visibility = View.GONE
 
             txtSubscription.setOnClickListener {
                 findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.policy), getString(R.string.subscription_info)))

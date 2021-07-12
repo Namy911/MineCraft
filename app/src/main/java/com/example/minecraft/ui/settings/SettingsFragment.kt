@@ -52,6 +52,6 @@ class SettingsFragment : Fragment() {
     }
 
     fun setupToolBartTitle(title: String){
-        (activity as MainActivity?)!!.setupToolBartTitle(title)
+        (activity as MainActivity).setupToolBartTitle(title)
     }
 }

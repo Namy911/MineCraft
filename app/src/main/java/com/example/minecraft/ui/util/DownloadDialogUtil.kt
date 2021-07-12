@@ -299,10 +299,11 @@ abstract class DownloadDialogUtil : Fragment(){
         if (File(cacheResourceLink).exists()) { temp2 = cacheResourceLink; viewModel.setCachePathResource(cacheResourceLink) }
 
         val sendIntent: Intent = Intent().apply {
-            putExtra(Intent.EXTRA_TEXT, "Share Addon")
+            putExtra(Intent.EXTRA_TEXT, getString(R.string.msg_share_addon))
             type = "file/*"
             flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
         }
+
         if (temp1 != null) {
             list[1] = FileProvider.getUriForFile(
                 requireContext().applicationContext,
@@ -347,6 +348,12 @@ abstract class DownloadDialogUtil : Fragment(){
         } catch (e: PackageManager.NameNotFoundException) {
             false
         }
+    }
+    //
+    internal interface BtnShareListener{
+        suspend fun configResource()
+        suspend fun configBehavior()
+        fun sendIntent()
     }
 
     override fun onStop() {

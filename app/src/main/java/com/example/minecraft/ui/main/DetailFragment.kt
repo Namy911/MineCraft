@@ -22,14 +22,15 @@ import com.example.minecraft.BuildConfig
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentDetailBinding
 import com.example.minecraft.MainActivity
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.AppUtil
 import com.example.minecraft.ui.util.DownloadDialogUtil
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
-import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -108,8 +109,13 @@ class DetailFragment : DownloadDialogUtil() {
             }
 
             btnShare.setOnClickListener {
-                checkFileExists(args.model)
-                shareFileCheck(it)
+//                val temp = viewModel.getFlagRewardShare()
+//                if (temp == false && checkInternetConnection()) {
+//                    adSeen(DownloadAddon.DIR_CACHE)
+//                }else{
+                    checkFileExists(args.model)
+                    shareFileCheck()
+//                }
             }
 
             btnDownload.setOnClickListener {
@@ -136,7 +142,7 @@ class DetailFragment : DownloadDialogUtil() {
                         dialogDownload(args.model, DownloadAddon.DIR_CACHE)
                     }
                 } else {
-                    findNavController().navigate(DetailFragmentDirections.trialFragment(2))
+                    findNavController().navigate(DetailFragmentDirections.trialFragment(FLAG_DEST_BILLING_FRAGMENT))
                 }
             }
         }
@@ -229,68 +235,86 @@ class DetailFragment : DownloadDialogUtil() {
     }
 
     fun setupToolBartTitle(title: String) {
-        (activity as MainActivity?)!!.setupToolBartTitle(title)
+        (activity as MainActivity).setupToolBartTitle(title)
     }
     // Button share logic
-    private fun shareFileCheck(view: View) {
-        val temp1 = viewModel.getCachePathBehavior()
-        val temp2 = viewModel.getCachePathResource()
+    private fun shareFileCheck() {
+        val callbackShare = object : BtnShareListener{
+            val temp1 = viewModel.getCachePathBehavior()
+            val temp2 = viewModel.getCachePathResource()
+            val list = arrayListOf<Uri?>(null, null)
 
-        if ((temp1 == null || temp2 == null) && checkPermission()){
-            binding.progressBar3.visibility = View.VISIBLE
-        }
-        val sendIntent: Intent = Intent().apply {
-            putExtra(Intent.EXTRA_TEXT, "Share Addon")
-            type = "file/*"
-            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-        }
-        val list = arrayListOf<Uri?>(null, null)
-        // Behavior cell config
-        if (temp1 != null) {
-            list[1] = getPath(File(temp1))
-        } else {
-            if (checkInternetConnection()) {
-                if (checkPermission()) {
-                    workDownloadAddon(
-                        args.model.behavior,
-                        getPackFileName(args.model.behavior, TAG_BEHAVIOR),
-                        DownloadAddon.DIR_CACHE,
-                        args.model,
-                        true
-                    )
-                }
-            } else {
-                Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
-            }
-        }
-        // Resource cell config
-        if (temp2 != null) {
-            list[0] = getPath(File(temp2))
-        } else {
-            if (checkInternetConnection()) {
-                    if (checkPermission()) {
-                        workDownloadAddon(
-                            args.model.resource,
-                            getPackFileName(args.model.resource, TAG_RESOURCE),
-                            DownloadAddon.DIR_CACHE,
-                            args.model,
-                            true
-                        )
-                    }
+            override suspend fun configResource() {
+                if (temp1 != null) {
+                    list[1] = getPath(File(temp1))
                 } else {
-                    Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+                    if (checkInternetConnection()) {
+                        if (checkPermission()) {
+                            workDownloadAddon(
+                                args.model.behavior,
+                                getPackFileName(args.model.behavior, TAG_BEHAVIOR),
+                                DownloadAddon.DIR_CACHE,
+                                args.model,
+                                true
+                            )
+                            list[1] = getPath(File (requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.behavior, TAG_BEHAVIOR)))
+                        }
+                    } else {
+                        Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+                    }
                 }
-        }
-        // Intent share config, multiple or single
-            if (list[0] != null && list[1] != null) {
-                binding.progressBar3.visibility = View.GONE
-                sendIntent.action = Intent.ACTION_SEND_MULTIPLE
-                sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
-                val shareIntent = Intent.createChooser(sendIntent, "")
-                requireActivity().startActivity(shareIntent)
             }
-    }
 
+            override suspend fun configBehavior() {
+                if (temp2 != null) {
+                    list[0] = getPath(File(temp2))
+                } else {
+                    if (checkInternetConnection()) {
+                        if (checkPermission()) {
+                            workDownloadAddon(
+                                args.model.resource,
+                                getPackFileName(args.model.resource, TAG_RESOURCE),
+                                DownloadAddon.DIR_CACHE,
+                                args.model,
+                                true
+                            )
+                            list[0] = getPath(File(requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.resource, TAG_RESOURCE)))
+                        }
+                    } else {
+                        Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+
+            override fun sendIntent() {
+                if (list[0] != null && list[1] != null) {
+                    val sendIntent: Intent = Intent().apply {
+                        putExtra(Intent.EXTRA_TEXT, "Share Addon")
+                        type = "file/*"
+                        flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                        action = Intent.ACTION_SEND_MULTIPLE
+                        putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
+                    }
+
+                    val shareIntent = Intent.createChooser(sendIntent, "")
+                    requireActivity().startActivity(shareIntent)
+                }
+            }
+
+        }
+
+        lifecycleScope.launch {
+             val job1 = async { callbackShare.configResource() }
+             val job2 = async { callbackShare.configBehavior() }
+
+            job1.start()
+            job2.start()
+            job1.await()
+            job2.await()
+
+            callbackShare.sendIntent()
+        }
+    }
     //
     fun getPath(file: File) = try {
         FileProvider.getUriForFile(

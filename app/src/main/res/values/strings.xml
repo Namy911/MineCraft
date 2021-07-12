@@ -69,5 +69,6 @@
     <string name="btn_share">Share</string>
     <string name="btn_prepay">Prepay</string>
     <string name="snack_msg_wait">Please wait until the files are ready</string>
+    <string name="msg_share_addon">Share Addon</string>
 
 </resources>
