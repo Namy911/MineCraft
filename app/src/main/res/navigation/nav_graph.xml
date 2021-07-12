@@ -63,7 +63,7 @@
         android:id="@+id/trialFragment"
         android:name="com.example.minecraft.ui.billing.BillingFragment"
         android:label="fragment_trial"
-        tools:layout="@layout/fragment_trial" >
+        tools:layout="@layout/layout_premium" >
         <argument android:name="flag_Dest"
             app:argType="integer" />
         <action

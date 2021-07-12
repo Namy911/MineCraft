@@ -47,7 +47,6 @@ class PremiumFragment : Fragment() {
         val animBtn = AnimationUtils.loadAnimation(requireActivity(), R.anim.btn_premium)
         val animTxt = AnimationUtils.loadAnimation(requireActivity(), R.anim.txt_premium)
 
-
         binding.apply {
             btnPremium.animation = animBtn
             txtBtnTrial.animation = animTxt

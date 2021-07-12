@@ -4,26 +4,22 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import androidx.core.view.isVisible
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
-import com.example.minecraft.NavGraphDirections
-import com.example.minecraft.R
 import com.example.minecraft.databinding.ActivityMainBinding
+import com.example.minecraft.ui.main.MainFragmentDirections
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
-import com.example.minecraft.ui.util.BillingManager
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.MobileAds
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 private const val TAG = "MainActivity"
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
-
+    companion object{
+        const val FLAG_DEST_BILLING_FRAGMENT = 2
+        const val FLAG_DEST_BILLING_MAIN = 1
+        const val EXTRA_FLAG_DIR_NAME = "activity.main.flag"
+    }
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
 
@@ -34,7 +30,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         // Setup Navigation
-        setupToolBartTitle()
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.findNavController()
@@ -44,38 +39,82 @@ class MainActivity : AppCompatActivity() {
             setDisplayShowHomeEnabled(false)
         }
         appSharedPrefManager = AppSharedPreferencesManager(this)
+
+        val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
+
+        if (flagDest == FLAG_DEST_BILLING_FRAGMENT) {
+            navController.navigate(MainFragmentDirections.trialFragment(FLAG_DEST_BILLING_FRAGMENT))
+        } else {
+            setupToolBartTitle()
+        }
         // Setup navigation with colliders
-        binding.colliderBackArrow.setOnClickListener { super.onBackPressed() }
-        binding.colliderSettings.setOnClickListener { setActionBarSettings() }
+        binding.apply {
+            colliderBackArrow.setOnClickListener { super.onBackPressed() }
+            colliderSettings.setOnClickListener { setActionBarSettings() }
+        }
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.mainFragment -> {
-                    if (binding.homeIndicator.isVisible){
-                        binding.homeIndicator.visibility = View.INVISIBLE
-                        binding.colliderBackArrow.visibility = View.GONE
+                    binding.apply {
+                        if (homeIndicator.isVisible) {
+                            homeIndicator.visibility = View.INVISIBLE
+                            colliderBackArrow.visibility = View.GONE
+                        }
+                        toolBarSettings.visibility = View.VISIBLE
+                        colliderSettings.visibility = View.VISIBLE
                     }
-                    binding.toolBarSettings.visibility = View.VISIBLE
                 }
                 R.id.detailFragment -> {
-                    binding.homeIndicator.visibility = View.VISIBLE
-                    binding.colliderBackArrow.visibility = View.VISIBLE
-                    binding.toolBarSettings.visibility = View.VISIBLE
+                    binding.apply {
+                        colliderSettings.visibility = View.VISIBLE
+                        homeIndicator.visibility = View.VISIBLE
+                        colliderBackArrow.visibility = View.VISIBLE
+                        toolBarSettings.visibility = View.VISIBLE
+                    }
                 }
                 R.id.settingsFragment -> {
-                    binding.homeIndicator.visibility = View.VISIBLE
-                    binding.colliderBackArrow.visibility = View.VISIBLE
-                    binding.toolBarSettings.visibility = View.INVISIBLE
+                    binding.apply {
+                        colliderSettings.visibility = View.VISIBLE
+                        homeIndicator.visibility = View.VISIBLE
+                        colliderBackArrow.visibility = View.VISIBLE
+                        toolBarSettings.visibility = View.GONE
+                    }
                 }
                 R.id.settingsDetailFragment -> {
-                    binding.homeIndicator.visibility = View.VISIBLE
-                    binding.colliderBackArrow.visibility = View.VISIBLE
+                    if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
+                        binding.apply {
+                            homeIndicator.visibility = View.VISIBLE
+                            colliderBackArrow.visibility = View.VISIBLE
+                        }
+                    } else {
+                        binding.apply {
+                            homeIndicator.visibility = View.VISIBLE
+                            colliderBackArrow.visibility = View.VISIBLE
+                            toolBarSettings.visibility = View.GONE
+                            colliderSettings.visibility = View.GONE
+                        }
+                    }
                 }
                 R.id.trialFragment -> {
-                    binding.homeIndicator.visibility = View.VISIBLE
-                    binding.colliderBackArrow.visibility = View.VISIBLE
-                    binding.toolBarSettings.visibility = View.INVISIBLE
+                    if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
+                        binding.apply {
+                            colliderSettings.visibility = View.VISIBLE
+                            colliderSettings.visibility = View.VISIBLE
+                            homeIndicator.visibility = View.VISIBLE
+                            colliderBackArrow.visibility = View.VISIBLE
+                            toolBarSettings.visibility = View.GONE
+                        }
+                    } else {
+                        binding.apply {
+                            homeIndicator.visibility = View.VISIBLE
+                            colliderBackArrow.visibility = View.VISIBLE
+                            toolBarSettings.visibility = View.GONE
+                            colliderSettings.visibility = View.GONE
+                        }
+                    }
                 }
-                else -> { }
+                else -> {
+                }
             }
         }
     }

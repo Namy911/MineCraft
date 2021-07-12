@@ -158,12 +158,15 @@ class SplashscreenActivity : AppCompatActivity() {
     }
     // Check if user have trial and redirect
     private fun navigateToMainScreen() {
+        val intent = Intent(this@SplashscreenActivity, MainActivity::class.java)
         if (BillingManager.BILLING_FLAG_STATE) {
             finish()
-            startActivity(Intent(this@SplashscreenActivity, PremiumActivity::class.java))
+            intent.putExtra(MainActivity.EXTRA_FLAG_DIR_NAME, MainActivity.FLAG_DEST_BILLING_FRAGMENT)
+            startActivity(intent)
         } else {
             finish()
-            startActivity(Intent(this@SplashscreenActivity, MainActivity::class.java))
+            intent.putExtra(MainActivity.EXTRA_FLAG_DIR_NAME, MainActivity.FLAG_DEST_BILLING_MAIN)
+            startActivity(intent)
         }
     }
 

@@ -31,14 +31,14 @@
 
             <TextView
                 android:id="@+id/txt_bar"
+                style="@style/CustomStyleTitleBar"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                style="@style/CustomStyleTitleBar"
                 android:layout_marginBottom="8dp"
-                tools:text="TextView"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/tool_bar_settings"
-                app:layout_constraintStart_toEndOf="@+id/home_indicator" />
+                app:layout_constraintEnd_toEndOf="@+id/collider_settings"
+                app:layout_constraintStart_toStartOf="@+id/collider_back_arrow"
+                tools:text="TextView" />
 
             <ImageView
                 android:id="@+id/tool_bar_settings"

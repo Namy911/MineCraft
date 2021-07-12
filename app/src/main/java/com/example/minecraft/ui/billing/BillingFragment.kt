@@ -75,17 +75,14 @@ class BillingFragment : Fragment() {
             imgClose.visibility = View.GONE
 
             txtSubscription.setOnClickListener {
-                Log.d(TAG, "onViewCreated: ")
                 findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.policy), getString(R.string.subscription_info)))
             }
 
             txtTerms.setOnClickListener {
-                Log.d(TAG, "onViewCreated: ")
                 findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.help), getString(R.string.terms_of_usage)))
             }
 
             txtPrivacy.setOnClickListener {
-                Log.d(TAG, "onViewCreated: ")
                 findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.policy), getString(R.string.txt_privacy_policy)))
             }
         }
