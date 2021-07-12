@@ -57,7 +57,7 @@ abstract class DownloadDialogUtil : Fragment(){
     private val viewModel: MainViewModel by viewModels()
 
     var receiver : BroadcastReceiver? = null
-
+    var toast: Toast? = null
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
         var term = ".mcpack"
@@ -120,11 +120,17 @@ abstract class DownloadDialogUtil : Fragment(){
         workManager.enqueue(request)
         workManager.getWorkInfoByIdLiveData(request.id).observe(viewLifecycleOwner){
             if (it.state.isFinished){
-                Log.d(TAG, "workDownloadAddon: isFinished")
                 // Download addon type(resource or behavior)
-                val result = it.outputData
-                val id = result.getLong(DownloadAddon.DOWNLOAD_FLAG, -3)
-                receiverComplete(id, model, flagDir, flagBtnShare)
+                if (flagBtnShare){
+                    downloadShareFile(model)
+                } else {
+                    checkInstallation(model, flagDir)
+                }
+                // check if needed toast message, from cache do not needed
+                if (flagDir == DownloadAddon.DIR_EXT_STORAGE){
+                    toast = Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT)
+                    toast?.show()
+                }
             }
         }
     }
@@ -277,31 +283,8 @@ abstract class DownloadDialogUtil : Fragment(){
             Log.d(TAG, "isFileBehavior Install: no file")
         }
     }
-    // Receiver, check download completed by id and install addon
-    private fun receiverComplete(idEnqueue: Long, model: AddonModel, flagDir: String, flagBtnShare: Boolean){
-        receiver = object : BroadcastReceiver(){
-            override fun onReceive(context: Context?, intent: Intent?) {
-                val id = intent?.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1)
-                Log.d(TAG, "receiverComplete")
-                if (id == idEnqueue){
-                    Log.d(TAG, "id == idEnqueue")
-                    // check if needed install, yes = install, no = button share
-                    if (flagBtnShare){
-                        downloadShareFile(model)
-                    } else {
-                        checkInstallation(model, flagDir)
-                    }
-                    // check if needed toast message, from cache do not needed
-                    if (flagDir == DownloadAddon.DIR_EXT_STORAGE){
-                        Toast.makeText(context, getString(R.string.msg_finish_download), Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
-        }
-        requireActivity().registerReceiver(receiver, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE) )
-    }
     //
-    fun downloadShareFile(model: AddonModel){
+    private fun downloadShareFile(model: AddonModel){
         var temp1 = viewModel.getCachePathBehavior()
         var temp2 = viewModel.getCachePathResource()
         val list = arrayListOf<Uri?>(null, null)
@@ -327,14 +310,13 @@ abstract class DownloadDialogUtil : Fragment(){
                 requireContext().applicationContext,
                 BuildConfig.APPLICATION_ID + ".fileProvider", File(temp2))
         }
-        if (list[0] != null && list[1] != null) {
+        if (list[0] != null && list[1] != null && checkPermission()) {
             sendIntent.action = Intent.ACTION_SEND_MULTIPLE
             sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
 
-            val shareIntent = Intent.createChooser(sendIntent, "null")
+            val shareIntent = Intent.createChooser(sendIntent, null)
             requireActivity().startActivity(shareIntent)
         }
-        Log.d(TAG, "downloadShareFile: ${list[0]}  +++  ${list[1]}")
     }
     // Check if app is installed, otherwise go to install
     private fun dialogDownloadApp() {
@@ -364,9 +346,7 @@ abstract class DownloadDialogUtil : Fragment(){
         }
     }
 
-//    override fun onStop() {
-//        super.onStop()
-//        if (receiver != null)
-//            requireActivity().unregisterReceiver(receiver)
-//    }
+    override fun onStop() {
+        super.onStop()
+        if (toast != null) toast = null }
 }
