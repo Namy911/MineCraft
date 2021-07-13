@@ -35,6 +35,7 @@ import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.nativead.NativeAd
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.coroutines.resume
@@ -113,7 +114,24 @@ class MainFragment : DownloadDialogUtil(){
                                         viewModel.getItem(adapter.getItems(), PAGE_SIZE)
                                     }
                                     is RosterItemLoadState.LoadComplete -> {
-                                        insertRosterIem(state.content)
+                                        val job1 = async { getItemAd() }
+                                        val job2 = async { state.content }
+                                        job2.start()
+                                        job1.start()
+
+                                        val content = job2.await()
+                                        val ad = job1.await()
+
+                                        val prev = fulList.size
+                                        fulList.addAll(content)
+                                        val newList = fulList.size
+                                        if (newList - prev == PAGE_SIZE){
+                                            fulList.add(ad)
+                                        }
+                                        adapter.deleteFooter()
+                                        fulList.add(FooterItem())
+                                        adapter.submitList(fulList.toMutableList())
+
                                         progressBar.visibility = View.GONE
                                     }
                                     is RosterItemLoadState.LoadLast -> {
@@ -233,16 +251,8 @@ class MainFragment : DownloadDialogUtil(){
         }
     }
 
-    private suspend fun insertRosterIem(list: List<RosterItem>) {
-        val prev = fulList.size
-        fulList.addAll(list)
-        val newList = fulList.size
-        if (newList - prev == PAGE_SIZE && checkInternetConnection()) {
-            fulList.add(getItemAd())
-        }
-        adapter.deleteFooter()
-        fulList.add(FooterItem())
-        adapter.submitList(fulList.toMutableList())
+    private fun insertRosterIem(list: List<RosterItem>) {
+
     }
 
     private fun insertLastItem(list: List<RosterItem>){

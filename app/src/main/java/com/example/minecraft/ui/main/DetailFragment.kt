@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -109,8 +110,8 @@ class DetailFragment : DownloadDialogUtil() {
             }
 
             btnShare.setOnClickListener {
-//                val temp = viewModel.getFlagRewardShare()
-//                if (temp == false && checkInternetConnection()) {
+                val temp = viewModel.getFlagRewardShare()
+//                if (temp == false && checkInternetConnection() && !prefState) {
 //                    adSeen(DownloadAddon.DIR_CACHE)
 //                }else{
                     checkFileExists(args.model)
@@ -257,7 +258,8 @@ class DetailFragment : DownloadDialogUtil() {
                                 args.model,
                                 true
                             )
-                            list[1] = getPath(File (requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.behavior, TAG_BEHAVIOR)))
+                            val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.behavior, TAG_BEHAVIOR)
+                            list[1] = getPath(File(cacheBehaviorLink))
                         }
                     } else {
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -278,7 +280,8 @@ class DetailFragment : DownloadDialogUtil() {
                                 args.model,
                                 true
                             )
-                            list[0] = getPath(File(requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.resource, TAG_RESOURCE)))
+                            val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.resource, TAG_RESOURCE)
+                            list[0] = getPath(File(cacheResourceLink))
                         }
                     } else {
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -292,8 +295,8 @@ class DetailFragment : DownloadDialogUtil() {
                         putExtra(Intent.EXTRA_TEXT, "Share Addon")
                         type = "file/*"
                         flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        action = Intent.ACTION_SEND_MULTIPLE
                         putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
+                        action = Intent.ACTION_SEND_MULTIPLE
                     }
 
                     val shareIntent = Intent.createChooser(sendIntent, "")
@@ -316,7 +319,7 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
     //
-    fun getPath(file: File) = try {
+    fun getPath(file: File): Uri? = try {
         FileProvider.getUriForFile(
             requireContext().applicationContext,
             BuildConfig.APPLICATION_ID + ".fileProvider", file

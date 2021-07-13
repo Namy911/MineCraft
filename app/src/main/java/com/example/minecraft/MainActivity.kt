@@ -101,14 +101,16 @@ class MainActivity : AppCompatActivity() {
                         binding.apply {
                             colliderSettings.visibility = View.VISIBLE
                             colliderSettings.visibility = View.VISIBLE
-                            homeIndicator.visibility = View.VISIBLE
-                            colliderBackArrow.visibility = View.VISIBLE
+                            homeIndicator.visibility = View.GONE
+                            colliderBackArrow.visibility = View.GONE
                             toolBarSettings.visibility = View.GONE
                         }
                     } else {
                         binding.apply {
                             homeIndicator.visibility = View.VISIBLE
                             colliderBackArrow.visibility = View.VISIBLE
+                            homeIndicator.visibility = View.GONE
+                            colliderBackArrow.visibility = View.GONE
                             toolBarSettings.visibility = View.GONE
                             colliderSettings.visibility = View.GONE
                         }

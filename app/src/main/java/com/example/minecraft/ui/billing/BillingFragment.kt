@@ -73,8 +73,8 @@ class BillingFragment : Fragment() {
             btnPremium.animation = animBtn
             txtBtnTrial.animation = animTxt
 
-            txtSubscription.setOnClickListener {
-                findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.policy), getString(R.string.subscription_info)))
+            imgClose.setOnClickListener {
+                requireActivity().onBackPressed()
             }
 
             txtTerms.setOnClickListener {

@@ -21,7 +21,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.3"/>
+        app:layout_constraintGuide_percent="0.40" />
 
     <ImageView
         android:id="@+id/bg_sliding"
@@ -38,7 +38,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.28"/>
+        app:layout_constraintGuide_percent="0.38" />
+
     <View
         android:id="@+id/btn_premium"
         android:layout_width="0dp"
@@ -53,11 +54,11 @@
         android:id="@+id/txt_btn_trial"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        android:textAllCaps="false"
         android:fontFamily="@font/regular_alt"
         android:text="@string/start_trial_an_plan"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="@+id/btn_premium"
         app:layout_constraintEnd_toEndOf="@+id/btn_premium"
         app:layout_constraintStart_toStartOf="@+id/btn_premium"
@@ -65,18 +66,15 @@
 
     <ImageView
         android:id="@+id/imageView2"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:rotationY="180"
         android:src="@drawable/cub_left"
         app:layout_constraintBottom_toBottomOf="@+id/view_text_content"
         app:layout_constraintEnd_toEndOf="@+id/view_text_content"
-        app:layout_constraintHeight_percent="0.5"
-        app:layout_constraintWidth_percent="0.5"
         app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="@+id/view_text_content"
-        app:layout_constraintTop_toTopOf="@+id/view_text_content"
-        />
+        app:layout_constraintTop_toTopOf="@+id/view_text_content" />
 
     <ScrollView
         android:id="@+id/view_text_content"
@@ -99,9 +97,9 @@
 
             <TextView
                 android:id="@+id/txt_policy_content"
+                style="@style/CustomStyleText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                style="@style/CustomStyleText"
                 android:padding="12dp"
                 android:text="@string/txt_policy"
                 android:textAlignment="center"
@@ -114,8 +112,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"
-        android:src="@drawable/cub_left"
         android:scaleType="centerCrop"
+        android:src="@drawable/cub_left"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/bg_sliding" />
 
@@ -123,14 +121,17 @@
         android:id="@+id/txt_privacy"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="2dp"
         android:layout_marginBottom="8dp"
         android:fontFamily="@font/regular_bmg"
         android:padding="8dp"
         android:text="@string/privacy_policy"
+        android:textAlignment="center"
         android:textColor="@color/white"
-        android:textSize="12sp"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/txt_terms"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/bg_sliding"
         app:layout_constraintStart_toStartOf="parent" />
 
     <TextView
@@ -141,24 +142,24 @@
         android:fontFamily="@font/regular_bmg"
         android:padding="8dp"
         android:text="@string/txt_terms_of_usage"
+        android:textAlignment="center"
         android:textColor="@color/white"
-        android:textSize="12sp"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/txt_subscription"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/txt_privacy" />
 
-    <TextView
-        android:id="@+id/txt_subscription"
+    <ImageView
+        android:id="@+id/img_close"
+        android:background="@drawable/round_close_img"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="2dp"
-        android:layout_marginBottom="8dp"
-        android:fontFamily="@font/regular_bmg"
-        android:padding="8dp"
-        android:text="@string/subscription_info"
-        android:textColor="@color/white"
-        android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:src="@android:drawable/ic_menu_close_clear_cancel"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/container"
@@ -22,7 +23,6 @@
         style="@style/CustomStyleButtons"
         android:layout_width="230dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="100dp"
         android:background="@drawable/btn_help"
         android:text="@string/help"
         app:layout_constraintBottom_toTopOf="@+id/btn_policy"
@@ -42,12 +42,11 @@
 
     <Button
         android:id="@+id/btn_policy"
+        style="@style/CustomStyleButtons"
         android:layout_width="230dp"
         android:layout_height="wrap_content"
+        android:background="@drawable/btn_policy"
         android:text="@string/privacy_policy"
-        style="@style/CustomStyleButtons"
-        android:layout_marginTop="90dp"
-        android:background = "@drawable/btn_policy"
         app:layout_constraintBottom_toTopOf="@+id/btn_terms"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -64,16 +63,14 @@
 
     <Button
         android:id="@+id/btn_terms"
-        android:layout_marginTop="90dp"
         style="@style/CustomStyleButtons"
         android:layout_width="230dp"
         android:layout_height="wrap_content"
         android:background="@drawable/btn_terms"
         android:text="@string/terms_of_usage"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btn_policy" />
-
-
 </androidx.constraintlayout.widget.ConstraintLayout>
