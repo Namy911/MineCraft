@@ -12,7 +12,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -26,8 +25,12 @@ import com.example.minecraft.MainActivity
 import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.AppUtil
+import com.example.minecraft.ui.util.AppUtil.Companion.INTERSTIAL_AD_ID
+import com.example.minecraft.ui.util.AppUtil.Companion.REVARD_AD_ID
 import com.example.minecraft.ui.util.DownloadDialogUtil
 import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
@@ -50,6 +53,7 @@ class DetailFragment : DownloadDialogUtil() {
     private val viewModel: MainViewModel by viewModels()
 
     var mRewardedAd: RewardedAd? = null
+    private var interstitialAd: InterstitialAd? = null
 
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
     private var prefState = false
@@ -79,6 +83,8 @@ class DetailFragment : DownloadDialogUtil() {
                 }
             }
         }
+        // Ad Interstitial config
+
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -136,7 +142,7 @@ class DetailFragment : DownloadDialogUtil() {
                 }
             }
 
-            btnInstall.setOnClickListener { button ->
+            btnInstall.setOnClickListener {
                 if (prefState) {
                     if (checkPermission()) {
                         checkFileExists(args.model)
@@ -149,20 +155,21 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
 
+
     override fun onResume() {
         super.onResume()
         lifecycleScope.launchWhenResumed {
             appSharedPrefManager.billingAdsSate.collectLatest { state ->
                 if (!state) {
                     MobileAds.initialize(requireActivity()) {}
-                    val adRequest = AdRequest.Builder().build()
-                    binding.adView.loadAd(adRequest)
+                    binding.adView.loadAd(AdRequest.Builder().build())
                 } else {
                     binding.adView.visibility = View.GONE
                 }
             }
         }
     }
+
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -195,11 +202,7 @@ class DetailFragment : DownloadDialogUtil() {
 
     private fun loadAddReward() {
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(
-            requireActivity(),
-            AppUtil.REVARD_ID,
-            adRequest,
-            object : RewardedAdLoadCallback() {
+        RewardedAd.load(requireActivity(), REVARD_AD_ID, adRequest, object : RewardedAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     Log.d(TAG, adError.message)
                     mRewardedAd = null

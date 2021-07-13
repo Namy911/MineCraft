@@ -9,11 +9,13 @@ import androidx.navigation.fragment.findNavController
 import com.example.minecraft.R
 import com.example.minecraft.MainActivity
 import com.example.minecraft.ui.util.AppUtil
+import dagger.hilt.EntryPoints
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.InputStream
 import javax.inject.Inject
 
 @AndroidEntryPoint
+//class SettingsFragment @Inject constructor( val appComponentBuilder: AppComponentBuilder) : Fragment() {
 class SettingsFragment : Fragment() {
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
@@ -24,6 +26,9 @@ class SettingsFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         appUtil = AppUtil()
+//        val component = appComponentBuilder.utilSeedData(AppUtil()).build()
+//        appUtil = EntryPoints.get(component, AppComponentEntryPoint::class.java).provideAppUtil()
+
         setHasOptionsMenu(true);
     }
     override fun onCreateView(

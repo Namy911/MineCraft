@@ -95,4 +95,7 @@ dependencies {
     implementation("com.android.billingclient:billing:$billing_version")
     // Preferences DataStore
     implementation("androidx.datastore:datastore-preferences:1.0.0-rc01")
+    //
+    implementation 'com.google.dagger:dagger:2.36'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.36'
 }

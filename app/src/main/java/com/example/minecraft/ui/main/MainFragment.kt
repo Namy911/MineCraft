@@ -18,12 +18,10 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.DiffUtil
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.ListAdapter
-import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.*
 import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_MAIN_FRAGMENT
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.databinding.ItemFooterBinding
@@ -33,6 +31,8 @@ import com.example.minecraft.databinding.FragmentMainBinding
 import com.example.minecraft.ui.spash.SplashscreenActivity
 import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.async
@@ -101,7 +101,6 @@ class MainFragment : DownloadDialogUtil(){
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
-
             lifecycleScope.launch {
                 if (!prefState) {
                     if (checkInternetConnection()) {
@@ -128,6 +127,7 @@ class MainFragment : DownloadDialogUtil(){
                                         if (newList - prev == PAGE_SIZE){
                                             fulList.add(ad)
                                         }
+
                                         adapter.deleteFooter()
                                         fulList.add(FooterItem())
                                         adapter.submitList(fulList.toMutableList())
@@ -144,12 +144,13 @@ class MainFragment : DownloadDialogUtil(){
                                     }
                                 }
 
-                                container.addOnScrollListener(object :
-                                    RecyclerView.OnScrollListener() { override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                                container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                                         super.onScrolled(recyclerView, dx, dy)
                                         if (isLoading) {
-                                            if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
+                                            if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 3) {
 //                                networkState()
+                                                Log.d(TAG, "onScrolled: ")
                                                 if (!checkInternetConnection()) {
                                                     dialogNetwork(false)
                                                 }
@@ -244,11 +245,8 @@ class MainFragment : DownloadDialogUtil(){
         }
 
         val dialog = builder.create()
-        try {
-            dialog.show()
-        } catch (e : Exception){
-            Log.d(TAG, "dialogNoInternet: ")
-        }
+        try { dialog.show() }
+        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
     }
 
     private fun insertRosterIem(list: List<RosterItem>) {
@@ -304,7 +302,7 @@ class MainFragment : DownloadDialogUtil(){
                 REGULAR_ITEM -> { TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false)      ) }
                 FOOTER_ITEM -> { FooterViewHolder(ItemFooterBinding.inflate(layoutInflater, parent, false)) }
                 AD_NATIVE_ITEM -> { AdNativeViewHolder(ItemRecyclerAdnativeBinding.inflate(layoutInflater, parent, false)) }
-                else -> { throw RuntimeException("ItemArrayAdapter, The type has to be ONE or ZERO") }
+                else -> { throw RuntimeException("ItemArrayAdapter, The type has to be TWO, ONE or ZERO") }
             }
         }
 
@@ -369,7 +367,6 @@ class MainFragment : DownloadDialogUtil(){
                 (adView.callToActionView as Button).text = ad.callToAction
             }
 
-
             if (ad.icon == null) {
                 adView.iconView?.visibility = View.GONE
             } else {
@@ -395,7 +392,7 @@ class MainFragment : DownloadDialogUtil(){
 
                     btnDownload.setOnClickListener {
                         if (!prefState) {
-                            findNavController().navigate(MainFragmentDirections.trialFragment(1))
+                            findNavController().navigate(MainFragmentDirections.trialFragment(FLAG_DEST_MAIN_FRAGMENT))
                         } else {
                             if (checkPermission()) {
                                 checkFileExists(item)
@@ -405,11 +402,7 @@ class MainFragment : DownloadDialogUtil(){
                     }
 
                     itemView.setOnClickListener {
-                        findNavController().navigate(
-                            MainFragmentDirections.detailFragment(
-                                item,
-                                title
-                            )
+                        findNavController().navigate(MainFragmentDirections.detailFragment(item, title)
                         )
                     }
                 }

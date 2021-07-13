@@ -2,14 +2,20 @@ package com.example.minecraft
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.core.view.isVisible
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.example.minecraft.databinding.ActivityMainBinding
+import com.example.minecraft.ui.main.DetailFragment
 import com.example.minecraft.ui.main.MainFragmentDirections
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
+import com.example.minecraft.ui.util.AppUtil
+import com.google.android.gms.ads.*
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
 
 private const val TAG = "MainActivity"
@@ -24,7 +30,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
 
-    lateinit var appSharedPrefManager: AppSharedPreferencesManager
+    private var interstitialAd: InterstitialAd? = null
+    private var flagInterstitialAd = false
+
+    private lateinit var appSharedPrefManager: AppSharedPreferencesManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +73,7 @@ class MainActivity : AppCompatActivity() {
                         toolBarSettings.visibility = View.VISIBLE
                         colliderSettings.visibility = View.VISIBLE
                     }
+                    flagInterstitialAd = true
                 }
                 R.id.detailFragment -> {
                     binding.apply {
@@ -72,6 +82,7 @@ class MainActivity : AppCompatActivity() {
                         colliderBackArrow.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.VISIBLE
                     }
+                    flagInterstitialAd = true
                 }
                 R.id.settingsFragment -> {
                     binding.apply {
@@ -80,6 +91,7 @@ class MainActivity : AppCompatActivity() {
                         colliderBackArrow.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.GONE
                     }
+                    flagInterstitialAd = true
                 }
                 R.id.settingsDetailFragment -> {
                     if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
@@ -95,6 +107,7 @@ class MainActivity : AppCompatActivity() {
                             colliderSettings.visibility = View.GONE
                         }
                     }
+                    flagInterstitialAd = true
                 }
                 R.id.trialFragment -> {
                     if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
@@ -115,11 +128,48 @@ class MainActivity : AppCompatActivity() {
                             colliderSettings.visibility = View.GONE
                         }
                     }
+                    flagInterstitialAd = false
                 }
-                else -> {
-                }
+                else -> { }
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (interstitialAd != null && flagInterstitialAd) {
+            interstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    interstitialAd = null
+                }
+
+                override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                }
+
+                override fun onAdShowedFullScreenContent() {
+                    interstitialAd = null
+                }
+            }
+            interstitialAd?.show(this)
+        } else {
+            Log.d("TAG", "The interstitial ad wasn't ready yet.")
+        }
+    }
+
+
+    override fun onPause() {
+        super.onPause()
+        InterstitialAd.load(this,
+            AppUtil.INTERSTIAL_AD_ID, AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.d(DetailFragment.TAG, adError.message)
+                interstitialAd = null
+            }
+
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                this@MainActivity.interstitialAd = interstitialAd
+            }
+        })
     }
 
     private fun setActionBarSettings(){

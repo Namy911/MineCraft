@@ -29,12 +29,12 @@ class MainViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle): ViewModel()
 {
     companion object{
-        val PATH_CACHE_RESOURCE: String = "ui.main.path.cache.resource"
-        val PATH_CACHE_BEHAVIOR: String = "ui.main.path.cache.behavior"
+        const val PATH_CACHE_RESOURCE: String = "ui.main.path.cache.resource"
+        const val PATH_CACHE_BEHAVIOR: String = "ui.main.path.cache.behavior"
 
-        val FLAG_TRIAL: String = "ui.main.flag.trial"
-        val FLAG_REWARD_DOWNLOAD: String = "ui.main.flag.reward"
-        val FLAG_REWARD_SHARE: String = "ui.main.flag.share"
+        const val FLAG_TRIAL: String = "ui.main.flag.trial"
+        const val FLAG_REWARD_DOWNLOAD: String = "ui.main.flag.reward"
+        const val FLAG_REWARD_SHARE: String = "ui.main.flag.share"
 
         val FLAG_INIT: String = "ui.main.flag.init"
     }
