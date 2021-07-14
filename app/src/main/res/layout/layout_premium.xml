@@ -38,17 +38,17 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.38" />
+        app:layout_constraintGuide_percent="0.47" />
 
     <View
         android:id="@+id/btn_premium"
         android:layout_width="0dp"
-        android:layout_height="75dp"
+        android:layout_height="65dp"
         android:background="@drawable/premium_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/guideline3"
-        app:layout_constraintWidth_percent="0.7" />
+        app:layout_constraintWidth_percent="0.65" />
 
     <TextView
         android:id="@+id/txt_btn_trial"
@@ -58,7 +58,7 @@
         android:text="@string/start_trial_an_plan"
         android:textAllCaps="false"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="@+id/btn_premium"
         app:layout_constraintEnd_toEndOf="@+id/btn_premium"
         app:layout_constraintStart_toStartOf="@+id/btn_premium"
@@ -81,9 +81,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="16dp"
         android:background="@drawable/bg_txt_premium"
         app:layout_constraintBottom_toTopOf="@+id/txt_terms"
         app:layout_constraintEnd_toEndOf="parent"
@@ -100,10 +98,11 @@
                 style="@style/CustomStyleText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="12dp"
+                android:padding="11dp"
                 android:text="@string/txt_policy"
                 android:textAlignment="center"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:textSize="13sp" />
         </LinearLayout>
     </ScrollView>
 
@@ -111,7 +110,7 @@
         android:id="@+id/imageView3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="32dp"
         android:scaleType="centerCrop"
         android:src="@drawable/cub_left"
         app:layout_constraintStart_toStartOf="parent"
@@ -121,13 +120,12 @@
         android:id="@+id/txt_privacy"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         android:fontFamily="@font/regular_bmg"
         android:padding="8dp"
         android:text="@string/privacy_policy"
         android:textAlignment="center"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/txt_terms"
         app:layout_constraintHorizontal_bias="0.5"
@@ -138,13 +136,12 @@
         android:id="@+id/txt_terms"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
         android:fontFamily="@font/regular_bmg"
         android:padding="8dp"
         android:text="@string/txt_terms_of_usage"
         android:textAlignment="center"
         android:textColor="@color/white"
-        android:textSize="16sp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"

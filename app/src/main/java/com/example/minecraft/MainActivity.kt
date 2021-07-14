@@ -1,22 +1,23 @@
 package com.example.minecraft
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.example.minecraft.databinding.ActivityMainBinding
-import com.example.minecraft.ui.main.DetailFragment
 import com.example.minecraft.ui.main.MainFragmentDirections
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.AppUtil
 import com.google.android.gms.ads.*
+import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 
 private const val TAG = "MainActivity"
 @AndroidEntryPoint
@@ -30,8 +31,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
 
-    private var interstitialAd: InterstitialAd? = null
-    private var flagInterstitialAd = false
+    var appOpenAd: AppOpenAd? = null
+    private var flagAppOpenAd = false
+    private var prefState = false
 
     private lateinit var appSharedPrefManager: AppSharedPreferencesManager
 
@@ -48,7 +50,13 @@ class MainActivity : AppCompatActivity() {
             setDisplayShowTitleEnabled(false)
             setDisplayShowHomeEnabled(false)
         }
+
         appSharedPrefManager = AppSharedPreferencesManager(this)
+        lifecycleScope.launch {
+            appSharedPrefManager.billingAdsSate.collectLatest { state ->
+                prefState = state
+            }
+        }
 
         val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
 
@@ -73,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                         toolBarSettings.visibility = View.VISIBLE
                         colliderSettings.visibility = View.VISIBLE
                     }
-                    flagInterstitialAd = true
+                    flagAppOpenAd = true
                 }
                 R.id.detailFragment -> {
                     binding.apply {
@@ -82,7 +90,7 @@ class MainActivity : AppCompatActivity() {
                         colliderBackArrow.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.VISIBLE
                     }
-                    flagInterstitialAd = true
+                    flagAppOpenAd = true
                 }
                 R.id.settingsFragment -> {
                     binding.apply {
@@ -91,7 +99,7 @@ class MainActivity : AppCompatActivity() {
                         colliderBackArrow.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.GONE
                     }
-                    flagInterstitialAd = true
+                    flagAppOpenAd = true
                 }
                 R.id.settingsDetailFragment -> {
                     if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
@@ -107,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                             colliderSettings.visibility = View.GONE
                         }
                     }
-                    flagInterstitialAd = true
+                    flagAppOpenAd = true
                 }
                 R.id.trialFragment -> {
                     if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
@@ -128,48 +136,47 @@ class MainActivity : AppCompatActivity() {
                             colliderSettings.visibility = View.GONE
                         }
                     }
-                    flagInterstitialAd = false
+                    flagAppOpenAd = false
                 }
                 else -> { }
             }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (interstitialAd != null && flagInterstitialAd) {
-            interstitialAd?.fullScreenContentCallback = object: FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    interstitialAd = null
-                }
+    override fun onPause() {
+        super.onPause()
+        if (!prefState) {
+            AppOpenAd.load(this, AppUtil.APP_OPEN_UNIT_ID, AdRequest.Builder().build(), 1, object : AppOpenAd.AppOpenAdLoadCallback() {
+                    override fun onAdLoaded(appOpenAd: AppOpenAd) {
+                        super.onAdLoaded(appOpenAd)
+                        this@MainActivity.appOpenAd = appOpenAd
+                    }
 
-                override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
-                }
-
-                override fun onAdShowedFullScreenContent() {
-                    interstitialAd = null
-                }
-            }
-            interstitialAd?.show(this)
-        } else {
-            Log.d("TAG", "The interstitial ad wasn't ready yet.")
+                    override fun onAdFailedToLoad(error: LoadAdError) {
+                        super.onAdFailedToLoad(error)
+                        appOpenAd = null
+                    }
+                })
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        appOpenAd?.let { ad ->
+        if (flagAppOpenAd) {
+            val fullScreenContentCallback = object : FullScreenContentCallback() {
+                override fun onAdDismissedFullScreenContent() {
+                    this@MainActivity.appOpenAd = null
+                }
 
-    override fun onPause() {
-        super.onPause()
-        InterstitialAd.load(this,
-            AppUtil.INTERSTIAL_AD_ID, AdRequest.Builder().build(), object : InterstitialAdLoadCallback() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.d(DetailFragment.TAG, adError.message)
-                interstitialAd = null
+                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                    this@MainActivity.appOpenAd = null
+                }
             }
-
-            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                this@MainActivity.interstitialAd = interstitialAd
+                ad.fullScreenContentCallback = fullScreenContentCallback
+                ad.show(this)
             }
-        })
+        }
     }
 
     private fun setActionBarSettings(){

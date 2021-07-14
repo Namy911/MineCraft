@@ -24,13 +24,10 @@ import com.example.minecraft.databinding.FragmentDetailBinding
 import com.example.minecraft.MainActivity
 import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
-import com.example.minecraft.ui.util.AppUtil
-import com.example.minecraft.ui.util.AppUtil.Companion.INTERSTIAL_AD_ID
-import com.example.minecraft.ui.util.AppUtil.Companion.REVARD_AD_ID
+import com.example.minecraft.ui.util.AppUtil.Companion.REVARD_AD_UNIT_ID
 import com.example.minecraft.ui.util.DownloadDialogUtil
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
@@ -202,7 +199,7 @@ class DetailFragment : DownloadDialogUtil() {
 
     private fun loadAddReward() {
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(requireActivity(), REVARD_AD_ID, adRequest, object : RewardedAdLoadCallback() {
+        RewardedAd.load(requireActivity(), REVARD_AD_UNIT_ID, adRequest, object : RewardedAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     Log.d(TAG, adError.message)
                     mRewardedAd = null
