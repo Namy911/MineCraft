@@ -28,6 +28,7 @@ import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.ui.main.DetailFragment
 import com.example.minecraft.ui.main.DownloadAddon
+import com.example.minecraft.ui.main.DownloadAddon.Companion.Progress
 import com.example.minecraft.ui.main.MainViewModel
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
@@ -98,6 +99,7 @@ abstract class DownloadDialogUtil : Fragment(){
             }
     }
     // WorkManager config, download file
+    @SuppressLint("ShowToast")
     fun workDownloadAddon(uri: String, fileName: String, flagDir: String, model: AddonModel, flagBtnShare: Boolean = false){
         val workManager = WorkManager.getInstance(requireContext())
 
@@ -117,8 +119,11 @@ abstract class DownloadDialogUtil : Fragment(){
             .build()
         // Get result and observe response from manager
         workManager.enqueue(request)
-        workManager.getWorkInfoByIdLiveData(request.id).observe(viewLifecycleOwner){
-            if (it.state.isFinished){
+        workManager.getWorkInfoByIdLiveData(request.id).observe(viewLifecycleOwner){ workInfo ->
+            if (workInfo != null && workInfo.state.isFinished) {
+//                val progress = workInfo.progress
+//                val value = progress.getInt(Progress, 0)
+
                 // Download addon type(resource or behavior)
                 if (flagBtnShare){
                     downloadShareFile(model)
@@ -288,35 +293,28 @@ abstract class DownloadDialogUtil : Fragment(){
     }
     //
     private fun downloadShareFile(model: AddonModel){
-        var temp1 = viewModel.getCachePathBehavior()
-        var temp2 = viewModel.getCachePathResource()
         val list = arrayListOf<Uri?>(null, null)
-
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
-        if (File(cacheBehaviorLink).exists()) { temp1 = cacheBehaviorLink; viewModel.setCachePathBehavior(cacheBehaviorLink) }
-        if (File(cacheResourceLink).exists()) { temp2 = cacheResourceLink; viewModel.setCachePathResource(cacheResourceLink) }
+        if (File(cacheBehaviorLink).exists()) {viewModel.setCachePathBehavior(cacheBehaviorLink) }
+        if (File(cacheResourceLink).exists()) {viewModel.setCachePathResource(cacheResourceLink) }
 
-        val sendIntent: Intent = Intent().apply {
-            putExtra(Intent.EXTRA_TEXT, getString(R.string.msg_share_addon))
-            type = "file/*"
-            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
-        }
 
-        if (temp1 != null) {
-            list[1] = FileProvider.getUriForFile(
-                requireContext().applicationContext,
-                BuildConfig.APPLICATION_ID + ".fileProvider", File(temp1))
-        }
-        if (temp2 != null) {
-            list[0] = FileProvider.getUriForFile(
-                requireContext().applicationContext,
-                BuildConfig.APPLICATION_ID + ".fileProvider", File(temp2))
-        }
+        list[1] = FileProvider.getUriForFile(requireContext().applicationContext,
+            BuildConfig.APPLICATION_ID + ".fileProvider", File(cacheBehaviorLink))
+
+        list[0] = FileProvider.getUriForFile(requireContext().applicationContext,
+            BuildConfig.APPLICATION_ID + ".fileProvider", File(cacheResourceLink))
+
         if (list[0] != null && list[1] != null && checkPermission()) {
-            sendIntent.action = Intent.ACTION_SEND_MULTIPLE
-            sendIntent.putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
+            val sendIntent: Intent = Intent().apply {
+                putExtra(Intent.EXTRA_TEXT, getString(R.string.msg_share_addon))
+                type = "file/*"
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                action = Intent.ACTION_SEND_MULTIPLE
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, list)
+            }
 
             val shareIntent = Intent.createChooser(sendIntent, null)
             requireActivity().startActivity(shareIntent)

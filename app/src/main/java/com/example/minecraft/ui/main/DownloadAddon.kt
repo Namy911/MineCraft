@@ -14,6 +14,7 @@ import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
 import androidx.work.Data
 import androidx.work.WorkerParameters
+import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -35,34 +36,54 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
         const val DOWNLOAD_FLAG_PRIVATE = "ui.main.download.flag.private"
 
         const val FOLDER_DOWNLOAD_ADDONS = "MineCraftAddons"
+
+        const val Progress = "Progress"
     }
 
     override suspend fun doWork(): Result {
-        return try {
-            val uri = inputData.getString(URI_DOWNLOAD)
-            val title = inputData.getString(FILE_NAME)
-            val directory = inputData.getString(DIRECTORY)
+        return withContext(Dispatchers.IO){
+            try {
+                val uri = inputData.getString(URI_DOWNLOAD)
+                val title = inputData.getString(FILE_NAME)
+                val directory = inputData.getString(DIRECTORY)
 
-            var outputId: Long = -2
-            // Check download directory
-            if (uri != null && title != null) {
-                when (directory) {
-                    DIR_EXT_STORAGE -> { outputId = downloadPublicDir(uri, title) }
-                    DIR_CACHE -> { outputId = downloadCacheDir(uri, title) }
+                var outputId: Long = -2
+
+//                val firstUpdate = workDataOf(Progress to 0)
+//                val lastUpdate = workDataOf(Progress to 100)
+                // Check download directory
+                if (uri != null && title != null) {
+//                    setProgress(firstUpdate)
+                    when (directory) {
+                        DIR_EXT_STORAGE -> {
+                            outputId = downloadPublicDir(uri, title)
+                        }
+                        DIR_CACHE -> {
+                            outputId = downloadCacheDir(uri, title)
+                        }
+                    }
+//                    setProgress(lastUpdate)
                 }
+
+                val outputData = Data.Builder()
+                    .putLong(DOWNLOAD_FLAG, outputId)
+                    .build()
+
+                Result.success(outputData)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                Log.d(TAG, "DownloadAddon: Error Download Addon ${e.message}")
+                Result.failure()
             }
-
-            val outputData = Data.Builder()
-                .putLong(DOWNLOAD_FLAG, outputId)
-                .build()
-
-            Result.success(outputData)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            Log.d(TAG, "DownloadAddon: Error Download Addon ${e.message}")
-            Result.failure()
         }
     }
+    private fun downloadManagerBuilder(uri: String, file_name: String) =
+        DownloadManager.Request(Uri.parse(uri))
+            .setTitle(file_name)
+            .setDescription("Download $file_name")
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
+            .setAllowedOverMetered(true)
     // Public directory download
     @Suppress("DEPRECATION")
     private suspend fun downloadPublicDir(uri: String, fileName: String): Long {
@@ -88,14 +109,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
         return dm.enqueue(request)
     }
 
-    private fun downloadManagerBuilder(uri: String, file_name: String) =
-        DownloadManager.Request(Uri.parse(uri))
-            .setTitle(file_name)
-            .setDescription("Download $file_name")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
-            .setAllowedOverMetered(true)
-
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun makeDirAddons() {
         val f = File(
@@ -116,9 +129,8 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             val collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
 
             client.newCall(request).enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    e.printStackTrace()
-                }
+                override fun onFailure(call: Call, e: IOException) { e.printStackTrace() }
+
                 @RequiresApi(Build.VERSION_CODES.Q)
                 override fun onResponse(call: Call, response: Response) {
                     response.use {
@@ -127,6 +139,7 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                                 put(MediaStore.DownloadColumns.TITLE, fileName)
                                 put(MediaStore.DownloadColumns.RELATIVE_PATH, "Download")
                                 put(MediaStore.DownloadColumns.MIME_TYPE, "application/octet-stream")
+//                                put(MediaStore.DownloadColumns.DOWNLOAD_URI, FOLDER_DOWNLOAD_ADDONS)
                                 put(MediaStore.DownloadColumns.IS_PENDING, 1)
                             }
 
@@ -152,6 +165,7 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                                     Log.d(TAG, "onResponse: resolver.update ${e.message}")
                                 }
                             }
+//                            scanMedia(fileUri)
                         }
                     }
                 }
@@ -160,8 +174,7 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
     }
     
     private fun scanMedia(uri: String) {
-        Log.d(TAG, "scanMedia: $uri")
         MediaScannerConnection
-            .scanFile(context, arrayOf(uri), null, null)
+            .scanFile(context, arrayOf(uri), arrayOf("application/octet-stream"), null)
     }
 }

@@ -4,10 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import com.android.billingclient.api.*
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 
 //class BillingManager @Inject constructor(
@@ -25,6 +22,8 @@ class BillingManager (
         var BILLING_FLAG_STATE = false
     }
 
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
             for (purchase in purchases) {
@@ -39,7 +38,8 @@ class BillingManager (
     private val acknowledgePurchaseResponseListener =
         AcknowledgePurchaseResponseListener { billingResult ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                CoroutineScope(SupervisorJob()).launch {
+//                CoroutineScope(SupervisorJob()).launch {
+                scope.launch {
                     sharedPreferencesManager.setBillingAdsSate(true)
                 }
             }
@@ -80,7 +80,8 @@ class BillingManager (
                         }
                     }else{
                         BILLING_FLAG_STATE = false
-                        CoroutineScope(SupervisorJob()).launch {
+                        scope.launch {
+//                        CoroutineScope(SupervisorJob()).launch {
                             sharedPreferencesManager.setBillingAdsSate(true)
                         }
                     }
@@ -124,7 +125,8 @@ class BillingManager (
             .setSkusList(skuList)
             .setType(PRODUCT_TYPE)
 
-        CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
+//        CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
+            scope.launch {
             billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
                 if (skuDetailsList != null) {
                     for (skuDetails in skuDetailsList) {

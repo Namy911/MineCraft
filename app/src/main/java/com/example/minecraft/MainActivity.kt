@@ -67,8 +67,8 @@ class MainActivity : AppCompatActivity() {
         }
         // Setup navigation with colliders
         binding.apply {
-            colliderBackArrow.setOnClickListener { super.onBackPressed() }
-            colliderSettings.setOnClickListener { setActionBarSettings() }
+            homeIndicator.setOnClickListener { super.onBackPressed() }
+            toolBarSettings.setOnClickListener { setActionBarSettings() }
         }
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
@@ -76,27 +76,21 @@ class MainActivity : AppCompatActivity() {
                     binding.apply {
                         if (homeIndicator.isVisible) {
                             homeIndicator.visibility = View.INVISIBLE
-                            colliderBackArrow.visibility = View.GONE
                         }
                         toolBarSettings.visibility = View.VISIBLE
-                        colliderSettings.visibility = View.VISIBLE
                     }
                     flagAppOpenAd = true
                 }
                 R.id.detailFragment -> {
                     binding.apply {
-                        colliderSettings.visibility = View.VISIBLE
                         homeIndicator.visibility = View.VISIBLE
-                        colliderBackArrow.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.VISIBLE
                     }
                     flagAppOpenAd = true
                 }
                 R.id.settingsFragment -> {
                     binding.apply {
-                        colliderSettings.visibility = View.VISIBLE
                         homeIndicator.visibility = View.VISIBLE
-                        colliderBackArrow.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.GONE
                     }
                     flagAppOpenAd = true
@@ -105,14 +99,11 @@ class MainActivity : AppCompatActivity() {
                     if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
                         binding.apply {
                             homeIndicator.visibility = View.VISIBLE
-                            colliderBackArrow.visibility = View.VISIBLE
                         }
                     } else {
                         binding.apply {
                             homeIndicator.visibility = View.VISIBLE
-                            colliderBackArrow.visibility = View.VISIBLE
                             toolBarSettings.visibility = View.GONE
-                            colliderSettings.visibility = View.GONE
                         }
                     }
                     flagAppOpenAd = true
@@ -120,20 +111,13 @@ class MainActivity : AppCompatActivity() {
                 R.id.trialFragment -> {
                     if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
                         binding.apply {
-                            colliderSettings.visibility = View.VISIBLE
-                            colliderSettings.visibility = View.VISIBLE
                             homeIndicator.visibility = View.GONE
-                            colliderBackArrow.visibility = View.GONE
                             toolBarSettings.visibility = View.GONE
                         }
                     } else {
                         binding.apply {
-                            homeIndicator.visibility = View.VISIBLE
-                            colliderBackArrow.visibility = View.VISIBLE
                             homeIndicator.visibility = View.GONE
-                            colliderBackArrow.visibility = View.GONE
                             toolBarSettings.visibility = View.GONE
-                            colliderSettings.visibility = View.GONE
                         }
                     }
                     flagAppOpenAd = false

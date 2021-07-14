@@ -50,7 +50,6 @@ class DetailFragment : DownloadDialogUtil() {
     private val viewModel: MainViewModel by viewModels()
 
     var mRewardedAd: RewardedAd? = null
-    private var interstitialAd: InterstitialAd? = null
 
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
     private var prefState = false
@@ -151,7 +150,6 @@ class DetailFragment : DownloadDialogUtil() {
             }
         }
     }
-
 
     override fun onResume() {
         super.onResume()
@@ -258,8 +256,8 @@ class DetailFragment : DownloadDialogUtil() {
                                 args.model,
                                 true
                             )
-                            val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.behavior, TAG_BEHAVIOR)
-                            list[1] = getPath(File(cacheBehaviorLink))
+//                            val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.behavior, TAG_BEHAVIOR)
+//                            list[1] = getPath(File(cacheBehaviorLink))
                         }
                     } else {
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -280,8 +278,8 @@ class DetailFragment : DownloadDialogUtil() {
                                 args.model,
                                 true
                             )
-                            val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.resource, TAG_RESOURCE)
-                            list[0] = getPath(File(cacheResourceLink))
+//                            val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.resource, TAG_RESOURCE)
+//                            list[0] = getPath(File(cacheResourceLink))
                         }
                     } else {
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
