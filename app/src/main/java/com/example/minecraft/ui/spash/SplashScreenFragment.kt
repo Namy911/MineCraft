@@ -1,6 +1,5 @@
 package com.example.minecraft.ui.spash
 
-import android.animation.ValueAnimator
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
@@ -10,7 +9,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
 import android.view.*
-import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.viewModels
@@ -20,10 +18,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.example.minecraft.MainActivity
 import com.example.minecraft.R
+import com.example.minecraft.databinding.FragmentSettingsDetailBinding
 import com.example.minecraft.databinding.FragmentSplashScreenBinding
+import com.example.minecraft.databinding.LayoutPremiumBinding
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.lang.Exception
@@ -32,7 +33,8 @@ private const val TAG = "SplashFragment"
 @AndroidEntryPoint
 class SplashScreenFragment : Fragment() {
 
-    lateinit var binding: FragmentSplashScreenBinding
+    private var _binding: FragmentSplashScreenBinding? = null
+    private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
 
     private val motor: SplashScreenMotor by viewModels()
 
@@ -40,10 +42,11 @@ class SplashScreenFragment : Fragment() {
 
     lateinit var billingManager: BillingManager
 
+    var job: Job? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         billingManager = BillingManager(requireActivity()){ }
-//        billingManager.setSubsState()
         billingManager.setSubsState()
         appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
         // Ful screen window
@@ -63,10 +66,10 @@ class SplashScreenFragment : Fragment() {
             dialogNoInternet()
         }
     }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        return FragmentSplashScreenBinding.inflate(layoutInflater)
-            .apply { binding = this }
-            .root
+        _binding = FragmentSplashScreenBinding.inflate(layoutInflater)
+        return binding.root
     }
 
     override fun onPause() {
@@ -84,31 +87,43 @@ class SplashScreenFragment : Fragment() {
     }
     // Progress bar config, main logic
     private fun observeState(){
-        lifecycleScope.launch {
+        job = lifecycleScope.launch {
             motor.fulList.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
                 .collectLatest { viewState ->
-                    when (viewState) {
-                        SplashScreenState.Loading -> {
-                            motor.setLoadingNumber()
-                            binding.progressBar.progress = motor.getLoadingNumber()!!
-                            binding.textView3.text = "${motor.getLoadingNumber()!!} %"
+                    binding.apply {
+                        when (viewState) {
+                            SplashScreenState.Loading -> {
+                                motor.setLoadingNumber()
+                                progressBar.progress = motor.getLoadingNumber()!!
+                                textView3.text = "${motor.getLoadingNumber()!!} %"
+                            }
+                            SplashScreenState.LoadComplete -> {
+                                motor.setStartContentNumber()
+                                progressBar.progress = motor.getStartContentNumber()!!
+                                textView3.text = "${motor.getStartContentNumber()!!} %"
+                                navigateToMainScreen()
+                                progressBar.progress = 100
+                                textView3.text = "100 %"
+                            }
+                            is SplashScreenState.Error -> {}
                         }
-                        SplashScreenState.LoadComplete -> {
-                            motor.setStartContentNumber()
-                            binding.progressBar.progress = motor.getStartContentNumber()!!
-                            binding.textView3.text = "${motor.getStartContentNumber()!!} %"
-                            navigateToMainScreen()
-                            binding.progressBar.progress = 100
-                            binding.textView3.text = "100 %"
-                        }
-                        is SplashScreenState.Error -> { }
                     }
                 }
         }
     }
+
+    override fun onDetach() {
+        super.onDetach()
+        job?.cancel()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
+    }
     // Dialog chooser
     private fun dialogNoInternet(){
-        val builder = AlertDialog.Builder(requireActivity()).apply {
+        val builder = AlertDialog.Builder(requireContext()).apply {
             setTitle(getString(R.string.dialog_title_no_internet))
             setMessage(R.string.msg_no_internet)
             setPositiveButton(R.string.btn_snack_connect) { _, _ ->
@@ -117,7 +132,9 @@ class SplashScreenFragment : Fragment() {
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 startActivity(intent)
             }
-            setNegativeButton(getString(R.string.dialog_no_internet_go_next)) { _, _ -> navigateToMainScreen() }
+            setNegativeButton(getString(R.string.dialog_no_internet_go_next)) { _, _ ->
+                findNavController().navigate(SplashScreenFragmentDirections.mainFragment())
+            }
             setNeutralButton(getString(R.string.dialog_no_internet_leave)) { _, _ -> requireActivity().finish() }
         }
 
@@ -132,8 +149,7 @@ class SplashScreenFragment : Fragment() {
     private fun networkState(dialog: AlertDialog) {
         val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
-            connectivityManager.registerDefaultNetworkCallback(object :
-                ConnectivityManager.NetworkCallback() {
+            connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     observeState()
                     dialog.dismiss()
@@ -146,7 +162,7 @@ class SplashScreenFragment : Fragment() {
     }
     //
     private fun getConnection(): Boolean{
-        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
+        val connectivityManager = requireActivity().applicationContext.getSystemService(ConnectivityManager::class.java)
         val currentNetwork = connectivityManager.activeNetwork
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
         return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
@@ -154,11 +170,14 @@ class SplashScreenFragment : Fragment() {
     // Check if user have trial and redirect
     private fun navigateToMainScreen() {
         if (BillingManager.BILLING_FLAG_STATE) {
-            findNavController().navigate(SplashScreenFragmentDirections.trialFragment(MainActivity.FLAG_DEST_MAIN_FRAGMENT))
-//            findNavController().popBackStack(R.id.trialFragment, true)
+            findNavController().navigate(
+                SplashScreenFragmentDirections.subscriptionFragment(
+                    MainActivity.FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT
+                )
+            )
         } else {
             findNavController().navigate(SplashScreenFragmentDirections.mainFragment())
-//            findNavController().popBackStack(R.id.mainFragment, true)
         }
+
     }
 }

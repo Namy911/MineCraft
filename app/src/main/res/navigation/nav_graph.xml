@@ -13,8 +13,8 @@
             android:id="@+id/detailFragment"
             app:destination="@id/detailFragment" />
         <action
-            android:id="@+id/trialFragment"
-            app:destination="@id/trialFragment"
+            android:id="@+id/subscriptionFragment"
+            app:destination="@id/subscriptionFragment"
             app:popUpTo="@id/mainFragment" />
     </fragment>
     <fragment
@@ -28,8 +28,8 @@
             android:name="title"
             app:argType="string" />
         <action
-            android:id="@+id/trialFragment"
-            app:destination="@id/trialFragment"
+            android:id="@+id/subscriptionFragment"
+            app:destination="@id/subscriptionFragment"
             app:popUpTo="@id/detailFragment" />
     </fragment>
 
@@ -56,9 +56,8 @@
             app:argType="string" />
     </fragment>
     <fragment
-        android:id="@+id/trialFragment"
+        android:id="@+id/subscriptionFragment"
         android:name="com.example.minecraft.ui.billing.BillingFragment"
-        android:label="fragment_trial"
         tools:layout="@layout/layout_premium" >
         <argument android:name="flag_Dest"
             app:argType="integer" />
@@ -68,7 +67,7 @@
         <action
             android:id="@+id/mainFragment"
             app:destination="@id/mainFragment"
-            app:popUpTo="@id/trialFragment"
+            app:popUpTo="@id/subscriptionFragment"
             app:popUpToInclusive="true" />
     </fragment>
     <fragment
@@ -81,8 +80,8 @@
             app:popUpTo="@id/splashScreenFragment"
             app:popUpToInclusive="true" />
         <action
-            android:id="@+id/trialFragment"
-            app:destination="@id/trialFragment"
+            android:id="@+id/subscriptionFragment"
+            app:destination="@id/subscriptionFragment"
             app:popUpTo="@id/splashScreenFragment"
             app:popUpToInclusive="true" />
     </fragment>

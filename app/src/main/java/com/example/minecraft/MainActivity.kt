@@ -14,17 +14,16 @@ import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.AppUtil
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.appopen.AppOpenAd
-import com.google.android.gms.ads.interstitial.InterstitialAd
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
 
 private const val TAG = "MainActivity"
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     companion object{
         const val FLAG_DEST_BILLING_FRAGMENT = 2
-        const val FLAG_DEST_MAIN_FRAGMENT = 1
+        const val FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT = 1
+        const val FLAG_DEST_MAIN_FRAGMENT = 3
         const val EXTRA_FLAG_DIR_NAME = "activity.main.flag"
     }
 
@@ -57,77 +56,60 @@ class MainActivity : AppCompatActivity() {
         val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
 
         if (flagDest == FLAG_DEST_BILLING_FRAGMENT) {
-            navController.navigate(MainFragmentDirections.trialFragment(FLAG_DEST_BILLING_FRAGMENT))
+            navController.navigate(MainFragmentDirections.subscriptionFragment(FLAG_DEST_BILLING_FRAGMENT))
         } else {
             setupToolBartTitle()
         }
-        // Setup navigation with colliders
+        // Setup navigation
         binding.apply {
             homeIndicator.setOnClickListener { super.onBackPressed() }
             toolBarSettings.setOnClickListener { setActionBarSettings() }
-        }
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            when (destination.id) {
-                R.id.splashScreenFragment -> {
-                    binding.toolbar.visibility = View.GONE
-                }
-                R.id.mainFragment -> {
-                    binding.apply {
+            navController.addOnDestinationChangedListener { _, destination, _ ->
+                when (destination.id) {
+                    R.id.splashScreenFragment -> { toolbar.visibility = View.GONE }
+                    R.id.mainFragment -> {
                         toolbar.visibility = View.VISIBLE
                         if (homeIndicator.isVisible) {
                             homeIndicator.visibility = View.INVISIBLE
                         }
                         toolBarSettings.visibility = View.VISIBLE
+                        flagAppOpenAd = true
                     }
-                    flagAppOpenAd = true
-                }
-                R.id.detailFragment -> {
-                    binding.apply {
+                    R.id.detailFragment -> {
                         homeIndicator.visibility = View.VISIBLE
                         toolBarSettings.visibility = View.VISIBLE
+                        flagAppOpenAd = true
                     }
-                    flagAppOpenAd = true
-                }
-                R.id.settingsFragment -> {
-                    binding.apply {
-                        homeIndicator.visibility = View.VISIBLE
-                        toolBarSettings.visibility = View.GONE
-                    }
-                    flagAppOpenAd = true
-                }
-                R.id.settingsDetailFragment -> {
-                    if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
-                        binding.apply {
+                    R.id.settingsFragment -> {
                             homeIndicator.visibility = View.VISIBLE
-                        }
-                    } else {
-                        binding.apply {
+                            toolBarSettings.visibility = View.GONE
+                        flagAppOpenAd = true
+                    }
+                    R.id.settingsDetailFragment -> {
+                        if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
+                            homeIndicator.visibility = View.VISIBLE
+                        } else {
                             homeIndicator.visibility = View.VISIBLE
                             toolBarSettings.visibility = View.GONE
                         }
+                        flagAppOpenAd = true
                     }
-                    flagAppOpenAd = true
-                }
-                R.id.trialFragment -> {
-                    binding.toolbar.visibility = View.VISIBLE
-                    if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
-                        binding.apply {
-                            homeIndicator.visibility = View.GONE
-                            toolBarSettings.visibility = View.GONE
+                    R.id.subscriptionFragment -> {
+                        toolbar.visibility = View.VISIBLE
+                        if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
+                                homeIndicator.visibility = View.GONE
+                                toolBarSettings.visibility = View.GONE
+                        } else {
+                                homeIndicator.visibility = View.GONE
+                                toolBarSettings.visibility = View.GONE
                         }
-                    } else {
-                        binding.apply {
-                            homeIndicator.visibility = View.GONE
-                            toolBarSettings.visibility = View.GONE
-                        }
+                        flagAppOpenAd = false
                     }
-                    flagAppOpenAd = false
+                    else -> { }
                 }
-                else -> { }
             }
         }
     }
-
     override fun onPause() {
         super.onPause()
         lifecycleScope.launchWhenResumed{

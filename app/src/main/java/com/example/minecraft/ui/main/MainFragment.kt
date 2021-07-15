@@ -28,14 +28,11 @@ import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.FragmentMainBinding
 import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.*
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -47,7 +44,7 @@ class MainFragment : DownloadDialogUtil(){
     }
 
     private var _binding: FragmentMainBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
 
     private val viewModel: MainViewModel by viewModels()
 
@@ -92,6 +89,8 @@ class MainFragment : DownloadDialogUtil(){
 
     override fun onResume() {
         super.onResume()
+        setupToolBartTitle(getString(R.string.title_fragment_details))
+
         binding.apply {
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
@@ -144,11 +143,7 @@ class MainFragment : DownloadDialogUtil(){
 
                                     container.addOnScrollListener(object :
                                         RecyclerView.OnScrollListener() {
-                                        override fun onScrolled(
-                                            recyclerView: RecyclerView,
-                                            dx: Int,
-                                            dy: Int
-                                        ) {
+                                        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                                             super.onScrolled(recyclerView, dx, dy)
                                             if (isLoading) {
                                                 if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
@@ -174,6 +169,10 @@ class MainFragment : DownloadDialogUtil(){
                 }
             }
         }
+    }
+
+    fun setupToolBartTitle(title: String) {
+        (activity as MainActivity).setupToolBartTitle(title)
     }
 
     override fun onDestroyView() {
@@ -228,10 +227,10 @@ class MainFragment : DownloadDialogUtil(){
                 builder.create().dismiss()
             }
             .setNegativeButton(getString(R.string.alert_btn_reload)) { _, _ ->
-//                val intent = Intent(requireActivity(), SplashscreenActivity::class.java)
-//                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//                startActivity(intent)
+                val intent = Intent(requireActivity(), MainActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(intent)
             }
 
         if (state) {
@@ -284,9 +283,9 @@ class MainFragment : DownloadDialogUtil(){
     // ==========================   Helpers  ==============================================
 
     inner class PagingAdapter : ListAdapter<RosterItem, RecyclerView.ViewHolder>(diff) {
-        val REGULAR_ITEM = 0
-        val FOOTER_ITEM = 1
-        val AD_NATIVE_ITEM = 2
+        private val REGULAR_ITEM = 0
+        private val FOOTER_ITEM = 1
+        private val AD_NATIVE_ITEM = 2
 
         override fun submitList(list: MutableList<RosterItem>?) {
             super.submitList(list)
@@ -396,7 +395,7 @@ class MainFragment : DownloadDialogUtil(){
 
                     btnDownload.setOnClickListener {
                         if (!prefState) {
-                            findNavController().navigate(MainFragmentDirections.trialFragment(FLAG_DEST_MAIN_FRAGMENT))
+                            findNavController().navigate(MainFragmentDirections.subscriptionFragment(FLAG_DEST_MAIN_FRAGMENT))
                         } else {
                             if (checkPermission()) {
                                 checkFileExists(item)

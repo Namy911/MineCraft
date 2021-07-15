@@ -168,15 +168,11 @@ abstract class DownloadDialogUtil : Fragment(){
 
     }
     // Permissions Setup
-    fun checkPermission(): Boolean{
+    fun checkPermission(): Boolean {
         setupPermissions()
-        return if(ContextCompat.checkSelfPermission(requireActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            != PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, "No permission: WRITE_EXTERNAL_STORAGE")
-            false
-        } else {
-            true
-        }
+        return ContextCompat.checkSelfPermission(
+            requireActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ) == PackageManager.PERMISSION_GRANTED
     }
     // Check permission: WRITE_EXTERNAL_STORAGE
     private fun setupPermissions() {

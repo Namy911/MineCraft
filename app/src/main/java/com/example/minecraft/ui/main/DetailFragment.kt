@@ -47,7 +47,7 @@ class DetailFragment : DownloadDialogUtil() {
     }
 
     private var _binding: FragmentDetailBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
 
     private val args: DetailFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
@@ -88,7 +88,6 @@ class DetailFragment : DownloadDialogUtil() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        setupToolBartTitle(getString(R.string.title_fragment_details))
         checkFileExists(args.model)
 
         binding.apply {
@@ -141,7 +140,7 @@ class DetailFragment : DownloadDialogUtil() {
                     }
                 } else {
                     findNavController().navigate(
-                        DetailFragmentDirections.trialFragment(
+                        DetailFragmentDirections.subscriptionFragment(
                             FLAG_DEST_BILLING_FRAGMENT
                         )
                     )
@@ -153,6 +152,7 @@ class DetailFragment : DownloadDialogUtil() {
 
     override fun onResume() {
         super.onResume()
+        setupToolBartTitle(getString(R.string.title_fragment_details))
         lifecycleScope.launchWhenResumed {
             appSharedPrefManager.billingAdsSate.collectLatest { state ->
                 if (!state) {

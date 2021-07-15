@@ -15,10 +15,11 @@ sealed class SplashScreenState {
 }
 
 @HiltViewModel
-class SplashScreenMotor @Inject constructor(
-        private val repository: SplashScreenRepository,
-        private val savedStateHandle: SavedStateHandle
-    ): ViewModel() {
+class SplashScreenMotor
+@Inject constructor(
+    private val repository: SplashScreenRepository,
+    private val savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     private val stage1:Int = Random.nextInt(20, 65)
     private val stage2:Int = Random.nextInt(66, 85)
@@ -32,7 +33,7 @@ class SplashScreenMotor @Inject constructor(
     val fulList: StateFlow<SplashScreenState> = _fulList.asStateFlow()
 
     init {
-        getFulData()
+        getFullData()
     }
 
     fun setLoadingNumber(){ savedStateHandle.set(LOADING_STATE, stage1) }
@@ -42,7 +43,7 @@ class SplashScreenMotor @Inject constructor(
     fun getStartContentNumber() = savedStateHandle.get<Int>(START_CONTENT_STATE)
 
     // Get all data from server
-    private fun getFulData(){
+    private fun getFullData(){
         viewModelScope.launch {
             repository.getDataFromServer()
                 .distinctUntilChanged()

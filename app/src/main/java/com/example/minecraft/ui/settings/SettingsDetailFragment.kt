@@ -15,7 +15,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class SettingsDetailFragment : Fragment() {
 
     private var _binding: FragmentSettingsDetailBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
 
     private val args: SettingsDetailFragmentArgs by navArgs()
 

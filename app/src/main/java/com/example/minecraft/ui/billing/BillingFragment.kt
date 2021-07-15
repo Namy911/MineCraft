@@ -1,10 +1,8 @@
 package com.example.minecraft.ui.billing
 
-import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,10 +13,12 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_MAIN_FRAGMENT
 import com.example.minecraft.R
 import com.example.minecraft.databinding.LayoutPremiumBinding
 import com.example.minecraft.ui.settings.SettingsFragmentDirections
-import com.example.minecraft.ui.spash.SplashScreenFragmentDirections
 import com.example.minecraft.ui.util.AppUtil
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,7 +29,7 @@ import dagger.hilt.android.AndroidEntryPoint
 class BillingFragment : Fragment() {
     private val TAG = "BillingFragment"
     private var _binding: LayoutPremiumBinding? = null
-    private val binding get() = _binding!!
+    private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
 
     private val args: BillingFragmentArgs by navArgs()
 
@@ -85,11 +85,11 @@ class BillingFragment : Fragment() {
         }
     }
     private fun closeNavigation(){
-        val destId = args.flagDest
-        if (destId == 1){
-            findNavController().navigate(BillingFragmentDirections.mainFragment())
-        }else {
-            findNavController().popBackStack()
+        when (args.flagDest) {
+            FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT -> { findNavController().navigate(BillingFragmentDirections.mainFragment()) }
+            FLAG_DEST_BILLING_FRAGMENT -> { findNavController().popBackStack() }
+            FLAG_DEST_MAIN_FRAGMENT -> { findNavController().popBackStack(R.id.mainFragment, true) }
+            else -> { throw RuntimeException("Bad flag no destination ")}
         }
     }
 
