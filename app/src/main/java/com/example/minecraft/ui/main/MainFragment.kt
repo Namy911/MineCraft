@@ -26,7 +26,6 @@ import com.example.minecraft.databinding.ItemFooterBinding
 import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.FragmentMainBinding
-import com.example.minecraft.ui.spash.SplashscreenActivity
 import com.example.minecraft.ui.util.*
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.interstitial.InterstitialAd
@@ -34,6 +33,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.nativead.NativeAd
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.coroutines.resume
@@ -74,11 +74,12 @@ class MainFragment : DownloadDialogUtil(){
         }
 
         appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
-        lifecycleScope.launch {
-            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+        lifecycleScope.launchWhenResumed {
+            appSharedPrefManager.billingAdsSate.collect { prefState ->
                 this@MainFragment.prefState = prefState
             }
         }
+        Log.d(TAG, "onViewCreated: ${!prefState}")
         adapter = PagingAdapter()
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
@@ -86,92 +87,91 @@ class MainFragment : DownloadDialogUtil(){
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMainBinding.inflate(inflater, container, false)
-
         return binding.root
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        setupToolBartTitle()
-        Log.d(TAG, "onViewCreated: ${!prefState}")
-        if (!prefState) {
-            val adRequest = AdRequest.Builder().build()
-            binding.adView.loadAd(adRequest)
-        } else {
-            binding.adView.visibility = View.GONE
-        }
-        // Setup recycler
+    override fun onResume() {
+        super.onResume()
         binding.apply {
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
-            if (!prefState) {
-                lifecycleScope.launch {
-                    if (checkInternetConnection()) {
-                        // Online list
-                        viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
-                            .collectLatest { state ->
-                                when (state) {
-                                    RosterItemLoadState.Loading -> {
-                                        progressBar.visibility = View.VISIBLE
-                                        viewModel.getItem(adapter.getItems(), PAGE_SIZE)
-                                    }
-                                    is RosterItemLoadState.LoadComplete -> {
-                                        val job1 = async { getItemAd() }
-                                        val job2 = async { state.content }
-                                        job2.start()
-                                        job1.start()
-
-                                        val content = job2.await()
-                                        val ad = job1.await()
-
-                                        val prev = fulList.size
-                                        fulList.addAll(content)
-                                        val newList = fulList.size
-                                        if (newList - prev == PAGE_SIZE){
-                                            fulList.add(ad)
+            lifecycleScope.launchWhenResumed {
+                appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+                    if (!prefState) {
+                        val adRequest = AdRequest.Builder().build()
+                        binding.adView.loadAd(adRequest)
+                        if (checkInternetConnection()) {
+                            // Online list
+                            viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
+                                .collectLatest { state ->
+                                    when (state) {
+                                        RosterItemLoadState.Loading -> {
+                                            progressBar.visibility = View.VISIBLE
+                                            viewModel.getItem(adapter.getItems(), PAGE_SIZE)
                                         }
+                                        is RosterItemLoadState.LoadComplete -> {
+                                            val job1 = async { getItemAd() }
+                                            val job2 = async { state.content }
+                                            job2.start()
+                                            job1.start()
 
-                                        adapter.deleteFooter()
-                                        fulList.add(FooterItem())
-                                        adapter.submitList(fulList.toMutableList())
+                                            val content = job2.await()
+                                            val ad = job1.await()
 
-                                        progressBar.visibility = View.GONE
-                                    }
-                                    is RosterItemLoadState.LoadLast -> {
-                                        insertLastItem(state.content)
-                                        progressBar.visibility = View.GONE
-                                    }
-                                    is RosterItemLoadState.Error -> {
-                                        progressBar.visibility = View.GONE
-                                        Log.d(TAG, "flowWithLifecycle list: ${state.error}")
-                                    }
-                                }
+                                            val prev = fulList.size
+                                            fulList.addAll(content)
+                                            val newList = fulList.size
+                                            if (newList - prev == PAGE_SIZE) {
+                                                fulList.add(ad)
+                                            }
 
-                                container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                                        super.onScrolled(recyclerView, dx, dy)
-                                        if (isLoading) {
-                                            if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
+                                            adapter.deleteFooter()
+                                            fulList.add(FooterItem())
+                                            adapter.submitList(fulList.toMutableList())
+
+                                            progressBar.visibility = View.GONE
+                                        }
+                                        is RosterItemLoadState.LoadLast -> {
+                                            insertLastItem(state.content)
+                                            progressBar.visibility = View.GONE
+                                        }
+                                        is RosterItemLoadState.Error -> {
+                                            progressBar.visibility = View.GONE
+                                            Log.d(TAG, "flowWithLifecycle list: ${state.error}")
+                                        }
+                                    }
+
+                                    container.addOnScrollListener(object :
+                                        RecyclerView.OnScrollListener() {
+                                        override fun onScrolled(
+                                            recyclerView: RecyclerView,
+                                            dx: Int,
+                                            dy: Int
+                                        ) {
+                                            super.onScrolled(recyclerView, dx, dy)
+                                            if (isLoading) {
+                                                if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
 //                                networkState()
-                                                Log.d(TAG, "onScrolled: ")
-                                                if (!checkInternetConnection()) {
-                                                    dialogNetwork(false)
+                                                    if (!checkInternetConnection()) {
+                                                        dialogNetwork(false)
+                                                    }
+                                                    viewModel.getItem(adapter.getItems(), PAGE_SIZE)
+                                                    isLoading = false
                                                 }
-                                                viewModel.getItem(adapter.getItems(), PAGE_SIZE)
-                                                isLoading = false
                                             }
                                         }
-                                    }
-                                })
-                            }
+                                    })
+                                }
+                        } else {
+                            networkState()
+                            offlineList()
+                        }
                     } else {
-                        networkState()
+                        binding.adView.visibility = View.GONE
                         offlineList()
                     }
                 }
-            }else{
-                offlineList()
             }
         }
     }
@@ -228,10 +228,10 @@ class MainFragment : DownloadDialogUtil(){
                 builder.create().dismiss()
             }
             .setNegativeButton(getString(R.string.alert_btn_reload)) { _, _ ->
-                val intent = Intent(requireActivity(), SplashscreenActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                startActivity(intent)
+//                val intent = Intent(requireActivity(), SplashscreenActivity::class.java)
+//                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+//                startActivity(intent)
             }
 
         if (state) {
