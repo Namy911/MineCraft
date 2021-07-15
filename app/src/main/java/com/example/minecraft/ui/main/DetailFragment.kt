@@ -2,7 +2,10 @@ package com.example.minecraft.ui.main
 
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -68,19 +71,11 @@ class DetailFragment : DownloadDialogUtil() {
             }
         }
 
-        lifecycleScope.launch {
-            appSharedPrefManager.billingAdsSate.collectLatest { state ->
-                if (checkInternetConnection() && !state) {
-                    if (checkInternetConnection()) {
-                        MobileAds.initialize(requireContext()) {
-                            loadAddReward()
-                        }
-                    }
-                }
+        if (checkInternetConnection() && !prefState) {
+            MobileAds.initialize(requireContext()) {
+                loadAddReward()
             }
         }
-        // Ad Interstitial config
-
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -113,12 +108,12 @@ class DetailFragment : DownloadDialogUtil() {
 
             btnShare.setOnClickListener {
                 val temp = viewModel.getFlagRewardShare()
-//                if (temp == false && checkInternetConnection() && !prefState) {
-//                    adSeen(DownloadAddon.DIR_CACHE)
-//                }else{
+                if (temp == false && checkInternetConnection() && !prefState) {
+                    adSeen(DownloadAddon.DIR_CACHE)
+                }else{
                     checkFileExists(args.model)
                     shareFileCheck()
-//                }
+                }
             }
 
             btnDownload.setOnClickListener {
@@ -145,8 +140,13 @@ class DetailFragment : DownloadDialogUtil() {
                         dialogDownload(args.model, DownloadAddon.DIR_CACHE)
                     }
                 } else {
-                    findNavController().navigate(DetailFragmentDirections.trialFragment(FLAG_DEST_BILLING_FRAGMENT))
+                    findNavController().navigate(
+                        DetailFragmentDirections.trialFragment(
+                            FLAG_DEST_BILLING_FRAGMENT
+                        )
+                    )
                 }
+
             }
         }
     }
@@ -249,15 +249,9 @@ class DetailFragment : DownloadDialogUtil() {
                 } else {
                     if (checkInternetConnection()) {
                         if (checkPermission()) {
-                            workDownloadAddon(
-                                args.model.behavior,
-                                getPackFileName(args.model.behavior, TAG_BEHAVIOR),
-                                DownloadAddon.DIR_CACHE,
-                                args.model,
-                                true
+                            workDownloadAddon(args.model.behavior, getPackFileName(args.model.behavior, TAG_BEHAVIOR),
+                                DownloadAddon.DIR_CACHE, args.model, true
                             )
-//                            val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.behavior, TAG_BEHAVIOR)
-//                            list[1] = getPath(File(cacheBehaviorLink))
                         }
                     } else {
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -271,15 +265,9 @@ class DetailFragment : DownloadDialogUtil() {
                 } else {
                     if (checkInternetConnection()) {
                         if (checkPermission()) {
-                            workDownloadAddon(
-                                args.model.resource,
-                                getPackFileName(args.model.resource, TAG_RESOURCE),
-                                DownloadAddon.DIR_CACHE,
-                                args.model,
-                                true
+                            workDownloadAddon(args.model.resource, getPackFileName(args.model.resource, TAG_RESOURCE),
+                                DownloadAddon.DIR_CACHE, args.model, true
                             )
-//                            val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(args.model.resource, TAG_RESOURCE)
-//                            list[0] = getPath(File(cacheResourceLink))
                         }
                     } else {
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -301,7 +289,6 @@ class DetailFragment : DownloadDialogUtil() {
                     requireActivity().startActivity(shareIntent)
                 }
             }
-
         }
 
         lifecycleScope.launch {

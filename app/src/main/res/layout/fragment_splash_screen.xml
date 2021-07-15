@@ -10,10 +10,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="fitXY"
-        app:lottie_autoPlay="true"
         android:id="@+id/lottie"
+        app:lottie_autoPlay="true"
         app:lottie_loop="true"
         app:lottie_rawRes="@raw/cubes"
+        app:lottie_imageAssetsFolder="images/"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -34,26 +35,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-
-    <!--    <FrameLayout-->
-<!--        android:id="@+id/container_progressBar"-->
-<!--        android:layout_width="280dp"-->
-<!--        android:layout_height="12dp"-->
-<!--        android:layout_marginTop="32dp"-->
-<!--        android:background="@drawable/progress_bar_background"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toBottomOf="@+id/view_snack">-->
-
-<!--        <ProgressBar-->
-<!--            android:id="@+id/progressBar"-->
-<!--            style="@style/Widget.AppCompat.ProgressBar.Horizontal"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="12dp"-->
-<!--            android:indeterminate="false"-->
-<!--            android:progressDrawable="@drawable/curved_progress_bar" />-->
-<!--    </FrameLayout>-->
 
     <ProgressBar
         android:id="@+id/progressBar"

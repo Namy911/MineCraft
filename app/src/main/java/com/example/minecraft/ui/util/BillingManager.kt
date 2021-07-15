@@ -38,8 +38,8 @@ class BillingManager (
     private val acknowledgePurchaseResponseListener =
         AcknowledgePurchaseResponseListener { billingResult ->
             if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-//                CoroutineScope(SupervisorJob()).launch {
-                scope.launch {
+                CoroutineScope(SupervisorJob()).launch {
+//                scope.launch {
                     sharedPreferencesManager.setBillingAdsSate(true)
                 }
             }
@@ -76,12 +76,13 @@ class BillingManager (
                     if (result) {
                         BILLING_FLAG_STATE = true
                         CoroutineScope(SupervisorJob()).launch {
+//                        scope.launch {
                             sharedPreferencesManager.setBillingAdsSate(false)
                         }
                     }else{
                         BILLING_FLAG_STATE = false
-                        scope.launch {
-//                        CoroutineScope(SupervisorJob()).launch {
+//                        scope.launch {
+                        CoroutineScope(SupervisorJob()).launch {
                             sharedPreferencesManager.setBillingAdsSate(true)
                         }
                     }
@@ -125,8 +126,8 @@ class BillingManager (
             .setSkusList(skuList)
             .setType(PRODUCT_TYPE)
 
-//        CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
-            scope.launch {
+        CoroutineScope(SupervisorJob()).launch(Dispatchers.IO) {
+//            scope.launch {
             billingClient.querySkuDetailsAsync(params.build()) { _, skuDetailsList ->
                 if (skuDetailsList != null) {
                     for (skuDetails in skuDetailsList) {

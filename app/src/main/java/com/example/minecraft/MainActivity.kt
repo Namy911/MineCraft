@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
         // Setup Navigation
         val navHostFragment =
             supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
@@ -72,8 +73,12 @@ class MainActivity : AppCompatActivity() {
         }
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
+                R.id.splashScreenFragment -> {
+                    binding.toolbar.visibility = View.GONE
+                }
                 R.id.mainFragment -> {
                     binding.apply {
+                        toolbar.visibility = View.VISIBLE
                         if (homeIndicator.isVisible) {
                             homeIndicator.visibility = View.INVISIBLE
                         }
@@ -109,6 +114,7 @@ class MainActivity : AppCompatActivity() {
                     flagAppOpenAd = true
                 }
                 R.id.trialFragment -> {
+                    binding.toolbar.visibility = View.VISIBLE
                     if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
                         binding.apply {
                             homeIndicator.visibility = View.GONE
@@ -146,19 +152,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        appOpenAd?.let { ad ->
-        if (flagAppOpenAd) {
-            val fullScreenContentCallback = object : FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    this@MainActivity.appOpenAd = null
-                }
+        if (!prefState) {
+            appOpenAd?.let { ad ->
+                if (flagAppOpenAd) {
+                    val fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            this@MainActivity.appOpenAd = null
+                        }
 
-                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                    this@MainActivity.appOpenAd = null
+                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                            this@MainActivity.appOpenAd = null
+                        }
+                    }
+                    ad.fullScreenContentCallback = fullScreenContentCallback
+                    ad.show(this)
                 }
-            }
-                ad.fullScreenContentCallback = fullScreenContentCallback
-                ad.show(this)
             }
         }
     }

@@ -6,9 +6,7 @@ import android.net.Network
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -37,6 +35,7 @@ import com.google.android.gms.ads.nativead.NativeAd
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -64,32 +63,38 @@ class MainFragment : DownloadDialogUtil(){
 
     var fulList: MutableSet<RosterItem> = mutableSetOf()
 
+    @Suppress("DEPRECATION")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+            requireActivity().window.insetsController?.show(WindowInsets.Type.statusBars())
+        } else {
+            requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+        }
+
         appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
-
+        lifecycleScope.launch {
+            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+                this@MainFragment.prefState = prefState
+            }
+        }
         adapter = PagingAdapter()
-
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentMainBinding.inflate(inflater, container, false)
-        lifecycleScope.launch {
-            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
-                this@MainFragment.prefState = prefState
-            }
-        }
+
         return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupToolBartTitle()
-
+        Log.d(TAG, "onViewCreated: ${!prefState}")
         if (!prefState) {
-            MobileAds.initialize(requireActivity()) {}
             val adRequest = AdRequest.Builder().build()
             binding.adView.loadAd(adRequest)
         } else {
@@ -100,8 +105,8 @@ class MainFragment : DownloadDialogUtil(){
             container.adapter = adapter
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
-            lifecycleScope.launch {
-                if (!prefState) {
+            if (!prefState) {
+                lifecycleScope.launch {
                     if (checkInternetConnection()) {
                         // Online list
                         viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
@@ -147,7 +152,7 @@ class MainFragment : DownloadDialogUtil(){
                                     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                                         super.onScrolled(recyclerView, dx, dy)
                                         if (isLoading) {
-                                            if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 3) {
+                                            if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
 //                                networkState()
                                                 Log.d(TAG, "onScrolled: ")
                                                 if (!checkInternetConnection()) {
@@ -164,9 +169,9 @@ class MainFragment : DownloadDialogUtil(){
                         networkState()
                         offlineList()
                     }
-                }else{
-                    offlineList()
                 }
+            }else{
+                offlineList()
             }
         }
     }
