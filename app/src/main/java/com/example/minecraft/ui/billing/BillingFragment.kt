@@ -23,8 +23,6 @@ import com.example.minecraft.ui.util.AppUtil
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
 
-
-
 @AndroidEntryPoint
 class BillingFragment : Fragment() {
     private val TAG = "BillingFragment"
@@ -55,7 +53,9 @@ class BillingFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupToolBartTitle(getString(R.string.title_fragment_trial))
 
-        Glide.with(requireActivity()).load("https://media.giphy.com/media/QGnhDpnrr7qhy/giphy.gif").into(binding.gifStub)
+        Glide.with(requireActivity())
+            .load("https://media.giphy.com/media/QGnhDpnrr7qhy/giphy.gif")
+            .into(binding.gifStub)
 
         val animBtn = AnimationUtils.loadAnimation(requireActivity(), R.anim.btn_premium)
         val animTxt = AnimationUtils.loadAnimation(requireActivity(), R.anim.txt_premium)
@@ -65,7 +65,9 @@ class BillingFragment : Fragment() {
                 if (checkInternetConnection()) {
                     billingManager.startConnection()
                 }else{
-                    Toast.makeText(requireActivity(), resources.getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        requireActivity(), resources.getString(R.string.msg_no_internet), Toast.LENGTH_SHORT
+                    ).show()
                 }
             }
             btnPremium.animation = animBtn
@@ -76,19 +78,34 @@ class BillingFragment : Fragment() {
             }
 
             txtTerms.setOnClickListener {
-                findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.help), getString(R.string.terms_of_usage)))
+                findNavController().navigate(
+                    SettingsFragmentDirections.settingsDetailFragment(
+                        appUtil.readTextFile(
+                            requireActivity(),
+                            R.raw.help
+                        ), getString(R.string.terms_of_usage)
+                    )
+                )
             }
 
             txtPrivacy.setOnClickListener {
-                findNavController().navigate(SettingsFragmentDirections.settingsDetailFragment(appUtil.readTextFile(requireActivity(), R.raw.policy), getString(R.string.txt_privacy_policy)))
+                findNavController().navigate(
+                    SettingsFragmentDirections.settingsDetailFragment(
+                        appUtil.readTextFile(requireActivity(), R.raw.policy),
+                        getString(R.string.txt_privacy_policy)
+                    )
+                )
             }
         }
     }
     private fun closeNavigation(){
         when (args.flagDest) {
-            FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT -> { findNavController().navigate(BillingFragmentDirections.mainFragment()) }
-            FLAG_DEST_BILLING_FRAGMENT -> { findNavController().popBackStack() }
-            FLAG_DEST_MAIN_FRAGMENT -> { findNavController().popBackStack(R.id.mainFragment, true) }
+            FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT -> {
+                findNavController().navigate(BillingFragmentDirections.mainFragment())
+            }
+            FLAG_DEST_BILLING_FRAGMENT, FLAG_DEST_MAIN_FRAGMENT -> {
+                findNavController().popBackStack()
+            }
             else -> { throw RuntimeException("Bad flag no destination ")}
         }
     }

@@ -78,7 +78,9 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentDetailBinding.inflate(inflater, container, false)
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
@@ -197,7 +199,11 @@ class DetailFragment : DownloadDialogUtil() {
 
     private fun loadAddReward() {
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(requireActivity(), REVARD_AD_UNIT_ID, adRequest, object : RewardedAdLoadCallback() {
+        RewardedAd.load(
+            requireActivity(),
+            REVARD_AD_UNIT_ID,
+            adRequest,
+            object : RewardedAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     Log.d(TAG, adError.message)
                     mRewardedAd = null
@@ -249,12 +255,17 @@ class DetailFragment : DownloadDialogUtil() {
                 } else {
                     if (checkInternetConnection()) {
                         if (checkPermission()) {
-                            workDownloadAddon(args.model.behavior, getPackFileName(args.model.behavior, TAG_BEHAVIOR),
-                                DownloadAddon.DIR_CACHE, args.model, true
+                            workDownloadAddon(
+                                args.model.behavior,
+                                getPackFileName(args.model.behavior, TAG_BEHAVIOR),
+                                DownloadAddon.DIR_CACHE, args.model,
+                                true
                             )
                         }
                     } else {
-                        Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
@@ -265,12 +276,18 @@ class DetailFragment : DownloadDialogUtil() {
                 } else {
                     if (checkInternetConnection()) {
                         if (checkPermission()) {
-                            workDownloadAddon(args.model.resource, getPackFileName(args.model.resource, TAG_RESOURCE),
-                                DownloadAddon.DIR_CACHE, args.model, true
+                            workDownloadAddon(
+                                args.model.resource,
+                                getPackFileName(args.model.resource, TAG_RESOURCE),
+                                DownloadAddon.DIR_CACHE,
+                                args.model,
+                                true
                             )
                         }
                     } else {
-                        Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }
@@ -314,7 +331,11 @@ class DetailFragment : DownloadDialogUtil() {
         null
     }
 
-    inner class DetailPageAdapter(private val listOfLinks: List<String>, val title: String, private val ctx: Context) : PagerAdapter() {
+    inner class DetailPageAdapter(
+        private val listOfLinks: List<String>, val title: String,
+        private val ctx: Context
+    ) : PagerAdapter() {
+
         override fun getCount(): Int {
             return listOfLinks.size
         }

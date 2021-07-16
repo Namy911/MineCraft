@@ -72,7 +72,7 @@
     </fragment>
     <fragment
         android:id="@+id/splashScreenFragment"
-        android:name="com.example.minecraft.ui.spash.SplashScreenFragment"
+        android:name="com.example.minecraft.ui.splash.SplashScreenFragment"
         android:label="SplashScreenFragment" >
         <action
             android:id="@+id/mainFragment"

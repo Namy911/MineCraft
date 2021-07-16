@@ -1,4 +1,4 @@
-package com.example.minecraft.ui.spash
+package com.example.minecraft.ui.splash
 
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -16,11 +16,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.example.minecraft.MainActivity
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT
 import com.example.minecraft.R
-import com.example.minecraft.databinding.FragmentSettingsDetailBinding
 import com.example.minecraft.databinding.FragmentSplashScreenBinding
-import com.example.minecraft.databinding.LayoutPremiumBinding
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -47,6 +45,7 @@ class SplashScreenFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         billingManager = BillingManager(requireActivity()){ }
+        // Set pref state from billing subscription
         billingManager.setSubsState()
         appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
         // Ful screen window
@@ -67,7 +66,9 @@ class SplashScreenFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentSplashScreenBinding.inflate(layoutInflater)
         return binding.root
     }
@@ -116,7 +117,6 @@ class SplashScreenFragment : Fragment() {
         super.onDetach()
         job?.cancel()
     }
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
@@ -142,13 +142,12 @@ class SplashScreenFragment : Fragment() {
 
         try { builder.create().show() }
         catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
-
         networkState(dialog)
     }
 
     private fun networkState(dialog: AlertDialog) {
         val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N && this@SplashScreenFragment.isDetached) {
             connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     observeState()
@@ -162,18 +161,16 @@ class SplashScreenFragment : Fragment() {
     }
     //
     private fun getConnection(): Boolean{
-        val connectivityManager = requireActivity().applicationContext.getSystemService(ConnectivityManager::class.java)
+        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         val currentNetwork = connectivityManager.activeNetwork
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
         return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
     }
-    // Check if user have trial and redirect
+    // Check if user have subscription and redirect
     private fun navigateToMainScreen() {
         if (BillingManager.BILLING_FLAG_STATE) {
             findNavController().navigate(
-                SplashScreenFragmentDirections.subscriptionFragment(
-                    MainActivity.FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT
-                )
+                SplashScreenFragmentDirections.subscriptionFragment(FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT)
             )
         } else {
             findNavController().navigate(SplashScreenFragmentDirections.mainFragment())

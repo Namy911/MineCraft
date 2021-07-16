@@ -56,7 +56,9 @@ class MainActivity : AppCompatActivity() {
         val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
 
         if (flagDest == FLAG_DEST_BILLING_FRAGMENT) {
-            navController.navigate(MainFragmentDirections.subscriptionFragment(FLAG_DEST_BILLING_FRAGMENT))
+            navController.navigate(
+                MainFragmentDirections.subscriptionFragment(FLAG_DEST_BILLING_FRAGMENT)
+            )
         } else {
             setupToolBartTitle()
         }
@@ -110,12 +112,18 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     override fun onPause() {
         super.onPause()
-        lifecycleScope.launchWhenResumed{
+        lifecycleScope.launchWhenResumed {
             appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
                 if (!prefState) {
-                    AppOpenAd.load(this@MainActivity, AppUtil.APP_OPEN_UNIT_ID, AdRequest.Builder().build(), 1, object : AppOpenAd.AppOpenAdLoadCallback() {
+                    AppOpenAd.load(
+                        this@MainActivity,
+                        AppUtil.APP_OPEN_UNIT_ID,
+                        AdRequest.Builder().build(),
+                        1,
+                        object : AppOpenAd.AppOpenAdLoadCallback() {
                             override fun onAdLoaded(appOpenAd: AppOpenAd) {
                                 super.onAdLoaded(appOpenAd)
                                 this@MainActivity.appOpenAd = appOpenAd

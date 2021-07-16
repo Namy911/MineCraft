@@ -32,11 +32,9 @@ class MainViewModel @Inject constructor(
         const val PATH_CACHE_RESOURCE: String = "ui.main.path.cache.resource"
         const val PATH_CACHE_BEHAVIOR: String = "ui.main.path.cache.behavior"
 
-        const val FLAG_TRIAL: String = "ui.main.flag.trial"
         const val FLAG_REWARD_DOWNLOAD: String = "ui.main.flag.reward"
         const val FLAG_REWARD_SHARE: String = "ui.main.flag.share"
 
-        val FLAG_INIT: String = "ui.main.flag.init"
     }
 
     private val _offLineList = MutableStateFlow<RosterItemOffLineState>(RosterItemOffLineState.InitSate)
@@ -62,9 +60,6 @@ class MainViewModel @Inject constructor(
 
     fun setCachePathBehavior(path: String){ savedStateHandle.set(PATH_CACHE_BEHAVIOR, path) }
     fun getCachePathBehavior() = savedStateHandle.get<String>(PATH_CACHE_BEHAVIOR)
-
-    fun setFlagTrial(flag: Boolean){ savedStateHandle.set(FLAG_TRIAL, flag) }
-    fun getFlagTrial() = savedStateHandle.get<Boolean>(FLAG_TRIAL)
 
     fun setFlagRewardDownload(flag: Boolean){ savedStateHandle.set(FLAG_REWARD_DOWNLOAD, flag) }
     fun getFlagRewardDownload() = savedStateHandle.get<Boolean>(FLAG_REWARD_DOWNLOAD)

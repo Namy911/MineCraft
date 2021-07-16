@@ -1,4 +1,4 @@
-package com.example.minecraft.ui.spash
+package com.example.minecraft.ui.splash
 
 import androidx.lifecycle.*
 import com.example.minecraft.repository.SplashScreenRepository

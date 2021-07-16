@@ -10,6 +10,7 @@ import java.io.InputStream
 class AppUtil {
     companion object{
         const val REVARD_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917"
+        const val REVARD_AD_ID = "ca-app-pub-3940256099942544/2247696110"
         const val INTERSTIAL_AD_UNIT_ID = "ca-app-pub-3940256099942544/1033173712"
         const val APP_OPEN_UNIT_ID = "ca-app-pub-3940256099942544/3419835294"
     }

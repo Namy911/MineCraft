@@ -160,7 +160,7 @@ abstract class DownloadDialogUtil : Fragment(){
     }
     // Internet connection
     fun checkInternetConnection(): Boolean{
-        val connectivityManager = requireActivity().applicationContext
+        val connectivityManager = requireContext()
             .getSystemService(ConnectivityManager::class.java)
         val currentNetwork = connectivityManager.activeNetwork
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)

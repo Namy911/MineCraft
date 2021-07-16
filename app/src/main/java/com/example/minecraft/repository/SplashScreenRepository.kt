@@ -3,7 +3,7 @@ package com.example.minecraft.repository
 import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.data.network.toAddonModel
 import com.example.minecraft.data.services.TaskService
-import com.example.minecraft.ui.spash.SplashScreenState
+import com.example.minecraft.ui.splash.SplashScreenState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext

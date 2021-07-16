@@ -27,6 +27,7 @@ import com.example.minecraft.databinding.ItemRecyclerAdnativeBinding
 import com.example.minecraft.databinding.ItemRecyclerBinding
 import com.example.minecraft.databinding.FragmentMainBinding
 import com.example.minecraft.ui.util.*
+import com.example.minecraft.ui.util.AppUtil.Companion.REVARD_AD_ID
 import com.google.android.gms.ads.*
 import com.google.android.gms.ads.nativead.NativeAd
 import dagger.hilt.android.AndroidEntryPoint
@@ -76,13 +77,16 @@ class MainFragment : DownloadDialogUtil(){
                 this@MainFragment.prefState = prefState
             }
         }
-        Log.d(TAG, "onViewCreated: ${!prefState}")
+
         adapter = PagingAdapter()
+
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View {
         _binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -93,9 +97,12 @@ class MainFragment : DownloadDialogUtil(){
 
         binding.apply {
             container.adapter = adapter
-            val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
+            val manager = LinearLayoutManager(
+                activity, LinearLayoutManager.VERTICAL, false
+            )
             container.layoutManager = manager
-            lifecycleScope.launchWhenResumed {
+
+             lifecycleScope.launchWhenResumed {
                 appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
                     if (!prefState) {
                         val adRequest = AdRequest.Builder().build()
@@ -117,18 +124,19 @@ class MainFragment : DownloadDialogUtil(){
 
                                             val content = job2.await()
                                             val ad = job1.await()
-
+                                            // prevent double insertion Ad
                                             val prev = fulList.size
                                             fulList.addAll(content)
                                             val newList = fulList.size
                                             if (newList - prev == PAGE_SIZE) {
                                                 fulList.add(ad)
                                             }
-
+                                            // -----------  end  --------------
                                             adapter.deleteFooter()
                                             fulList.add(FooterItem())
                                             adapter.submitList(fulList.toMutableList())
 
+//                                            preloadRosterIem()
                                             progressBar.visibility = View.GONE
                                         }
                                         is RosterItemLoadState.LoadLast -> {
@@ -145,9 +153,10 @@ class MainFragment : DownloadDialogUtil(){
                                         RecyclerView.OnScrollListener() {
                                         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                                             super.onScrolled(recyclerView, dx, dy)
+                                            val lastItem = manager.findLastCompletelyVisibleItemPosition()
                                             if (isLoading) {
-                                                if (manager.findLastCompletelyVisibleItemPosition() == adapter.itemCount - 2) {
-//                                networkState()
+                                                if ((lastItem == adapter.itemCount - 2)
+                                                    || !recyclerView.canScrollVertically(1)) {
                                                     if (!checkInternetConnection()) {
                                                         dialogNetwork(false)
                                                     }
@@ -179,7 +188,7 @@ class MainFragment : DownloadDialogUtil(){
         super.onDestroyView()
         _binding = null
     }
-    //
+    // Load offline list
     private fun offlineList(){
         viewModel.getAll()
         lifecycleScope.launch {
@@ -191,7 +200,9 @@ class MainFragment : DownloadDialogUtil(){
                             binding.progressBar.visibility = View.GONE
                             Log.d(TAG, "flowWithLifecycle offLineList: ${state.error}")
                         }
-                        RosterItemOffLineState.InitSate -> { binding.progressBar.visibility = View.VISIBLE }
+                        RosterItemOffLineState.InitSate -> {
+                            binding.progressBar.visibility = View.VISIBLE
+                        }
                         is RosterItemOffLineState.LoadComplete -> {
                             binding.progressBar.visibility = View.GONE
                             adapter.submitList(state.content.toMutableList())
@@ -252,7 +263,7 @@ class MainFragment : DownloadDialogUtil(){
         catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
     }
 
-    private fun insertRosterIem(list: List<RosterItem>) {
+    private fun preloadRosterIem() {
 
     }
 
@@ -261,11 +272,11 @@ class MainFragment : DownloadDialogUtil(){
         fulList.addAll(list)
         adapter.submitList(fulList.toMutableList())
     }
-    //Convert callback in to coroutine
+    // Convert callback in to coroutine
     private suspend fun getItemAd()  =
         suspendCoroutine<RosterItem> {cont ->
             var item: RosterItem? = null
-            val adLoader = AdLoader.Builder(requireActivity(), "ca-app-pub-3940256099942544/2247696110")
+            val adLoader = AdLoader.Builder(requireActivity(), REVARD_AD_ID)
                 .forNativeAd { ad: NativeAd ->
                     item = AdsItem(ad)
                 }
@@ -280,7 +291,7 @@ class MainFragment : DownloadDialogUtil(){
 
     fun setupToolBartTitle(){ (activity as MainActivity).setupToolBartTitle() }
 
-    // ==========================   Helpers  ==============================================
+    // ================================   Helpers  ========================================
 
     inner class PagingAdapter : ListAdapter<RosterItem, RecyclerView.ViewHolder>(diff) {
         private val REGULAR_ITEM = 0
@@ -302,10 +313,18 @@ class MainFragment : DownloadDialogUtil(){
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder{
             return when (viewType) {
-                REGULAR_ITEM -> { TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false)      ) }
-                FOOTER_ITEM -> { FooterViewHolder(ItemFooterBinding.inflate(layoutInflater, parent, false)) }
-                AD_NATIVE_ITEM -> { AdNativeViewHolder(ItemRecyclerAdnativeBinding.inflate(layoutInflater, parent, false)) }
-                else -> { throw RuntimeException("ItemArrayAdapter, The type has to be TWO, ONE or ZERO") }
+                REGULAR_ITEM -> {
+                    TaskViewHolder(ItemRecyclerBinding.inflate(layoutInflater, parent, false))
+                }
+                FOOTER_ITEM -> {
+                    FooterViewHolder(ItemFooterBinding.inflate(layoutInflater, parent, false))
+                }
+                AD_NATIVE_ITEM -> {
+                    AdNativeViewHolder(ItemRecyclerAdnativeBinding.inflate(layoutInflater, parent, false))
+                }
+                else -> {
+                    throw RuntimeException("ItemArrayAdapter, The type has to be TWO, ONE or ZERO")
+                }
             }
         }
 
@@ -344,7 +363,9 @@ class MainFragment : DownloadDialogUtil(){
     }
     inner class FooterViewHolder(private val binding: ItemFooterBinding) : RecyclerView.ViewHolder(binding.root)
 
-    inner class AdNativeViewHolder(private val binding: ItemRecyclerAdnativeBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class AdNativeViewHolder(private val binding: ItemRecyclerAdnativeBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
         fun bind(item: AdsItem) {
             val ad = item.ads
             val adView = binding.container
@@ -395,7 +416,9 @@ class MainFragment : DownloadDialogUtil(){
 
                     btnDownload.setOnClickListener {
                         if (!prefState) {
-                            findNavController().navigate(MainFragmentDirections.subscriptionFragment(FLAG_DEST_MAIN_FRAGMENT))
+                            findNavController().navigate(
+                                MainFragmentDirections.subscriptionFragment(FLAG_DEST_MAIN_FRAGMENT)
+                            )
                         } else {
                             if (checkPermission()) {
                                 checkFileExists(item)
@@ -405,7 +428,8 @@ class MainFragment : DownloadDialogUtil(){
                     }
 
                     itemView.setOnClickListener {
-                        findNavController().navigate(MainFragmentDirections.detailFragment(item, title)
+                        findNavController().navigate(
+                            MainFragmentDirections.detailFragment(item, title)
                         )
                     }
                 }
