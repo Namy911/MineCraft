@@ -108,25 +108,28 @@ abstract class DownloadDialogUtil : Fragment(){
             .putString(DownloadAddon.FILE_NAME, fileName)
             .putString(DownloadAddon.DIRECTORY, flagDir)
             .build()
-
-        val constrains = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
+//
+//        val constrains = Constraints.Builder()
+//            .setRequiredNetworkType(NetworkType.CONNECTED)
+//            .build()
 
         val request = OneTimeWorkRequest.Builder(DownloadAddon::class.java)
-            .setConstraints(constrains)
+//            .setConstraints(constrains)
             .setInputData(data)
             .build()
         // Get result and observe response from manager
         workManager.enqueue(request)
         workManager.getWorkInfoByIdLiveData(request.id).observe(viewLifecycleOwner){ workInfo ->
             if (workInfo != null && workInfo.state.isFinished) {
-//                val progress = workInfo.progress
-//                val value = progress.getInt(Progress, 0)
-
                 // Download addon type(resource or behavior)
                 if (flagBtnShare){
-                    downloadShareFile(model)
+                    if(model.resource.isNotEmpty() && model.behavior.isNotEmpty()) {
+                        downloadShareFile(model)
+                    }else if (model.resource.isNotEmpty()){
+                        downloadShareFiles(model.resource, TAG_RESOURCE)
+                    } else if (model.behavior.isNotEmpty()){
+                        downloadShareFiles(model.behavior, TAG_BEHAVIOR)
+                    }
                 } else {
                     checkInstallation(model, flagDir)
                 }
@@ -287,8 +290,39 @@ abstract class DownloadDialogUtil : Fragment(){
             Log.d(TAG, "isFileBehavior Install: no file")
         }
     }
+//    private fun downloadShareFiles(model: AddonModel){
+    private fun downloadShareFiles(modelType: String, tag: String){
+        var item: Uri? = null
+        val cacheLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(modelType, tag)
+
+        if (tag == TAG_BEHAVIOR) {
+            if (File(cacheLink).exists()) {
+                viewModel.setCachePathBehavior(cacheLink)
+            }
+        } else {
+            if (File(cacheLink).exists()) {
+                viewModel.setCachePathResource(cacheLink)
+            }
+        }
+
+        item = FileProvider.getUriForFile(requireContext().applicationContext,
+            BuildConfig.APPLICATION_ID + ".fileProvider", File(cacheLink))
+
+        if (item != null  && checkPermission()) {
+            val sendIntent: Intent = Intent().apply {
+                putExtra(Intent.EXTRA_TEXT, getString(R.string.msg_share_addon))
+                type = "file/*"
+                flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_STREAM, item)
+            }
+
+            val shareIntent = Intent.createChooser(sendIntent, null)
+            requireActivity().startActivity(shareIntent)
+        }
+    }
     //
-    private fun downloadShareFile(model: AddonModel){
+     private fun downloadShareFile(model: AddonModel){
         val list = arrayListOf<Uri?>(null, null)
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)

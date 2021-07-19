@@ -46,30 +46,18 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                 val uri = inputData.getString(URI_DOWNLOAD)
                 val title = inputData.getString(FILE_NAME)
                 val directory = inputData.getString(DIRECTORY)
-
-                var outputId: Long = -2
-
-//                val firstUpdate = workDataOf(Progress to 0)
-//                val lastUpdate = workDataOf(Progress to 100)
                 // Check download directory
                 if (uri != null && title != null) {
-//                    setProgress(firstUpdate)
                     when (directory) {
                         DIR_EXT_STORAGE -> {
-                            outputId = downloadPublicDir(uri, title)
+                            downloadPublicDir(uri, title)
                         }
                         DIR_CACHE -> {
-                            outputId = downloadCacheDir(uri, title)
+                            downloadCacheDir(uri, title)
                         }
                     }
-//                    setProgress(lastUpdate)
                 }
-
-                val outputData = Data.Builder()
-                    .putLong(DOWNLOAD_FLAG, outputId)
-                    .build()
-
-                Result.success(outputData)
+                Result.success()
             } catch (e: Exception) {
                 e.printStackTrace()
                 Log.d(TAG, "DownloadAddon: Error Download Addon ${e.message}")
@@ -112,10 +100,39 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
     @RequiresApi(Build.VERSION_CODES.Q)
     private fun makeDirAddons() {
         val f = File(
-            MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY).path,
-            FOLDER_DOWNLOAD_ADDONS
+            MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY).path, FOLDER_DOWNLOAD_ADDONS
         )
         if (!f.exists()) { f.mkdirs() }
+    }
+    //
+    private suspend fun downloadCacheDir2(fileUri: String, fileName: String) {
+        withContext(Dispatchers.IO) {
+            val request = Request.Builder()
+                .url(fileUri)
+                .build()
+            val client = OkHttpClient.Builder().build()
+
+            client.newCall(request).enqueue(object : Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    e.printStackTrace()
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    response.use {
+                        if (response.isSuccessful) {
+                            val resolver = context.contentResolver
+                            val fileByte = response.body?.byteStream()
+                            val path = File(context.externalCacheDir, fileName).toUri()
+
+                            resolver.openOutputStream(path, "w").use { output ->
+                                val encoded = fileByte?.readBytes()
+                                output?.write(encoded)
+                            }
+                        }
+                    }
+                }
+            })
+        }
     }
     // Download in media/download with okhttp
     @RequiresApi(Build.VERSION_CODES.Q)

@@ -39,7 +39,7 @@ class BillingFragment : Fragment() {
         super.onCreate(savedInstanceState)
         appUtil = AppUtil()
 
-        billingManager = BillingManager(requireContext()) { closeNavigation() }
+        billingManager = BillingManager(requireActivity()) { closeNavigation() }
     }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,

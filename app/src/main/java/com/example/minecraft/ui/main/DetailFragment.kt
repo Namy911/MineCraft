@@ -2,10 +2,7 @@ package com.example.minecraft.ui.main
 
 import android.content.Context
 import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.Network
 import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -30,7 +27,6 @@ import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.AppUtil.Companion.REVARD_AD_UNIT_ID
 import com.example.minecraft.ui.util.DownloadDialogUtil
 import com.google.android.gms.ads.*
-import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
@@ -107,25 +103,39 @@ class DetailFragment : DownloadDialogUtil() {
 
             btnShare.setOnClickListener {
                 val temp = viewModel.getFlagRewardShare()
-                if (temp == false && checkInternetConnection() && !prefState) {
-                    adSeen(DownloadAddon.DIR_CACHE)
-                }else{
+
+                val temBehavior = args.model.behavior
+                val temResource = args.model.resource
+
+
+
+//                if (temp == false && checkInternetConnection() && !prefState) {
+//                    adSeen(DownloadAddon.DIR_CACHE)
+//                }else{
+                if (temBehavior.isNotEmpty() && temResource.isNotEmpty()){
                     checkFileExists(args.model)
-                    shareFileCheck()
+                    shareFilesCheck()
+                }else if (temBehavior.isNotEmpty()){
+                    checkFileExists(args.model)
+                    shareFileCheck(temBehavior, TAG_BEHAVIOR)
+                } else if (temResource.isNotEmpty()){
+                    checkFileExists(args.model)
+                    shareFileCheck(temResource, TAG_RESOURCE)
                 }
+//                }
             }
 
             btnDownload.setOnClickListener {
                 if (!prefState) {
-                    val temp = viewModel.getFlagRewardDownload()
-                    if (temp == false && checkInternetConnection()) {
-                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
-                    } else {
-                        if (checkPermission()) {
-                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-                        }
-                    }
-                } else {
+//                    val temp = viewModel.getFlagRewardDownload()
+//                    if (temp == false && checkInternetConnection()) {
+//                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
+//                    } else {
+//                        if (checkPermission()) {
+//                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+//                        }
+//                    }
+//                } else {
                     if (checkPermission()) {
                         dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
                     }
@@ -236,8 +246,21 @@ class DetailFragment : DownloadDialogUtil() {
     fun setupToolBartTitle(title: String) {
         (activity as MainActivity).setupToolBartTitle(title)
     }
+
+    private fun shareFileCheck(model: String, tag: String) {
+        if (checkInternetConnection()) {
+            if (checkPermission()) {
+                workDownloadAddon(model, getPackFileName(model, tag),
+                    DownloadAddon.DIR_CACHE, args.model, true)
+            }
+        } else {
+            Toast.makeText(
+                requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
     // Button share logic
-    private fun shareFileCheck() {
+    private fun shareFilesCheck() {
         val callbackShare = object : BtnShareListener {
             val temp1 = viewModel.getCachePathBehavior()
             val temp2 = viewModel.getCachePathResource()
@@ -287,7 +310,9 @@ class DetailFragment : DownloadDialogUtil() {
             }
 
             override fun sendIntent() {
+                Log.d(TAG, "sendIntent: hhh")
                 if (list[0] != null && list[1] != null) {
+                    Log.d(TAG, "sendIntent: 1")
                     val sendIntent: Intent = Intent().apply {
                         putExtra(Intent.EXTRA_TEXT, "Share Addon")
                         type = "file/*"
