@@ -101,7 +101,7 @@ abstract class DownloadDialogUtil : Fragment(){
     // WorkManager config, download file
     @SuppressLint("ShowToast")
     fun workDownloadAddon(uri: String, fileName: String, flagDir: String, model: AddonModel, flagBtnShare: Boolean = false){
-        val workManager = WorkManager.getInstance(requireContext())
+        val workManager = WorkManager.getInstance(requireActivity())
 
         val data: Data = Data.Builder()
             .putString(DownloadAddon.URI_DOWNLOAD, uri)

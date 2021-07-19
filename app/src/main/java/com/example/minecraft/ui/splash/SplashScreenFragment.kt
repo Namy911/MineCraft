@@ -115,12 +115,20 @@ class SplashScreenFragment : Fragment() {
 
     override fun onDetach() {
         super.onDetach()
+        Log.d(TAG, "onDetach: ")
         job?.cancel()
     }
     override fun onDestroyView() {
         super.onDestroyView()
+        Log.d(TAG, "onDestroyView: ")
         _binding = null
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "onDestroy: ")
+    }
+
     // Dialog chooser
     private fun dialogNoInternet(){
         val builder = AlertDialog.Builder(requireContext()).apply {
@@ -146,8 +154,9 @@ class SplashScreenFragment : Fragment() {
     }
 
     private fun networkState(dialog: AlertDialog) {
-        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N && this@SplashScreenFragment.isDetached) {
+//        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
+        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
             connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     observeState()

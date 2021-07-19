@@ -63,7 +63,7 @@ class DetailFragment : DownloadDialogUtil() {
         viewModel.setFlagRewardDownload(false)
         viewModel.setFlagRewardShare(false)
         //
-        appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
+        appSharedPrefManager = AppSharedPreferencesManager(requireContext())
 
         lifecycleScope.launch {
             appSharedPrefManager.billingAdsSate.collectLatest { state ->
@@ -78,9 +78,7 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentDetailBinding.inflate(inflater, container, false)
         requireActivity().actionBar?.setDisplayShowTitleEnabled(false)
         requireActivity().actionBar?.setDisplayShowHomeEnabled(false)
@@ -158,7 +156,7 @@ class DetailFragment : DownloadDialogUtil() {
         lifecycleScope.launchWhenResumed {
             appSharedPrefManager.billingAdsSate.collectLatest { state ->
                 if (!state) {
-                    MobileAds.initialize(requireActivity()) {}
+                    MobileAds.initialize(requireContext()) {}
                     binding.adView.loadAd(AdRequest.Builder().build())
                 } else {
                     binding.adView.visibility = View.GONE
@@ -199,11 +197,7 @@ class DetailFragment : DownloadDialogUtil() {
 
     private fun loadAddReward() {
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(
-            requireActivity(),
-            REVARD_AD_UNIT_ID,
-            adRequest,
-            object : RewardedAdLoadCallback() {
+        RewardedAd.load(requireActivity(), REVARD_AD_UNIT_ID, adRequest, object : RewardedAdLoadCallback() {
                 override fun onAdFailedToLoad(adError: LoadAdError) {
                     Log.d(TAG, adError.message)
                     mRewardedAd = null
@@ -244,7 +238,7 @@ class DetailFragment : DownloadDialogUtil() {
     }
     // Button share logic
     private fun shareFileCheck() {
-        val callbackShare = object : BtnShareListener{
+        val callbackShare = object : BtnShareListener {
             val temp1 = viewModel.getCachePathBehavior()
             val temp2 = viewModel.getCachePathResource()
             val list = arrayListOf<Uri?>(null, null)

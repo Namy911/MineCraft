@@ -39,7 +39,7 @@ class BillingFragment : Fragment() {
         super.onCreate(savedInstanceState)
         appUtil = AppUtil()
 
-        billingManager = BillingManager(requireActivity()) { closeNavigation() }
+        billingManager = BillingManager(requireContext()) { closeNavigation() }
     }
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -111,8 +111,7 @@ class BillingFragment : Fragment() {
     }
 
     private fun checkInternetConnection(): Boolean{
-        val connectivityManager = requireActivity().applicationContext
-            .getSystemService(ConnectivityManager::class.java)
+        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         val currentNetwork = connectivityManager.activeNetwork
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
         return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
@@ -120,8 +119,8 @@ class BillingFragment : Fragment() {
     }
     override fun onDestroyView() {
         super.onDestroyView()
-        _binding = null
         billingManager.endConnection()
+        _binding = null
     }
 
     fun setupToolBartTitle(title: String){ (activity as MainActivity).setupToolBartTitle(title) }

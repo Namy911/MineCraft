@@ -71,7 +71,7 @@ class MainFragment : DownloadDialogUtil(){
             requireActivity().window.clearFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         }
 
-        appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
+        appSharedPrefManager = AppSharedPreferencesManager(requireContext())
         lifecycleScope.launchWhenResumed {
             appSharedPrefManager.billingAdsSate.collect { prefState ->
                 this@MainFragment.prefState = prefState
@@ -97,9 +97,7 @@ class MainFragment : DownloadDialogUtil(){
 
         binding.apply {
             container.adapter = adapter
-            val manager = LinearLayoutManager(
-                activity, LinearLayoutManager.VERTICAL, false
-            )
+            val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
 
              lifecycleScope.launchWhenResumed {
