@@ -77,9 +77,15 @@ abstract class DownloadDialogUtil : Fragment(){
                 if (isAppInstalled()) {
                     // Cache Dir
                     val cacheResourceLink =
-                        requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
+                        requireActivity().externalCacheDir?.path + File.separator + getPackFileName(
+                            model.resource,
+                            TAG_RESOURCE
+                        )
                     val cacheBehaviorLink =
-                        requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
+                        requireActivity().externalCacheDir?.path + File.separator + getPackFileName(
+                            model.behavior,
+                            TAG_BEHAVIOR
+                        )
                     // install packs
                     if (File(cacheResourceLink).exists()) {
                         viewModel.setCachePathResource(cacheResourceLink)
@@ -139,7 +145,7 @@ abstract class DownloadDialogUtil : Fragment(){
             }
         }
     }
-
+    // Install addon
     private fun installAddon(path: File) {
         val uri = try {
                 FileProvider.getUriForFile(
@@ -161,8 +167,7 @@ abstract class DownloadDialogUtil : Fragment(){
     }
     // Internet connection
     fun checkInternetConnection(): Boolean{
-        val connectivityManager = requireContext()
-            .getSystemService(ConnectivityManager::class.java)
+        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         val currentNetwork = connectivityManager.activeNetwork
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
         return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
@@ -238,9 +243,7 @@ abstract class DownloadDialogUtil : Fragment(){
             stubView.visibility = View.VISIBLE
             behavior.apply {
                 visibility = View.VISIBLE
-                if(flagDir == DownloadAddon.DIR_CACHE) {
-                    text = getString(R.string.btn_install_behavior)
-                }
+                if(flagDir == DownloadAddon.DIR_CACHE) { text = getString(R.string.btn_install_behavior) }
 
                 setOnClickListener {
                     if (temp1 != null && flagDir == DownloadAddon.DIR_CACHE) {
@@ -288,7 +291,7 @@ abstract class DownloadDialogUtil : Fragment(){
             Log.d(TAG, "isFileBehavior Install: no file")
         }
     }
-//    private fun downloadShareFiles(model: AddonModel){
+    // Download file and create chooser
     private fun downloadShareFile(modelType: AddonModel, tag: String){
         var item: Uri? = null
 
@@ -297,7 +300,7 @@ abstract class DownloadDialogUtil : Fragment(){
         } else{
             requireActivity().externalCacheDir?.path + File.separator + getPackFileName(modelType.behavior, tag)
         }
-    Log.d(TAG, "downloadShareFile: ${cacheLink}")
+
         item = FileProvider.getUriForFile(requireContext().applicationContext,
             BuildConfig.APPLICATION_ID + ".fileProvider", File(cacheLink))
 
@@ -314,7 +317,7 @@ abstract class DownloadDialogUtil : Fragment(){
             requireActivity().startActivity(shareIntent)
         }
     }
-    //
+    // Download files and create chooser
      private fun downloadShareFiles(model: AddonModel){
         val list = arrayListOf<Uri?>(null, null)
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
@@ -364,11 +367,9 @@ abstract class DownloadDialogUtil : Fragment(){
     fun checkFileExists(model: String , tag: String){
         val cacheLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model, tag)
         if (tag == TAG_BEHAVIOR) {
-            if (File(cacheLink).exists()) { viewModel.setCachePathBehavior(cacheLink);Log.d(TAG, "checkFileExists: 1") }
-
+            if (File(cacheLink).exists()) { viewModel.setCachePathBehavior(cacheLink) }
         } else {
-            if (File(cacheLink).exists()) { viewModel.setCachePathResource(cacheLink);  Log.d(TAG, "checkFileExists: 2") }
-
+            if (File(cacheLink).exists()) { viewModel.setCachePathResource(cacheLink) }
         }
     }
 

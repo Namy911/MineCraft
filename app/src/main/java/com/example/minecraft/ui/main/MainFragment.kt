@@ -88,7 +88,10 @@ class MainFragment : DownloadDialogUtil(){
         _binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
     }
-
+    /**
+     * Initialization
+     * Setup Recycle items with pagination
+     */
     override fun onResume() {
         super.onResume()
         setupToolBartTitle(getString(R.string.title_fragment_details))
@@ -104,7 +107,7 @@ class MainFragment : DownloadDialogUtil(){
                         val adRequest = AdRequest.Builder().build()
                         binding.adView.loadAd(adRequest)
                         if (checkInternetConnection()) {
-                            // Online list
+                            // Have internet connection list
                             viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
                                 .collectLatest { state ->
                                     when (state) {
@@ -113,6 +116,7 @@ class MainFragment : DownloadDialogUtil(){
                                             viewModel.getItem(adapter.getItems(), PAGE_SIZE)
                                         }
                                         is RosterItemLoadState.LoadComplete -> {
+                                            // Create chunk, [PAGE_SIZE] items [AddonModel] + 1 [AdItem]
                                             val job1 = async { getItemAd() }
                                             val job2 = async { state.content }
                                             job2.start()
@@ -132,7 +136,6 @@ class MainFragment : DownloadDialogUtil(){
                                             fulList.add(FooterItem())
                                             adapter.submitList(fulList.toMutableList())
 
-//                                            preloadRosterIem()
                                             progressBar.visibility = View.GONE
                                         }
                                         is RosterItemLoadState.LoadLast -> {
@@ -153,9 +156,7 @@ class MainFragment : DownloadDialogUtil(){
                                             if (isLoading) {
                                                 if ((lastItem == adapter.itemCount - 2)
                                                     || !recyclerView.canScrollVertically(1)) {
-                                                    if (!checkInternetConnection()) {
-                                                        dialogNetwork(false)
-                                                    }
+                                                    if (!checkInternetConnection()) { dialogNetwork(false) }
                                                     viewModel.getItem(adapter.getItems(), PAGE_SIZE)
                                                     isLoading = false
                                                 }
@@ -212,19 +213,26 @@ class MainFragment : DownloadDialogUtil(){
         val connectivityManager = requireActivity().applicationContext
             .getSystemService(ConnectivityManager::class.java)
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
-            connectivityManager.registerDefaultNetworkCallback(object :
-                ConnectivityManager.NetworkCallback() {
+            connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
                     if (checkInternetConnection()){ dialogNetwork(true) }
                 }
-
                 override fun onLost(network: Network) {
                     if (!checkInternetConnection()) { dialogNetwork(false) }
                 }
             })
         }
     }
-    //
+    /**
+     * See dialog chooser
+     * @param [state] state on internet connection
+     * state = false
+     * [PositiveButton] close dialog and continue
+     * [NegativeButton] reload App with new data
+     * state = true
+     * [PositiveButton] close app
+     * [NegativeButton] reload App with new data
+     */
     fun dialogNetwork(state: Boolean){
         val builder = AlertDialog.Builder(requireContext())
             .setTitle(getString(R.string.alert_network_title))
@@ -258,11 +266,7 @@ class MainFragment : DownloadDialogUtil(){
         try { dialog.show() }
         catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
     }
-
-    private fun preloadRosterIem() {
-
-    }
-
+    // Insert last item in recycler
     private fun insertLastItem(list: List<RosterItem>){
         adapter.deleteFooter()
         fulList.addAll(list)
@@ -273,9 +277,7 @@ class MainFragment : DownloadDialogUtil(){
         suspendCoroutine<RosterItem> {cont ->
             var item: RosterItem? = null
             val adLoader = AdLoader.Builder(requireActivity(), REVARD_AD_ID)
-                .forNativeAd { ad: NativeAd ->
-                    item = AdsItem(ad)
-                }
+                .forNativeAd { ad: NativeAd -> item = AdsItem(ad) }
                 .withAdListener(object : AdListener() {
                     override fun onAdLoaded() {
                         super.onAdLoaded()

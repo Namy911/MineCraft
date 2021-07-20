@@ -14,7 +14,7 @@ import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
 import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
-import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN
 import com.example.minecraft.MainActivity.Companion.FLAG_DEST_MAIN_FRAGMENT
 import com.example.minecraft.R
 import com.example.minecraft.databinding.LayoutPremiumBinding
@@ -41,10 +41,7 @@ class BillingFragment : Fragment() {
 
         billingManager = BillingManager(requireActivity()) { closeNavigation() }
     }
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = LayoutPremiumBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -52,11 +49,11 @@ class BillingFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupToolBartTitle(getString(R.string.title_fragment_trial))
-
+        // Background gif setup
         Glide.with(requireActivity())
             .load("https://media.giphy.com/media/QGnhDpnrr7qhy/giphy.gif")
             .into(binding.gifStub)
-
+        // Animation from button with text [Subscription]
         val animBtn = AnimationUtils.loadAnimation(requireActivity(), R.anim.btn_premium)
         val animTxt = AnimationUtils.loadAnimation(requireActivity(), R.anim.txt_premium)
 
@@ -65,18 +62,15 @@ class BillingFragment : Fragment() {
                 if (checkInternetConnection()) {
                     billingManager.startConnection()
                 }else{
-                    Toast.makeText(
-                        requireActivity(), resources.getString(R.string.msg_no_internet), Toast.LENGTH_SHORT
-                    ).show()
+                    Toast.makeText(requireActivity(), resources.getString(R.string.msg_no_internet), Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
             btnPremium.animation = animBtn
             txtBtnTrial.animation = animTxt
 
-            imgClose.setOnClickListener {
-                closeNavigation()
-            }
-
+            imgClose.setOnClickListener { closeNavigation() }
+            // Setup navigation from text[Terms of Usage], [Privacy Policy]
             txtTerms.setOnClickListener {
                 findNavController().navigate(
                     SettingsFragmentDirections.settingsDetailFragment(
@@ -87,7 +81,7 @@ class BillingFragment : Fragment() {
                     )
                 )
             }
-
+            // Navigate to detail with content [raw resource]
             txtPrivacy.setOnClickListener {
                 findNavController().navigate(
                     SettingsFragmentDirections.settingsDetailFragment(
@@ -98,14 +92,16 @@ class BillingFragment : Fragment() {
             }
         }
     }
+    /**
+     * Navigation [close button], navigate back
+     * [FLAG_DEST_SPLASH_TO_MAIN] previously destination [SplashScreenFragment]
+     * [FLAG_DEST_BILLING_FRAGMENT], [FLAG_DEST_MAIN_FRAGMENT]
+     * previously destination [DetailFragment] or [MainFragment]
+     */
     private fun closeNavigation(){
         when (args.flagDest) {
-            FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT -> {
-                findNavController().navigate(BillingFragmentDirections.mainFragment())
-            }
-            FLAG_DEST_BILLING_FRAGMENT, FLAG_DEST_MAIN_FRAGMENT -> {
-                findNavController().popBackStack()
-            }
+            FLAG_DEST_SPLASH_TO_MAIN -> { findNavController().navigate(BillingFragmentDirections.mainFragment()) }
+            FLAG_DEST_BILLING_FRAGMENT, FLAG_DEST_MAIN_FRAGMENT -> { findNavController().popBackStack() }
             else -> { throw RuntimeException("Bad flag no destination ")}
         }
     }

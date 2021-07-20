@@ -21,7 +21,7 @@ class BillingManager (
         var BILLING_FLAG_STATE = false
     }
 
-    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO + Job())
 
     private val purchasesUpdatedListener = PurchasesUpdatedListener { billingResult, purchases ->
         if (billingResult.responseCode

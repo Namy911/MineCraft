@@ -22,7 +22,7 @@ private const val TAG = "MainActivity"
 class MainActivity : AppCompatActivity() {
     companion object{
         const val FLAG_DEST_BILLING_FRAGMENT = 2
-        const val FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT = 1
+        const val FLAG_DEST_SPLASH_TO_MAIN = 1
         const val FLAG_DEST_MAIN_FRAGMENT = 3
         const val EXTRA_FLAG_DIR_NAME = "activity.main.flag"
     }
@@ -42,8 +42,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         // Setup Navigation
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
+        val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.findNavController()
         setSupportActionBar(binding.toolbar)
         supportActionBar?.apply {
@@ -55,14 +54,16 @@ class MainActivity : AppCompatActivity() {
 
         val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
 
-        if (flagDest == FLAG_DEST_BILLING_FRAGMENT) {
-            navController.navigate(
-                MainFragmentDirections.subscriptionFragment(FLAG_DEST_BILLING_FRAGMENT)
-            )
-        } else {
-            setupToolBartTitle()
-        }
-        // Setup navigation
+//        if (flagDest == FLAG_DEST_BILLING_FRAGMENT) {
+//            navController.navigate(MainFragmentDirections.subscriptionFragment(FLAG_DEST_BILLING_FRAGMENT))
+//        } else {
+//            setupToolBartTitle()
+//        }
+
+        /** Setup navigation
+         *  @param [flagAppOpenAd] flag enable ad
+         *  @param [homeIndicator], [toolBarSettings], [toolbar] setup visibility on fragments(custom toolbar)
+         */
         binding.apply {
             homeIndicator.setOnClickListener { super.onBackPressed() }
             toolBarSettings.setOnClickListener { setActionBarSettings() }
@@ -112,7 +113,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    // Config Ad: Ap open, load ad
     override fun onPause() {
         super.onPause()
         lifecycleScope.launchWhenResumed {
@@ -138,7 +139,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
+    /**
+     * check if have subscription
+     * if have disable ad
+     */
     override fun onResume() {
         super.onResume()
         lifecycleScope.launchWhenResumed {

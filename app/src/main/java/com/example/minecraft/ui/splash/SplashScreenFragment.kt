@@ -16,7 +16,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentSplashScreenBinding
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
@@ -59,16 +59,11 @@ class SplashScreenFragment : Fragment() {
             )
         }
         // Dialog chooser, if don't internet connection
-        if (getConnection()) {
-            observeState()
-        } else {
-            dialogNoInternet()
-        }
+        if (getConnection()) { observeState() }
+        else { dialogNoInternet() }
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSplashScreenBinding.inflate(layoutInflater)
         return binding.root
     }
@@ -115,21 +110,19 @@ class SplashScreenFragment : Fragment() {
 
     override fun onDetach() {
         super.onDetach()
-        Log.d(TAG, "onDetach: ")
         job?.cancel()
     }
     override fun onDestroyView() {
         super.onDestroyView()
-        Log.d(TAG, "onDestroyView: ")
         _binding = null
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        Log.d(TAG, "onDestroy: ")
-    }
-
-    // Dialog chooser
+    /**
+     * See dialog chooser
+     * [PositiveButton] close activity an redirect to Settings
+     * [NegativeButton] offline version of opp
+     * [NeutralButton] close opp
+     * (try block to avoid bug)
+     */
     private fun dialogNoInternet(){
         val builder = AlertDialog.Builder(requireContext()).apply {
             setTitle(getString(R.string.dialog_title_no_internet))
@@ -152,10 +145,13 @@ class SplashScreenFragment : Fragment() {
         catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
         networkState(dialog)
     }
-
+    /**
+     * Listener to have internet state
+     * [onAvailable] close dialog, see progress an redirect
+     * [dialogNoInternet] see dialog to choose action
+     */
     private fun networkState(dialog: AlertDialog) {
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N && this@SplashScreenFragment.isDetached) {
-//        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
         val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
             connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
@@ -175,11 +171,17 @@ class SplashScreenFragment : Fragment() {
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
         return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
     }
-    // Check if user have subscription and redirect
+    /**
+     * Redirect in don't have subscription
+     * @param [id], subscriptionFragment([id]), id to know which fragment was by previously
+     * [FLAG_DEST_SPLASH_TO_MAIN] redirect to [BillingFragment],
+     * path: SplashScreenFragment to subscriptionFragment, don't have subscription
+     * [mainFragment] redirect to [MainFragment], have subscription
+     */
     private fun navigateToMainScreen() {
         if (BillingManager.BILLING_FLAG_STATE) {
             findNavController().navigate(
-                SplashScreenFragmentDirections.subscriptionFragment(FLAG_DEST_SPLASH_TO_MAIN_FRAGMENT)
+                SplashScreenFragmentDirections.subscriptionFragment(FLAG_DEST_SPLASH_TO_MAIN)
             )
         } else {
             findNavController().navigate(SplashScreenFragmentDirections.mainFragment())

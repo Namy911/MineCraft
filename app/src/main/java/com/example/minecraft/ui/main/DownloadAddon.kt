@@ -49,12 +49,8 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                 // Check download directory
                 if (uri != null && title != null) {
                     when (directory) {
-                        DIR_EXT_STORAGE -> {
-                            downloadPublicDir(uri, title)
-                        }
-                        DIR_CACHE -> {
-                            downloadCacheDir(uri, title)
-                        }
+                        DIR_EXT_STORAGE -> { downloadPublicDir(uri, title) }
+                        DIR_CACHE -> { downloadCacheDir(uri, title) }
                     }
                 }
                 Result.success()
@@ -65,6 +61,7 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             }
         }
     }
+    // Download Manager builder config
     private fun downloadManagerBuilder(uri: String, file_name: String) =
         DownloadManager.Request(Uri.parse(uri))
             .setTitle(file_name)
@@ -72,7 +69,10 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
             .setAllowedOverMetered(true)
-    // Public directory download
+    /**
+     * Public directory download
+     * different directory from different version of the OS
+     */
     @Suppress("DEPRECATION")
     private suspend fun downloadPublicDir(uri: String, fileName: String): Long {
         val request = downloadManagerBuilder(uri, fileName)
