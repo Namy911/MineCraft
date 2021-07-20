@@ -417,7 +417,7 @@ class MainFragment : DownloadDialogUtil(){
                             )
                         } else {
                             if (checkPermission()) {
-                                checkFileExists(item)
+                                checkFilesExists(item)
                                 dialogDownload(item, DownloadAddon.DIR_CACHE)
                             }
                         }

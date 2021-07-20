@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -84,7 +85,16 @@ class DetailFragment : DownloadDialogUtil() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        checkFileExists(args.model)
+        checkFilesExists(args.model)
+
+        val tempBehavior = args.model.behavior
+        val tempResource = args.model.resource
+
+//        when {
+//            tempBehavior.isNotEmpty() && tempResource.isNotEmpty() -> { checkFilesExists(args.model) }
+//            tempBehavior.isNotEmpty() -> { checkFileExists(args.model.behavior, TAG_BEHAVIOR) }
+//            tempResource.isNotEmpty() -> { checkFileExists(args.model.resource, TAG_RESOURCE) }
+//        }
 
         binding.apply {
             val list: List<String> = args.model.preview
@@ -104,25 +114,25 @@ class DetailFragment : DownloadDialogUtil() {
             btnShare.setOnClickListener {
                 val temp = viewModel.getFlagRewardShare()
 
-                val temBehavior = args.model.behavior
-                val temResource = args.model.resource
-
-
-
 //                if (temp == false && checkInternetConnection() && !prefState) {
 //                    adSeen(DownloadAddon.DIR_CACHE)
 //                }else{
-                if (temBehavior.isNotEmpty() && temResource.isNotEmpty()){
-                    checkFileExists(args.model)
+                if (tempBehavior.isNotEmpty() && tempResource.isNotEmpty()){
+                    checkFilesExists(args.model)
                     shareFilesCheck()
-                }else if (temBehavior.isNotEmpty()){
-                    checkFileExists(args.model)
-                    shareFileCheck(temBehavior, TAG_BEHAVIOR)
-                } else if (temResource.isNotEmpty()){
-                    checkFileExists(args.model)
-                    shareFileCheck(temResource, TAG_RESOURCE)
+                    Log.d(TAG, "onViewCreated: 0")
+                }
+                else if (tempBehavior.isNotEmpty()){
+                    Log.d(TAG, "onViewCreated: 1")
+                    checkFileExists(args.model.behavior, TAG_BEHAVIOR)
+                    shareFileCheck(tempBehavior, TAG_BEHAVIOR)
+                } else if (tempResource.isNotEmpty() ){
+                    Log.d(TAG, "onViewCreated: 2")
+                    checkFileExists(args.model.resource, TAG_RESOURCE)
+                    shareFileCheck(tempResource, TAG_RESOURCE)
                 }
 //                }
+
             }
 
             btnDownload.setOnClickListener {
@@ -145,7 +155,7 @@ class DetailFragment : DownloadDialogUtil() {
             btnInstall.setOnClickListener {
                 if (prefState) {
                     if (checkPermission()) {
-                        checkFileExists(args.model)
+                        checkFilesExists(args.model)
                         dialogDownload(args.model, DownloadAddon.DIR_CACHE)
                     }
                 } else {
@@ -249,9 +259,35 @@ class DetailFragment : DownloadDialogUtil() {
 
     private fun shareFileCheck(model: String, tag: String) {
         if (checkInternetConnection()) {
-            if (checkPermission()) {
-                workDownloadAddon(model, getPackFileName(model, tag),
-                    DownloadAddon.DIR_CACHE, args.model, true)
+            val temp =  if (tag == TAG_RESOURCE) {
+                viewModel.getCachePathResource()
+            }else{
+                viewModel.getCachePathBehavior()
+            }
+
+            val cacheLink =
+                requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model, tag)
+//            Log.d(TAG, "onViewCreated:  ${temp}")
+            if (temp.isNullOrEmpty()) {
+                if (checkPermission()) {
+                    workDownloadAddon(
+                        model, getPackFileName(model, tag),
+                        DownloadAddon.DIR_CACHE, args.model, true
+                    )
+
+                    if (File(cacheLink).exists()) { viewModel.setCachePathBehavior(cacheLink) }
+                }
+            } else {
+                val sendIntent: Intent = Intent().apply {
+                    putExtra(Intent.EXTRA_TEXT, "Share Addon")
+                    type = "file/*"
+                    flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    putExtra(Intent.EXTRA_STREAM, getPath(File(cacheLink)))
+                    action = Intent.ACTION_SEND
+                }
+
+                val shareIntent = Intent.createChooser(sendIntent, "")
+                requireActivity().startActivity(shareIntent)
             }
         } else {
             Toast.makeText(
@@ -261,11 +297,11 @@ class DetailFragment : DownloadDialogUtil() {
     }
     // Button share logic
     private fun shareFilesCheck() {
-        val callbackShare = object : BtnShareListener {
-            val temp1 = viewModel.getCachePathBehavior()
-            val temp2 = viewModel.getCachePathResource()
-            val list = arrayListOf<Uri?>(null, null)
+        val temp1 = viewModel.getCachePathBehavior()
+        val temp2 = viewModel.getCachePathResource()
 
+        val callbackShare = object : BtnShareListener {
+            val list = arrayListOf<Uri?>(null, null)
             override suspend fun configResource() {
                 if (temp1 != null) {
                     list[1] = getPath(File(temp1))
