@@ -32,7 +32,6 @@ class MainActivity : AppCompatActivity() {
 
     var appOpenAd: AppOpenAd? = null
     private var flagAppOpenAd = false
-    private var prefState = false
 
     private lateinit var appSharedPrefManager: AppSharedPreferencesManager
 
@@ -40,7 +39,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         // Setup Navigation
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
         navController = navHostFragment.findNavController()
@@ -53,15 +51,9 @@ class MainActivity : AppCompatActivity() {
         appSharedPrefManager = AppSharedPreferencesManager(this)
 
         val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
-
-//        if (flagDest == FLAG_DEST_BILLING_FRAGMENT) {
-//            navController.navigate(MainFragmentDirections.subscriptionFragment(FLAG_DEST_BILLING_FRAGMENT))
-//        } else {
-//            setupToolBartTitle()
-//        }
-
         /** Setup navigation
-         *  @param [flagAppOpenAd] flag enable ad
+         *  @param [flagDest] flag to hide settings ico
+         *  @param [flagAppOpenAd] flag enable AD
          *  @param [homeIndicator], [toolBarSettings], [toolbar] setup visibility on fragments(custom toolbar)
          */
         binding.apply {
@@ -84,31 +76,21 @@ class MainActivity : AppCompatActivity() {
                         flagAppOpenAd = true
                     }
                     R.id.settingsFragment -> {
-                            homeIndicator.visibility = View.VISIBLE
-                            toolBarSettings.visibility = View.GONE
+                        homeIndicator.visibility = View.VISIBLE
+                        toolBarSettings.visibility = View.GONE
                         flagAppOpenAd = true
                     }
                     R.id.settingsDetailFragment -> {
-                        if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
-                            homeIndicator.visibility = View.VISIBLE
-                        } else {
-                            homeIndicator.visibility = View.VISIBLE
-                            toolBarSettings.visibility = View.GONE
-                        }
+                        homeIndicator.visibility = View.VISIBLE
+                        toolBarSettings.visibility = View.GONE
                         flagAppOpenAd = true
                     }
                     R.id.subscriptionFragment -> {
                         toolbar.visibility = View.VISIBLE
-                        if (flagDest != FLAG_DEST_BILLING_FRAGMENT) {
-                                homeIndicator.visibility = View.GONE
-                                toolBarSettings.visibility = View.GONE
-                        } else {
-                                homeIndicator.visibility = View.GONE
-                                toolBarSettings.visibility = View.GONE
-                        }
+                        homeIndicator.visibility = View.GONE
+                        toolBarSettings.visibility = View.GONE
                         flagAppOpenAd = false
                     }
-                    else -> { }
                 }
             }
         }

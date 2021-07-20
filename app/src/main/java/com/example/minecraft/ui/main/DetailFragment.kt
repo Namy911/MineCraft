@@ -65,7 +65,7 @@ class DetailFragment : DownloadDialogUtil() {
             appSharedPrefManager.billingAdsSate.collectLatest { state -> prefState = state }
         }
         // If have internet connection and don't have subscription load AD reward
-        if (checkInternetConnection() && !prefState) {
+        if (checkInternetConnection(requireContext()) && !prefState) {
             MobileAds.initialize(requireContext()) {
                 loadAddReward()
             }
@@ -114,7 +114,7 @@ class DetailFragment : DownloadDialogUtil() {
             btnShare.setOnClickListener {
                 val temp = viewModel.getFlagRewardShare()
 
-                if (temp == false && checkInternetConnection() && !prefState) {
+                if (temp == false && checkInternetConnection(requireContext()) && !prefState) {
                     adSeen(DownloadAddon.DIR_CACHE)
                 } else {
                     when {
@@ -137,7 +137,7 @@ class DetailFragment : DownloadDialogUtil() {
             btnDownload.setOnClickListener {
                 if (!prefState) {
                     val temp = viewModel.getFlagRewardDownload()
-                    if (temp == false && checkInternetConnection()) {
+                    if (temp == false && checkInternetConnection(requireContext())) {
                         adSeen(DownloadAddon.DIR_EXT_STORAGE)
                     } else {
                         if (checkPermission()) {
@@ -196,7 +196,7 @@ class DetailFragment : DownloadDialogUtil() {
     }
 
     private fun buttonInitTitle() {
-        if (checkInternetConnection()) {
+        if (checkInternetConnection(requireContext())) {
             if (mRewardedAd != null) {
                 readyAdsButtonsConf()
             } else {
@@ -255,16 +255,14 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
 
-    fun setupToolBartTitle(title: String) {
-        (activity as MainActivity).setupToolBartTitle(title)
-    }
+    fun setupToolBartTitle(title: String) { (activity as MainActivity).setupToolBartTitle(title) }
     /**
      * Behavior from share button, one file
      * check if file exist create and chooser if exist otherwise
      * download file and create chooser
      */
     private fun shareFileCheck(model: String, tag: String) {
-        if (checkInternetConnection()) {
+        if (checkInternetConnection(requireContext())) {
             val temp = if (tag == TAG_RESOURCE) {
                 viewModel.getCachePathResource()
             } else {
@@ -314,13 +312,11 @@ class DetailFragment : DownloadDialogUtil() {
                 if (temp1 != null) {
                     list[1] = getPath(File(temp1))
                 } else {
-                    if (checkInternetConnection()) {
+                    if (checkInternetConnection(requireContext())) {
                         if (checkPermission()) {
                             workDownloadAddon(
-                                args.model.behavior,
-                                getPackFileName(args.model.behavior, TAG_BEHAVIOR),
-                                DownloadAddon.DIR_CACHE, args.model,
-                                true
+                                args.model.behavior, getPackFileName(args.model.behavior, TAG_BEHAVIOR),
+                                DownloadAddon.DIR_CACHE, args.model, true
                             )
                         }
                     } else {
@@ -334,14 +330,11 @@ class DetailFragment : DownloadDialogUtil() {
                 if (temp2 != null) {
                     list[0] = getPath(File(temp2))
                 } else {
-                    if (checkInternetConnection()) {
+                    if (checkInternetConnection(requireContext())) {
                         if (checkPermission()) {
                             workDownloadAddon(
-                                args.model.resource,
-                                getPackFileName(args.model.resource, TAG_RESOURCE),
-                                DownloadAddon.DIR_CACHE,
-                                args.model,
-                                true
+                                args.model.resource, getPackFileName(args.model.resource, TAG_RESOURCE),
+                                DownloadAddon.DIR_CACHE, args.model, true
                             )
                         }
                     } else {

@@ -2,15 +2,9 @@ package com.example.minecraft.ui.util
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.DownloadManager
 import android.content.*
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
 import android.net.Uri
-import android.os.Build
-import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
@@ -26,19 +20,8 @@ import androidx.work.*
 import com.example.minecraft.BuildConfig
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
-import com.example.minecraft.ui.main.DetailFragment
 import com.example.minecraft.ui.main.DownloadAddon
-import com.example.minecraft.ui.main.DownloadAddon.Companion.Progress
 import com.example.minecraft.ui.main.MainViewModel
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.OnUserEarnedRewardListener
-import com.google.android.gms.ads.rewarded.RewardItem
-import com.google.android.gms.ads.rewarded.RewardedAd
-import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
-import com.google.gson.annotations.Until
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.File
 
@@ -46,7 +29,7 @@ import java.io.File
 private const val TAG = "DownloadDialogUtil"
 
 @AndroidEntryPoint
-abstract class DownloadDialogUtil : Fragment(){
+abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
     companion object{
         val TAG_RESOURCE = "resource"
         val TAG_BEHAVIOR = "behavior"
@@ -165,14 +148,6 @@ abstract class DownloadDialogUtil : Fragment(){
         }
         requireActivity().startActivity(intent)
     }
-    // Internet connection
-    fun checkInternetConnection(): Boolean{
-        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
-        val currentNetwork = connectivityManager.activeNetwork
-        val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
-        return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-
-    }
     // Permissions Setup
     fun checkPermission(): Boolean {
         setupPermissions()
@@ -251,7 +226,7 @@ abstract class DownloadDialogUtil : Fragment(){
                         dialog.dismiss()
                         return@setOnClickListener
                     }
-                    if (checkInternetConnection()) {
+                    if (checkInternetConnection(requireContext())) {
                         workDownloadAddon(model.behavior, behaviorLink, flagDir, model, false)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
@@ -279,7 +254,7 @@ abstract class DownloadDialogUtil : Fragment(){
                         checkInstallation(model, flagDir)
                         return@setOnClickListener
                     }
-                    if (checkInternetConnection()) {
+                    if (checkInternetConnection(requireContext())) {
                         workDownloadAddon(model.resource, resourceLink, flagDir, model, false)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()

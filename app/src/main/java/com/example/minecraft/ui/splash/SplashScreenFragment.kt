@@ -3,7 +3,7 @@ package com.example.minecraft.ui.splash
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
-import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -21,6 +21,7 @@ import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentSplashScreenBinding
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
+import com.example.minecraft.ui.util.NetworkUtil
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
@@ -29,7 +30,7 @@ import java.lang.Exception
 
 private const val TAG = "SplashFragment"
 @AndroidEntryPoint
-class SplashScreenFragment : Fragment() {
+class SplashScreenFragment : Fragment(), NetworkUtil {
 
     private var _binding: FragmentSplashScreenBinding? = null
     private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
@@ -59,7 +60,7 @@ class SplashScreenFragment : Fragment() {
             )
         }
         // Dialog chooser, if don't internet connection
-        if (getConnection()) { observeState() }
+        if (checkInternetConnection(requireContext())) { observeState() }
         else { dialogNoInternet() }
     }
 
@@ -121,7 +122,7 @@ class SplashScreenFragment : Fragment() {
      * [PositiveButton] close activity an redirect to Settings
      * [NegativeButton] offline version of opp
      * [NeutralButton] close opp
-     * (try block to avoid bug)
+     * (try block to avoid bug with dialog)
      */
     private fun dialogNoInternet(){
         val builder = AlertDialog.Builder(requireContext()).apply {
@@ -151,38 +152,51 @@ class SplashScreenFragment : Fragment() {
      * [dialogNoInternet] see dialog to choose action
      */
     private fun networkState(dialog: AlertDialog) {
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N && this@SplashScreenFragment.isDetached) {
         val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
             connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    observeState()
-                    dialog.dismiss()
+                    if (this@SplashScreenFragment.isDetached) {
+                        observeState()
+                        dialog.dismiss()
+                    }
                 }
                 override fun onLost(network: Network) {
-                    dialogNoInternet()
+                    if (this@SplashScreenFragment.isDetached) {
+                        dialogNoInternet()
+                    }
+                }
+            })
+        } else{
+            val networkChangeFilter = NetworkRequest.Builder().build()
+            connectivityManager.registerNetworkCallback(
+                networkChangeFilter,
+                object : ConnectivityManager.NetworkCallback(){
+                override fun onAvailable(network: Network) {
+                    super.onAvailable(network)
+                    if (this@SplashScreenFragment.isDetached) {
+                        observeState()
+                        dialog.dismiss()
+                    }
+                }
+                override fun onLost(network: Network) {
+                    if (this@SplashScreenFragment.isDetached) {
+                        dialogNoInternet()
+                    }
                 }
             })
         }
     }
-    //
-    private fun getConnection(): Boolean{
-        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
-        val currentNetwork = connectivityManager.activeNetwork
-        val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
-        return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-    }
     /**
-     * Redirect in don't have subscription
-     * @param [id], subscriptionFragment([id]), id to know which fragment was by previously
+     * Redirect if don't have subscription
+     * @param [FLAG_DEST_SPLASH_TO_MAIN], subscriptionFragment([FLAG_DEST_SPLASH_TO_MAIN]), id to know which fragment was by previously
      * [FLAG_DEST_SPLASH_TO_MAIN] redirect to [BillingFragment],
      * path: SplashScreenFragment to subscriptionFragment, don't have subscription
      * [mainFragment] redirect to [MainFragment], have subscription
      */
     private fun navigateToMainScreen() {
         if (BillingManager.BILLING_FLAG_STATE) {
-            findNavController().navigate(
-                SplashScreenFragmentDirections.subscriptionFragment(FLAG_DEST_SPLASH_TO_MAIN)
-            )
+            findNavController().navigate(SplashScreenFragmentDirections.subscriptionFragment(FLAG_DEST_SPLASH_TO_MAIN))
         } else {
             findNavController().navigate(SplashScreenFragmentDirections.mainFragment())
         }

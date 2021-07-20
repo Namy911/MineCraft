@@ -106,7 +106,7 @@ class MainFragment : DownloadDialogUtil(){
                     if (!prefState) {
                         val adRequest = AdRequest.Builder().build()
                         binding.adView.loadAd(adRequest)
-                        if (checkInternetConnection()) {
+                        if (checkInternetConnection(requireContext())) {
                             // Have internet connection list
                             viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
                                 .collectLatest { state ->
@@ -156,7 +156,7 @@ class MainFragment : DownloadDialogUtil(){
                                             if (isLoading) {
                                                 if ((lastItem == adapter.itemCount - 2)
                                                     || !recyclerView.canScrollVertically(1)) {
-                                                    if (!checkInternetConnection()) { dialogNetwork(false) }
+                                                    if (!checkInternetConnection(requireContext())) { dialogNetwork(false) }
                                                     viewModel.getItem(adapter.getItems(), PAGE_SIZE)
                                                     isLoading = false
                                                 }
@@ -215,10 +215,10 @@ class MainFragment : DownloadDialogUtil(){
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
             connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
-                    if (checkInternetConnection()){ dialogNetwork(true) }
+                    if (checkInternetConnection(requireContext())){ dialogNetwork(true) }
                 }
                 override fun onLost(network: Network) {
-                    if (!checkInternetConnection()) { dialogNetwork(false) }
+                    if (!checkInternetConnection(requireContext())) { dialogNetwork(false) }
                 }
             })
         }

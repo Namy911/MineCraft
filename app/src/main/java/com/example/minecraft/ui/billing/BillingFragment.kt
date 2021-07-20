@@ -1,7 +1,5 @@
 package com.example.minecraft.ui.billing
 
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -21,10 +19,11 @@ import com.example.minecraft.databinding.LayoutPremiumBinding
 import com.example.minecraft.ui.settings.SettingsFragmentDirections
 import com.example.minecraft.ui.util.AppUtil
 import com.example.minecraft.ui.util.BillingManager
+import com.example.minecraft.ui.util.NetworkUtil
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
-class BillingFragment : Fragment() {
+class BillingFragment : Fragment(), NetworkUtil {
     private val TAG = "BillingFragment"
     private var _binding: LayoutPremiumBinding? = null
     private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
@@ -59,7 +58,7 @@ class BillingFragment : Fragment() {
 
         binding.apply {
             btnPremium.setOnClickListener {
-                if (checkInternetConnection()) {
+                if (checkInternetConnection(requireContext())) {
                     billingManager.startConnection()
                 }else{
                     Toast.makeText(requireActivity(), resources.getString(R.string.msg_no_internet), Toast.LENGTH_SHORT)
@@ -74,10 +73,8 @@ class BillingFragment : Fragment() {
             txtTerms.setOnClickListener {
                 findNavController().navigate(
                     SettingsFragmentDirections.settingsDetailFragment(
-                        appUtil.readTextFile(
-                            requireActivity(),
-                            R.raw.help
-                        ), getString(R.string.terms_of_usage)
+                        appUtil.readTextFile(requireActivity(), R.raw.help),
+                        getString(R.string.terms_of_usage)
                     )
                 )
             }
@@ -106,13 +103,6 @@ class BillingFragment : Fragment() {
         }
     }
 
-    private fun checkInternetConnection(): Boolean{
-        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
-        val currentNetwork = connectivityManager.activeNetwork
-        val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
-        return caps?.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) == true
-
-    }
     override fun onDestroyView() {
         super.onDestroyView()
         billingManager.endConnection()
