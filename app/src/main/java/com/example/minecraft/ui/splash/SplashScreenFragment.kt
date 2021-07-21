@@ -1,5 +1,6 @@
 package com.example.minecraft.ui.splash
 
+import android.content.DialogInterface
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
@@ -122,28 +123,29 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
      * [PositiveButton] close activity an redirect to Settings
      * [NegativeButton] offline version of opp
      * [NeutralButton] close opp
-     * (try block to avoid bug with dialog)
      */
     private fun dialogNoInternet(){
         val builder = AlertDialog.Builder(requireContext()).apply {
             setTitle(getString(R.string.dialog_title_no_internet))
             setMessage(R.string.msg_no_internet)
-            setPositiveButton(R.string.btn_snack_connect) { _, _ ->
+            setPositiveButton(R.string.btn_snack_connect) { dialog, _ ->
+                dialog.dismiss()
                 requireActivity().finish()
                 val intent = Intent(Settings.ACTION_SETTINGS)
                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 startActivity(intent)
             }
-            setNegativeButton(getString(R.string.dialog_no_internet_go_next)) { _, _ ->
+            setNegativeButton(getString(R.string.dialog_no_internet_go_next)) { dialog, _ ->
+                dialog.dismiss()
                 findNavController().navigate(SplashScreenFragmentDirections.mainFragment())
             }
-            setNeutralButton(getString(R.string.dialog_no_internet_leave)) { _, _ -> requireActivity().finish() }
+            setNeutralButton(getString(R.string.dialog_no_internet_leave)) { dialog, _ -> dialog.dismiss(); requireActivity().finish() }
         }
 
         val dialog = builder.create()
-
-        try { builder.create().show() }
-        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
+        dialog.show()
+//        try { builder.create().show() }
+//        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
         networkState(dialog)
     }
     /**
@@ -152,39 +154,25 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
      * [dialogNoInternet] see dialog to choose action
      */
     private fun networkState(dialog: AlertDialog) {
+        val networkCallback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) {
+                if (this@SplashScreenFragment.isDetached) {
+                    observeState()
+                    dialog.dismiss()
+                }
+            }
+            override fun onLost(network: Network) {
+                if (this@SplashScreenFragment.isDetached) {
+                    dialogNoInternet()
+                }
+            }
+        }
         val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
-            connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
-                override fun onAvailable(network: Network) {
-                    if (this@SplashScreenFragment.isDetached) {
-                        observeState()
-                        dialog.dismiss()
-                    }
-                }
-                override fun onLost(network: Network) {
-                    if (this@SplashScreenFragment.isDetached) {
-                        dialogNoInternet()
-                    }
-                }
-            })
+            connectivityManager.registerDefaultNetworkCallback(networkCallback)
         } else{
             val networkChangeFilter = NetworkRequest.Builder().build()
-            connectivityManager.registerNetworkCallback(
-                networkChangeFilter,
-                object : ConnectivityManager.NetworkCallback(){
-                override fun onAvailable(network: Network) {
-                    super.onAvailable(network)
-                    if (this@SplashScreenFragment.isDetached) {
-                        observeState()
-                        dialog.dismiss()
-                    }
-                }
-                override fun onLost(network: Network) {
-                    if (this@SplashScreenFragment.isDetached) {
-                        dialogNoInternet()
-                    }
-                }
-            })
+            connectivityManager.registerNetworkCallback(networkChangeFilter, networkCallback)
         }
     }
     /**

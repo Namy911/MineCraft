@@ -5,6 +5,7 @@ import androidx.lifecycle.*
 import com.example.minecraft.repository.MainRepository
 import com.example.minecraft.ui.util.RosterItem
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -42,6 +43,9 @@ class MainViewModel @Inject constructor(
 
     private val _list = MutableStateFlow<RosterItemLoadState>(RosterItemLoadState.Loading)
     val list: StateFlow<RosterItemLoadState> = _list.asStateFlow()
+
+    val _progress = MutableSharedFlow<Int>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val progress: SharedFlow<Int> = _progress.asSharedFlow()
 
     fun getItem(offset: Int, limit: Int) {
         viewModelScope.launch {

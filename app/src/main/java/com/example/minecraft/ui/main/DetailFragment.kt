@@ -12,7 +12,6 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -52,6 +51,7 @@ class DetailFragment : DownloadDialogUtil() {
     var mRewardedAd: RewardedAd? = null
 
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
+
     private var prefState = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -100,6 +100,14 @@ class DetailFragment : DownloadDialogUtil() {
                 count = list.size
                 selection = 0
             }
+            //
+
+            //
+            lifecycleScope.launchWhenStarted {
+                viewModel.progress.collectLatest {value ->
+                    progressDownload.progress = value
+                }
+            }
 
             txtDesc.text = args.model.description
             if (!prefState) {
@@ -135,20 +143,20 @@ class DetailFragment : DownloadDialogUtil() {
             }
 
             btnDownload.setOnClickListener {
-                if (!prefState) {
-                    val temp = viewModel.getFlagRewardDownload()
-                    if (temp == false && checkInternetConnection(requireContext())) {
-                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
-                    } else {
-                        if (checkPermission()) {
-                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-                        }
-                    }
-                } else {
+//                if (!prefState) {
+//                    val temp = viewModel.getFlagRewardDownload()
+//                    if (temp == false && checkInternetConnection(requireContext())) {
+//                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
+//                    } else {
+//                        if (checkPermission()) {
+//                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+//                        }
+//                    }
+//                } else {
                     if (checkPermission()) {
                         dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
                     }
-                }
+//                }
             }
             // [FLAG_DEST_BILLING_FRAGMENT] from right redirection, close button
             btnInstall.setOnClickListener {
@@ -376,7 +384,7 @@ class DetailFragment : DownloadDialogUtil() {
     //
     fun getPath(file: File): Uri? = try {
         FileProvider.getUriForFile(
-            requireContext().applicationContext,
+            requireContext(),
             BuildConfig.APPLICATION_ID + ".fileProvider", file
         )
     } catch (e: IllegalArgumentException) {
@@ -386,7 +394,8 @@ class DetailFragment : DownloadDialogUtil() {
 
     inner class DetailPageAdapter(
         private val listOfLinks: List<String>,
-        val title: String, private val ctx: Context
+        private val title: String,
+        private val ctx: Context
     ): PagerAdapter() {
 
         override fun getCount(): Int {

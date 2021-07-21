@@ -101,7 +101,7 @@ class MainFragment : DownloadDialogUtil(){
             val manager = LinearLayoutManager(activity, LinearLayoutManager.VERTICAL, false)
             container.layoutManager = manager
 
-             lifecycleScope.launchWhenResumed {
+             lifecycleScope.launch {
                 appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
                     if (!prefState) {
                         val adRequest = AdRequest.Builder().build()
@@ -117,20 +117,20 @@ class MainFragment : DownloadDialogUtil(){
                                         }
                                         is RosterItemLoadState.LoadComplete -> {
                                             // Create chunk, [PAGE_SIZE] items [AddonModel] + 1 [AdItem]
-                                            val job1 = async { getItemAd() }
+//                                            val job1 = async { getItemAd() }
                                             val job2 = async { state.content }
                                             job2.start()
-                                            job1.start()
+//                                            job1.start()
 
                                             val content = job2.await()
-                                            val ad = job1.await()
+//                                            val ad = job1.await()
                                             // prevent double insertion Ad
                                             val prev = fulList.size
                                             fulList.addAll(content)
                                             val newList = fulList.size
-                                            if (newList - prev == PAGE_SIZE) {
-                                                fulList.add(ad)
-                                            }
+//                                            if (newList - prev == PAGE_SIZE) {
+//                                                fulList.add(ad)
+//                                            }
                                             // -----------  end  --------------
                                             adapter.deleteFooter()
                                             fulList.add(FooterItem())
@@ -241,7 +241,8 @@ class MainFragment : DownloadDialogUtil(){
         builder.setPositiveButton(getString(R.string.alert_btn_continue)) { _, _ ->
                 builder.create().dismiss()
             }
-            .setNegativeButton(getString(R.string.alert_btn_reload)) { _, _ ->
+            .setNegativeButton(getString(R.string.alert_btn_reload)) { dialog, _ ->
+                dialog.dismiss()
                 val intent = Intent(requireActivity(), MainActivity::class.java)
                 intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -250,21 +251,24 @@ class MainFragment : DownloadDialogUtil(){
 
         if (state) {
             builder.setMessage(getString(R.string.alert_network_msg))
-                .setPositiveButton(getString(R.string.alert_btn_leave)) { _, _ ->
+                .setPositiveButton(getString(R.string.alert_btn_leave)) { dialog, _ ->
+                    dialog.dismiss()
                     requireActivity().finish()
                 }
-                .setNegativeButton(getString(R.string.alert_btn_reload)) { _, _ ->
+                .setNegativeButton(getString(R.string.alert_btn_reload)) { dialog, _ ->
+                    dialog.dismiss()
                     val intent = Intent(requireActivity(), MainActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK;
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent)
                 }
-            builder.create().dismiss()
+//            builder.create().dismiss()
         }
 
-        val dialog = builder.create()
-        try { dialog.show() }
-        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
+        builder.create().show()
+
+//        try { dialog.show() }
+//        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
     }
     // Insert last item in recycler
     private fun insertLastItem(list: List<RosterItem>){

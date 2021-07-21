@@ -109,5 +109,10 @@ class BillingFragment : Fragment(), NetworkUtil {
         _binding = null
     }
 
+    override fun onDetach() {
+        super.onDetach()
+        billingManager.endConnection()
+    }
+
     fun setupToolBartTitle(title: String){ (activity as MainActivity).setupToolBartTitle(title) }
 }

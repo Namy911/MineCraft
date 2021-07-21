@@ -10,6 +10,8 @@ import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -20,6 +22,7 @@ import androidx.work.*
 import com.example.minecraft.BuildConfig
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
+import com.example.minecraft.ui.main.DetailFragment
 import com.example.minecraft.ui.main.DownloadAddon
 import com.example.minecraft.ui.main.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,11 +39,23 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
 
         const val RECORD_REQUEST_CODE = 101
         const val packageName = "com.mojang.minecraftpe"
+        const val TAG_WORK_MANAGER = "ui.util.tag.work.manager"
     }
 
     private val viewModel: MainViewModel by viewModels()
 
     var toast: Toast? = null
+    var flagPermission = false
+
+    lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission())
+        { isGranted: Boolean ->
+            flagPermission = isGranted
+        }
+    }
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
         var term = ".mcpack"
@@ -90,7 +105,7 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
     // WorkManager config, download file
     @SuppressLint("ShowToast")
     fun workDownloadAddon(uri: String, fileName: String, flagDir: String, model: AddonModel, flagBtnShare: Boolean = false){
-        val workManager = WorkManager.getInstance(requireActivity())
+        val workManager = WorkManager.getInstance(requireContext())
 
         val data: Data = Data.Builder()
             .putString(DownloadAddon.URI_DOWNLOAD, uri)
@@ -102,14 +117,17 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
 //            .setRequiredNetworkType(NetworkType.CONNECTED)
 //            .build()
 
-        val request = OneTimeWorkRequest.Builder(DownloadAddon::class.java)
+        val request = OneTimeWorkRequest.Builder(DownloadAddon::class.java).addTag(TAG_WORK_MANAGER)
 //            .setConstraints(constrains)
             .setInputData(data)
             .build()
         // Get result and observe response from manager
         workManager.enqueue(request)
         workManager.getWorkInfoByIdLiveData(request.id).observe(viewLifecycleOwner){ workInfo ->
-            if (workInfo != null && workInfo.state.isFinished) {
+            if (workInfo != null && workInfo.state == WorkInfo.State.SUCCEEDED) {
+                var progress = workInfo.progress.getInt(DownloadAddon.Progress, 0)
+//                viewModel._progress.tryEmit(progress)
+                Log.d(TAG, "workDownloadAddon: ${progress}")
                 // Download addon type(resource or behavior)
                 if (flagBtnShare){
                     when {
@@ -131,15 +149,15 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
     // Install addon
     private fun installAddon(path: File) {
         val uri = try {
-                FileProvider.getUriForFile(
-                    requireContext().applicationContext,
-                    BuildConfig.APPLICATION_ID + ".fileProvider",
-                    path
-                )
-            } catch (e: IllegalArgumentException) {
-                Log.d("File Selector", "The selected file not funded: $path")
-                null
-            }
+            FileProvider.getUriForFile(
+                requireContext().applicationContext,
+                BuildConfig.APPLICATION_ID + ".fileProvider",
+                path
+            )
+        } catch (e: IllegalArgumentException) {
+            Log.d("File Selector", "The selected file not funded: $path")
+            null
+        }
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/octet-stream")
             addCategory(Intent.CATEGORY_DEFAULT)
@@ -150,41 +168,33 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
     }
     // Permissions Setup
     fun checkPermission(): Boolean {
-        setupPermissions()
-        return ContextCompat.checkSelfPermission(
-            requireActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE
-        ) == PackageManager.PERMISSION_GRANTED
+        onRequestCheckPermission()
+        return flagPermission
     }
-    // Check permission: WRITE_EXTERNAL_STORAGE
-    private fun setupPermissions() {
-        val permWrite = ContextCompat.checkSelfPermission(requireActivity(),
-            Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
-        if (permWrite != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(requireActivity(),
-                    Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                dialogRequest()
-            } else {
-                makeRequestWriteStorage()
-            }
-        }
-    }
     private fun makeRequestWriteStorage() {
         ActivityCompat.requestPermissions(requireActivity(),
             arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
             RECORD_REQUEST_CODE)
     }
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when(requestCode){
-            RECORD_REQUEST_CODE -> {
-                if (grantResults.isEmpty() || grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    dialogRequest()
-                }
+    // Check permission: WRITE_EXTERNAL_STORAGE
+    private fun onRequestCheckPermission() {
+        when {
+            ContextCompat.checkSelfPermission(
+                requireContext(), Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) == PackageManager.PERMISSION_GRANTED -> {
+                flagPermission = true
+            }
+            ActivityCompat.shouldShowRequestPermissionRationale(
+                requireActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) -> {
+                dialogRequest()
+            }
+            else -> {
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             }
         }
     }
-
     // Dialog Info about permission
     private fun dialogRequest(){
         val builder = AlertDialog.Builder(requireActivity())
@@ -364,7 +374,13 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
         fun sendIntent()
     }
 
+    override fun onDetach() {
+        super.onDetach()
+        requestPermissionLauncher.unregister()
+    }
+
     override fun onStop() {
         super.onStop()
-        if (toast != null) toast = null }
+        if (toast != null) toast = null
+    }
 }

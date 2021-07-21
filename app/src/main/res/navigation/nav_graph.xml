@@ -67,7 +67,6 @@
         <action
             android:id="@+id/mainFragment"
             app:destination="@id/mainFragment"
-            app:launchSingleTop="true"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
     </fragment>
@@ -78,13 +77,11 @@
         <action
             android:id="@+id/mainFragment"
             app:destination="@id/mainFragment"
-            app:launchSingleTop="true"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
         <action
             android:id="@+id/subscriptionFragment"
             app:destination="@id/subscriptionFragment"
-            app:launchSingleTop="true"
             app:popUpTo="@id/nav_graph"
             app:popUpToInclusive="true" />
     </fragment>

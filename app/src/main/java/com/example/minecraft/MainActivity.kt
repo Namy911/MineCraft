@@ -95,6 +95,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
     // Config Ad: Ap open, load ad
     override fun onPause() {
         super.onPause()
@@ -102,11 +103,8 @@ class MainActivity : AppCompatActivity() {
             appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
                 if (!prefState) {
                     AppOpenAd.load(
-                        this@MainActivity,
-                        AppUtil.APP_OPEN_UNIT_ID,
-                        AdRequest.Builder().build(),
-                        1,
-                        object : AppOpenAd.AppOpenAdLoadCallback() {
+                        this@MainActivity, AppUtil.APP_OPEN_UNIT_ID, AdRequest.Builder().build(),
+                        1, object : AppOpenAd.AppOpenAdLoadCallback() {
                             override fun onAdLoaded(appOpenAd: AppOpenAd) {
                                 super.onAdLoaded(appOpenAd)
                                 this@MainActivity.appOpenAd = appOpenAd
