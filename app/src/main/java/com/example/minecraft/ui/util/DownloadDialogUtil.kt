@@ -398,6 +398,16 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
         if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
     }
 
+    fun checkFileExist(model: String, tag: String){
+        val cacheLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model, tag)
+
+        if (tag == TAG_RESOURCE) {
+            if (File(cacheLink).exists()) { viewModel.setCachePathResource(cacheLink) }
+        }else {
+            if (File(cacheLink).exists()) { viewModel.setCachePathBehavior(cacheLink) }
+        }
+    }
+
     fun checkFileExists(model: String , tag: String){
         val cacheLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model, tag)
         if (tag == TAG_BEHAVIOR) {

@@ -133,11 +133,13 @@ class DetailFragment : DownloadDialogUtil() {
                             when {
                                 viewModel.getCachePathResource() == null -> {
                                     shareFileCheck(tempResource, TAG_RESOURCE)
-                                    checkFilesExists(args.model)
+//                                    checkFilesExists(args.model)
+                                    checkFileExist(args.model.resource, TAG_RESOURCE)
                                 }
                                 viewModel.getCachePathBehavior() == null -> {
                                     shareFileCheck(tempBehavior, TAG_BEHAVIOR)
-                                    checkFilesExists(args.model)
+//                                    checkFilesExists(args.model)
+                                    checkFileExist(args.model.behavior, TAG_BEHAVIOR)
                                 }
                                 else -> {
                                     checkFilesExists(args.model)
