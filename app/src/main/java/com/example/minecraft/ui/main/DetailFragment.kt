@@ -130,8 +130,20 @@ class DetailFragment : DownloadDialogUtil() {
                 } else {
                     when {
                         tempBehavior.isNotEmpty() && tempResource.isNotEmpty() -> {
-                            checkFilesExists(args.model)
-                            shareFilesCheck()
+                            when {
+                                viewModel.getCachePathResource() == null -> {
+                                    shareFileCheck(tempResource, TAG_RESOURCE)
+                                    checkFilesExists(args.model)
+                                }
+                                viewModel.getCachePathBehavior() == null -> {
+                                    shareFileCheck(tempBehavior, TAG_BEHAVIOR)
+                                    checkFilesExists(args.model)
+                                }
+                                else -> {
+                                    checkFilesExists(args.model)
+                                    shareFilesCheck()
+                                }
+                            }
                         }
                         tempBehavior.isNotEmpty() -> {
                             checkFileExists(args.model.behavior, TAG_BEHAVIOR)
@@ -317,22 +329,32 @@ class DetailFragment : DownloadDialogUtil() {
      * download files and create chooser
      */
     private fun shareFilesCheck() {
-        val temp1 = viewModel.getCachePathBehavior()
-        val temp2 = viewModel.getCachePathResource()
+        val temp1 = viewModel.getCachePathResource()
+        val temp2 = viewModel.getCachePathBehavior()
 
         val list = arrayListOf<Uri?>(null, null)
 
         if (checkPermission()) {
             if (checkInternetConnection(requireContext())) {
+                val model = args.model
                 if (temp1 == null && temp2 == null) {
                     workDownloadMultiple(
                         listOf(
-                            getPackFileName(args.model.resource, TAG_RESOURCE),
-                            getPackFileName(args.model.behavior, TAG_BEHAVIOR)
+                            getPackFileName(model.resource, TAG_RESOURCE),
+                            getPackFileName(model.behavior, TAG_BEHAVIOR)
                         ),
-                        args.model
+                        model
                     )
-                } else {
+                } else if (temp1 == null && temp2 != null){
+                    workDownloadMultiple(
+                        listOf(getPackFileName(model.resource, TAG_RESOURCE), null), model
+                    )
+                }
+                else if (temp1 != null && temp2 == null){
+                    workDownloadMultiple(
+                        listOf(null, getPackFileName(model.behavior, TAG_BEHAVIOR)), model
+                    )
+                }else{
                     temp1?.let { list[1] = getPath(File(it)) }
                     temp2?.let { list[0] = getPath(File(it)) }
 

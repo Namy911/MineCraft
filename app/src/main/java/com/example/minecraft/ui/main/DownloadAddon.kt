@@ -15,6 +15,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import java.io.File
@@ -50,14 +51,16 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
                 val directory = inputData.getString(DIRECTORY)
                 // Check download directory
                 if (uri != null && fileName != null) {
-//                    setProgressAsync(firstUpdate)
-//                    delay(1500)
+                    val progressData = firstUpdate
+                    setProgress(progressData)
                     when (directory) {
                         DIR_EXT_STORAGE -> { downloadPublicDir(uri, fileName) }
                         DIR_CACHE -> { downloadCacheDir(uri, fileName) }
                     }
-//                    setProgressAsync(lastUpdate)
                 }
+                setProgress(lastUpdate)
+                delay(1L)
+
                 Result.success()
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -81,7 +84,6 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
     @Suppress("DEPRECATION")
     private suspend fun downloadPublicDir(uri: String, fileName: String) {
         val request = downloadManagerBuilder(uri, fileName)
-        setProgressAsync(firstUpdate)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             downloadPublicMediaDir(uri, fileName)
         } else {
@@ -91,16 +93,15 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
         }
         val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         dm.enqueue(request)
-        setProgressAsync(lastUpdate)
     }
     // Cache directory download
-    private fun downloadCacheDir(uri: String, fileName: String): Long {
+    private fun downloadCacheDir(uri: String, fileName: String) {
         val path = File(context.externalCacheDir, fileName).toUri()
         val request = downloadManagerBuilder(uri, fileName)
             .setDestinationUri(path)
 
         val dm = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        return dm.enqueue(request)
+        dm.enqueue(request)
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
