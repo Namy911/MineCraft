@@ -12,11 +12,9 @@ import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.net.toUri
 import androidx.work.CoroutineWorker
-import androidx.work.Data
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import okhttp3.*
 import java.io.File
@@ -48,15 +46,15 @@ class DownloadAddon(val context: Context, workerParameters: WorkerParameters) : 
         return withContext(Dispatchers.IO){
             try {
                 val uri = inputData.getString(URI_DOWNLOAD)
-                val title = inputData.getString(FILE_NAME)
+                val fileName = inputData.getString(FILE_NAME)
                 val directory = inputData.getString(DIRECTORY)
                 // Check download directory
-                if (uri != null && title != null) {
+                if (uri != null && fileName != null) {
 //                    setProgressAsync(firstUpdate)
 //                    delay(1500)
                     when (directory) {
-                        DIR_EXT_STORAGE -> { downloadPublicDir(uri, title) }
-                        DIR_CACHE -> { downloadCacheDir(uri, title) }
+                        DIR_EXT_STORAGE -> { downloadPublicDir(uri, fileName) }
+                        DIR_CACHE -> { downloadCacheDir(uri, fileName) }
                     }
 //                    setProgressAsync(lastUpdate)
                 }

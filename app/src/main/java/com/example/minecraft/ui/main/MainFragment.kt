@@ -117,20 +117,20 @@ class MainFragment : DownloadDialogUtil(){
                                         }
                                         is RosterItemLoadState.LoadComplete -> {
                                             // Create chunk, [PAGE_SIZE] items [AddonModel] + 1 [AdItem]
-//                                            val job1 = async { getItemAd() }
+                                            val job1 = async { getItemAd() }
                                             val job2 = async { state.content }
                                             job2.start()
 //                                            job1.start()
 
                                             val content = job2.await()
-//                                            val ad = job1.await()
+                                            val ad = job1.await()
                                             // prevent double insertion Ad
                                             val prev = fulList.size
                                             fulList.addAll(content)
                                             val newList = fulList.size
-//                                            if (newList - prev == PAGE_SIZE) {
-//                                                fulList.add(ad)
-//                                            }
+                                            if (newList - prev == PAGE_SIZE) {
+                                                fulList.add(ad)
+                                            }
                                             // -----------  end  --------------
                                             adapter.deleteFooter()
                                             fulList.add(FooterItem())

@@ -17,12 +17,17 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager.widget.PagerAdapter
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.example.minecraft.BuildConfig
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentDetailBinding
 import com.example.minecraft.MainActivity
 import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
+import com.example.minecraft.data.model.AddonModel
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.AppUtil.Companion.REVARD_AD_UNIT_ID
 import com.example.minecraft.ui.util.DownloadDialogUtil
@@ -43,7 +48,7 @@ class DetailFragment : DownloadDialogUtil() {
     }
 
     private var _binding: FragmentDetailBinding? = null
-    private val binding get() = checkNotNull(_binding) {"binding isn't initialized"}
+    private val binding get() = checkNotNull(_binding) { "binding isn't initialized" }
 
     private val args: DetailFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
@@ -82,7 +87,7 @@ class DetailFragment : DownloadDialogUtil() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        // checkFilesExists(args.model)
+
         val tempBehavior = args.model.behavior
         val tempResource = args.model.resource
         // check if file exist before download
@@ -101,10 +106,8 @@ class DetailFragment : DownloadDialogUtil() {
                 selection = 0
             }
             //
-
-            //
             lifecycleScope.launchWhenStarted {
-                viewModel.progress.collectLatest {value ->
+                viewModel.progress.collectLatest { value ->
                     progressDownload.progress = value
                 }
             }
@@ -143,20 +146,20 @@ class DetailFragment : DownloadDialogUtil() {
             }
 
             btnDownload.setOnClickListener {
-//                if (!prefState) {
-//                    val temp = viewModel.getFlagRewardDownload()
-//                    if (temp == false && checkInternetConnection(requireContext())) {
-//                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
-//                    } else {
-//                        if (checkPermission()) {
-//                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-//                        }
-//                    }
-//                } else {
+                if (!prefState) {
+                    val temp = viewModel.getFlagRewardDownload()
+                    if (temp == false && checkInternetConnection(requireContext())) {
+                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
+                    } else {
+                        if (checkPermission()) {
+                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+                        }
+                    }
+                } else {
                     if (checkPermission()) {
                         dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
                     }
-//                }
+                }
             }
             // [FLAG_DEST_BILLING_FRAGMENT] from right redirection, close button
             btnInstall.setOnClickListener {
@@ -263,7 +266,9 @@ class DetailFragment : DownloadDialogUtil() {
         }
     }
 
-    fun setupToolBartTitle(title: String) { (activity as MainActivity).setupToolBartTitle(title) }
+    fun setupToolBartTitle(title: String) {
+        (activity as MainActivity).setupToolBartTitle(title)
+    }
     /**
      * Behavior from share button, one file
      * check if file exist create and chooser if exist otherwise
@@ -281,11 +286,13 @@ class DetailFragment : DownloadDialogUtil() {
 
             if (temp.isNullOrEmpty()) {
                 if (checkPermission()) {
-                    workDownloadAddon(
+                    workDownloadSingle(
                         model, getPackFileName(model, tag),
                         DownloadAddon.DIR_CACHE, args.model, true
                     )
-                    if (File(cacheLink).exists()) { viewModel.setCachePathBehavior(cacheLink) }
+                    if (File(cacheLink).exists()) {
+                        viewModel.setCachePathBehavior(cacheLink)
+                    }
                 }
             } else {
                 val sendIntent: Intent = Intent().apply {
@@ -307,54 +314,28 @@ class DetailFragment : DownloadDialogUtil() {
     }
     /**
      * Behavior from share button, multiple file
-     * check if files exist create and chooser if exist otherwise
      * download files and create chooser
      */
     private fun shareFilesCheck() {
         val temp1 = viewModel.getCachePathBehavior()
         val temp2 = viewModel.getCachePathResource()
 
-        val callbackShare = object : BtnShareListener {
-            val list = arrayListOf<Uri?>(null, null)
-            override suspend fun configResource() {
-                if (temp1 != null) {
-                    list[1] = getPath(File(temp1))
-                } else {
-                    if (checkInternetConnection(requireContext())) {
-                        if (checkPermission()) {
-                            workDownloadAddon(
-                                args.model.behavior, getPackFileName(args.model.behavior, TAG_BEHAVIOR),
-                                DownloadAddon.DIR_CACHE, args.model, true
-                            )
-                        }
-                    } else {
-                        Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            }
+        val list = arrayListOf<Uri?>(null, null)
 
-            override suspend fun configBehavior() {
-                if (temp2 != null) {
-                    list[0] = getPath(File(temp2))
+        if (checkPermission()) {
+            if (checkInternetConnection(requireContext())) {
+                if (temp1 == null && temp2 == null) {
+                    workDownloadMultiple(
+                        listOf(
+                            getPackFileName(args.model.resource, TAG_RESOURCE),
+                            getPackFileName(args.model.behavior, TAG_BEHAVIOR)
+                        ),
+                        args.model
+                    )
                 } else {
-                    if (checkInternetConnection(requireContext())) {
-                        if (checkPermission()) {
-                            workDownloadAddon(
-                                args.model.resource, getPackFileName(args.model.resource, TAG_RESOURCE),
-                                DownloadAddon.DIR_CACHE, args.model, true
-                            )
-                        }
-                    } else {
-                        Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT)
-                            .show()
-                    }
-                }
-            }
+                    temp1?.let { list[1] = getPath(File(it)) }
+                    temp2?.let { list[0] = getPath(File(it)) }
 
-            override fun sendIntent() {
-                Log.d(TAG, "sendIntent: hhh")
-                if (list[0] != null && list[1] != null) {
                     val sendIntent: Intent = Intent().apply {
                         putExtra(Intent.EXTRA_TEXT, "Share Addon")
                         type = "file/*"
@@ -366,27 +347,15 @@ class DetailFragment : DownloadDialogUtil() {
                     val shareIntent = Intent.createChooser(sendIntent, "")
                     requireActivity().startActivity(shareIntent)
                 }
+            } else {
+                Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT)
+                    .show()
             }
-        }
-
-        lifecycleScope.launch {
-             val job1 = async { callbackShare.configResource() }
-             val job2 = async { callbackShare.configBehavior() }
-
-            job1.start()
-            job2.start()
-            job1.await()
-            job2.await()
-
-            callbackShare.sendIntent()
         }
     }
     //
     fun getPath(file: File): Uri? = try {
-        FileProvider.getUriForFile(
-            requireContext(),
-            BuildConfig.APPLICATION_ID + ".fileProvider", file
-        )
+        FileProvider.getUriForFile(requireContext(), BuildConfig.APPLICATION_ID + ".fileProvider", file)
     } catch (e: IllegalArgumentException) {
         Log.d("File Selector", "The selected file not funded: $file")
         null

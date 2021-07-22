@@ -22,7 +22,6 @@ import androidx.work.*
 import com.example.minecraft.BuildConfig
 import com.example.minecraft.R
 import com.example.minecraft.data.model.AddonModel
-import com.example.minecraft.ui.main.DetailFragment
 import com.example.minecraft.ui.main.DownloadAddon
 import com.example.minecraft.ui.main.MainViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -52,9 +51,7 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission())
-        { isGranted: Boolean ->
-            flagPermission = isGranted
-        }
+        { isGranted -> flagPermission = isGranted }
     }
     // Config name of downloaded file
     fun getPackFileName(resource: String, tag: String): String {
@@ -102,9 +99,50 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
                 }
             }
     }
+    @SuppressLint("ShowToast")
+    fun workDownloadMultiple(fileNameList: List<String?>, model: AddonModel){
+
+        val data: Data = Data.Builder()
+            .putString(DownloadAddon.URI_DOWNLOAD, model.resource)
+            .putString(DownloadAddon.FILE_NAME, fileNameList[0])
+            .putString(DownloadAddon.DIRECTORY, DownloadAddon.DIR_CACHE)
+            .build()
+
+        val data2: Data = Data.Builder()
+            .putString(DownloadAddon.URI_DOWNLOAD, model.behavior)
+            .putString(DownloadAddon.FILE_NAME, fileNameList[1])
+            .putString(DownloadAddon.DIRECTORY, DownloadAddon.DIR_CACHE)
+            .build()
+
+        val request = OneTimeWorkRequest.Builder(DownloadAddon::class.java)
+            .setInputData(data)
+            .build()
+
+        val request2 = OneTimeWorkRequest.Builder(DownloadAddon::class.java)
+            .setInputData(data2)
+            .build()
+
+        // Get result and observe response from manager
+        val workManager = WorkManager.getInstance(requireContext())
+
+        if (fileNameList[0] != null && fileNameList[1] != null) {
+            workManager.enqueue(mutableListOf(request, request2))
+        }
+//            fileNameList[0] != null -> { workManager.enqueue(request) }
+//            fileNameList[1] != null -> { workManager.enqueue(request2) }
+
+        workManager.getWorkInfoByIdLiveData(request.id).observe(viewLifecycleOwner){ workInfo ->
+//            if (workInfo != null && workInfo.state == WorkInfo.State.SUCCEEDED) {
+            if (workInfo != null && workInfo.state.isFinished) {
+                downloadShareFiles(model)
+                toast = Toast.makeText(context, "getString(R.string.msg_finish_download", Toast.LENGTH_SHORT)
+                toast?.show()
+            }
+        }
+    }
     // WorkManager config, download file
     @SuppressLint("ShowToast")
-    fun workDownloadAddon(uri: String, fileName: String, flagDir: String, model: AddonModel, flagBtnShare: Boolean = false){
+    fun workDownloadSingle(uri: String, fileName: String, flagDir: String, model: AddonModel, flagBtnShare: Boolean = false){
         val workManager = WorkManager.getInstance(requireContext())
 
         val data: Data = Data.Builder()
@@ -172,11 +210,11 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
         return flagPermission
     }
 
-    private fun makeRequestWriteStorage() {
-        ActivityCompat.requestPermissions(requireActivity(),
-            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            RECORD_REQUEST_CODE)
-    }
+//    private fun makeRequestWriteStorage() {
+//        ActivityCompat.requestPermissions(requireActivity(),
+//            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+//            RECORD_REQUEST_CODE)
+//    }
     // Check permission: WRITE_EXTERNAL_STORAGE
     private fun onRequestCheckPermission() {
         when {
@@ -201,7 +239,9 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
         builder.apply {
             setMessage(getString(R.string.dialog_requestPerm_msg))
             setTitle(getString(R.string.dialog_requestPerm_title))
-            setPositiveButton(getString(R.string.dialog_requestPerm_butt_OK)){ _, _ -> makeRequestWriteStorage()}
+            setPositiveButton(getString(R.string.dialog_requestPerm_butt_OK)){ _, _ ->
+                requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            }
             create()
         }
         builder.show()
@@ -237,7 +277,7 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
                         return@setOnClickListener
                     }
                     if (checkInternetConnection(requireContext())) {
-                        workDownloadAddon(model.behavior, behaviorLink, flagDir, model, false)
+                        workDownloadSingle(model.behavior, behaviorLink, flagDir, model, false)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
                     }
@@ -265,7 +305,7 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
                         return@setOnClickListener
                     }
                     if (checkInternetConnection(requireContext())) {
-                        workDownloadAddon(model.resource, resourceLink, flagDir, model, false)
+                        workDownloadSingle(model.resource, resourceLink, flagDir, model, false)
                     }else{
                         Toast.makeText(requireActivity(), getString(R.string.msg_no_internet), Toast.LENGTH_SHORT).show()
                     }
@@ -303,7 +343,8 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
         }
     }
     // Download files and create chooser
-     private fun downloadShareFiles(model: AddonModel){
+     fun downloadShareFiles(model: AddonModel){
+
         val list = arrayListOf<Uri?>(null, null)
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
@@ -352,8 +393,10 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
     fun checkFileExists(model: String , tag: String){
         val cacheLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model, tag)
         if (tag == TAG_BEHAVIOR) {
+            Log.d(TAG, "checkFileExists: setCachePathBehavior")
             if (File(cacheLink).exists()) { viewModel.setCachePathBehavior(cacheLink) }
         } else {
+            Log.d(TAG, "checkFileExists: setCachePathResource")
             if (File(cacheLink).exists()) { viewModel.setCachePathResource(cacheLink) }
         }
     }
