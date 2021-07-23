@@ -40,6 +40,7 @@ class BillingFragment : Fragment(), NetworkUtil {
 
         billingManager = BillingManager(requireActivity()) { closeNavigation() }
     }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = LayoutPremiumBinding.inflate(inflater, container, false)
         return binding.root

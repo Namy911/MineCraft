@@ -77,11 +77,8 @@ dependencies {
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.12.0'
     annotationProcessor 'com.github.bumptech.glide:compiler:4.12.0'
-    // Paging
-    implementation "androidx.paging:paging-runtime-ktx:$paging_version"
     // Lottie
     implementation "com.airbnb.android:lottie:$lottieVersion"
-    implementation 'com.akexorcist:round-corner-progress-bar:2.1.2'
     //
     implementation "androidx.activity:activity-ktx:$activity_version"
     implementation "androidx.fragment:fragment-ktx:$fragment_version"

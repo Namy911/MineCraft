@@ -123,6 +123,7 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
         val workManager = WorkManager.getInstance(requireContext())
         with(workManager) {
             when {
+//                fileNameList[0] != null && fileNameList[1] != null -> { enqueue(mutableListOf(request, request2)) }
                 fileNameList[0] != null && fileNameList[1] != null -> { enqueue(mutableListOf(request, request2)) }
                 fileNameList[0] != null && fileNameList[1] == null -> { enqueue(request) }
                 fileNameList[0] == null && fileNameList[1] != null -> { enqueue(request2) }
@@ -394,8 +395,8 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
         val cacheResourceLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.resource, TAG_RESOURCE)
         val cacheBehaviorLink = requireActivity().externalCacheDir?.path + File.separator + getPackFileName(model.behavior, TAG_BEHAVIOR)
 
-        if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink) }
-        if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink) }
+        if (File(cacheResourceLink).exists()) { viewModel.setCachePathResource(cacheResourceLink);  }
+        if (File(cacheBehaviorLink).exists()) { viewModel.setCachePathBehavior(cacheBehaviorLink);  }
     }
 
     fun checkFileExist(model: String, tag: String){

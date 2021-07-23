@@ -30,7 +30,8 @@
         <action
             android:id="@+id/subscriptionFragment"
             app:destination="@id/subscriptionFragment"
-            app:popUpTo="@id/detailFragment" />
+            app:popUpTo="@id/detailFragment"
+            app:popUpToInclusive="false" />
     </fragment>
 
     <fragment

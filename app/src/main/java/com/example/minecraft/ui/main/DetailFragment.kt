@@ -49,6 +49,7 @@ class DetailFragment : DownloadDialogUtil() {
 
     private var _binding: FragmentDetailBinding? = null
     private val binding get() = checkNotNull(_binding) { "binding isn't initialized" }
+//    private val binding get() = _binding!!
 
     private val args: DetailFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
@@ -92,11 +93,12 @@ class DetailFragment : DownloadDialogUtil() {
         val tempResource = args.model.resource
         // check if file exist before download
         when {
-            tempBehavior.isNotEmpty() && tempResource.isNotEmpty() -> { checkFilesExists(args.model) }
-            tempBehavior.isNotEmpty() -> { checkFileExists(args.model.behavior, TAG_BEHAVIOR) }
-            tempResource.isNotEmpty() -> { checkFileExists(args.model.resource, TAG_RESOURCE) }
+            tempBehavior.isNotEmpty() && tempResource.isNotEmpty() -> { checkFilesExists(args.model);Log.d(TAG, "onViewCreated: 1") }
+            tempBehavior.isNotEmpty() -> { checkFileExists(args.model.behavior, TAG_BEHAVIOR);Log.d(TAG, "onViewCreated: 2") }
+            tempResource.isNotEmpty() -> { checkFileExists(args.model.resource, TAG_RESOURCE);Log.d(TAG, "onViewCreated: 3") }
         }
-
+        Log.d(TAG, "checkFilesExists: ${viewModel.getCachePathBehavior()}")
+        Log.d(TAG, "checkFilesExists: ${viewModel.getCachePathResource()}")
         binding.apply {
             val list: List<String> = args.model.preview
             imgContainer.adapter = DetailPageAdapter(list, args.title, requireActivity())
@@ -106,11 +108,11 @@ class DetailFragment : DownloadDialogUtil() {
                 selection = 0
             }
             //
-            lifecycleScope.launchWhenStarted {
-                viewModel.progress.collectLatest { value ->
-                    progressDownload.progress = value
-                }
-            }
+//            lifecycleScope.launchWhenStarted {
+//                viewModel.progress.collectLatest { value ->
+//                    progressDownload.progress = value
+//                }
+//            }
 
             txtDesc.text = args.model.description
             if (!prefState) {
@@ -125,23 +127,24 @@ class DetailFragment : DownloadDialogUtil() {
             btnShare.setOnClickListener {
                 val temp = viewModel.getFlagRewardShare()
 
-                if (temp == false && checkInternetConnection(requireContext()) && !prefState) {
-                    adSeen(DownloadAddon.DIR_CACHE)
-                } else {
+//                if (temp == false && checkInternetConnection(requireContext()) && !prefState) {
+//                    adSeen(DownloadAddon.DIR_CACHE)
+//                } else {
                     when {
                         tempBehavior.isNotEmpty() && tempResource.isNotEmpty() -> {
                             when {
+                                viewModel.getCachePathBehavior() == null && viewModel.getCachePathResource() == null -> {
+                                    checkFilesExists(args.model)
+                                    shareFilesCheck()
+                                }
                                 viewModel.getCachePathResource() == null -> {
                                     shareFileCheck(tempResource, TAG_RESOURCE)
-//                                    checkFilesExists(args.model)
                                     checkFileExist(args.model.resource, TAG_RESOURCE)
                                 }
                                 viewModel.getCachePathBehavior() == null -> {
                                     shareFileCheck(tempBehavior, TAG_BEHAVIOR)
-//                                    checkFilesExists(args.model)
                                     checkFileExist(args.model.behavior, TAG_BEHAVIOR)
-                                }
-                                else -> {
+                                } else -> {
                                     checkFilesExists(args.model)
                                     shareFilesCheck()
                                 }
@@ -157,38 +160,38 @@ class DetailFragment : DownloadDialogUtil() {
                         }
                     }
                 }
-            }
+//            }
 
             btnDownload.setOnClickListener {
-                if (!prefState) {
-                    val temp = viewModel.getFlagRewardDownload()
-                    if (temp == false && checkInternetConnection(requireContext())) {
-                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
-                    } else {
-                        if (checkPermission()) {
-                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
-                        }
-                    }
-                } else {
+//                if (!prefState) {
+//                    val temp = viewModel.getFlagRewardDownload()
+//                    if (temp == false && checkInternetConnection(requireContext())) {
+//                        adSeen(DownloadAddon.DIR_EXT_STORAGE)
+//                    } else {
+//                        if (checkPermission()) {
+//                            dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
+//                        }
+//                    }
+//                } else {
                     if (checkPermission()) {
                         dialogDownload(args.model, DownloadAddon.DIR_EXT_STORAGE)
                     }
                 }
-            }
+//            }
             // [FLAG_DEST_BILLING_FRAGMENT] from right redirection, close button
             btnInstall.setOnClickListener {
-                if (prefState) {
+//                if (prefState) {
                     if (checkPermission()) {
                         checkFilesExists(args.model)
                         dialogDownload(args.model, DownloadAddon.DIR_CACHE)
                     }
-                } else {
-                    findNavController().navigate(
-                        DetailFragmentDirections.subscriptionFragment(
-                            FLAG_DEST_BILLING_FRAGMENT
-                        )
-                    )
-                }
+//                } else {
+//                    findNavController().navigate(
+//                        DetailFragmentDirections.subscriptionFragment(
+//                            FLAG_DEST_BILLING_FRAGMENT
+//                        )
+//                    )
+//                }
             }
         }
     }
@@ -333,13 +336,14 @@ class DetailFragment : DownloadDialogUtil() {
     private fun shareFilesCheck() {
         val temp1 = viewModel.getCachePathResource()
         val temp2 = viewModel.getCachePathBehavior()
-
+        Log.d(TAG, "shareFilesCheck:")
         val list = arrayListOf<Uri?>(null, null)
 
         if (checkPermission()) {
             if (checkInternetConnection(requireContext())) {
                 val model = args.model
                 if (temp1 == null && temp2 == null) {
+                    Log.d(TAG, "shareFilesCheck: null2")
                     workDownloadMultiple(
                         listOf(
                             getPackFileName(model.resource, TAG_RESOURCE),

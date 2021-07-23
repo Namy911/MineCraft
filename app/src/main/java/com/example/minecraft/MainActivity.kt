@@ -97,56 +97,56 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Config Ad: Ap open, load ad
-    override fun onPause() {
-        super.onPause()
-        lifecycleScope.launchWhenResumed {
-            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
-                if (!prefState) {
-                    AppOpenAd.load(
-                        this@MainActivity, AppUtil.APP_OPEN_UNIT_ID, AdRequest.Builder().build(),
-                        1, object : AppOpenAd.AppOpenAdLoadCallback() {
-                            override fun onAdLoaded(appOpenAd: AppOpenAd) {
-                                super.onAdLoaded(appOpenAd)
-                                this@MainActivity.appOpenAd = appOpenAd
-                            }
-
-                            override fun onAdFailedToLoad(error: LoadAdError) {
-                                super.onAdFailedToLoad(error)
-                                appOpenAd = null
-                            }
-                        })
-                }
-            }
-        }
-    }
-    /**
-     * check if have subscription
-     * if have disable ad
-     */
-    override fun onResume() {
-        super.onResume()
-        lifecycleScope.launchWhenResumed {
-            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
-                if (!prefState) {
-                    appOpenAd?.let { ad ->
-                        if (flagAppOpenAd) {
-                            val fullScreenContentCallback = object : FullScreenContentCallback() {
-                                override fun onAdDismissedFullScreenContent() {
-                                    this@MainActivity.appOpenAd = null
-                                }
-
-                                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                                    this@MainActivity.appOpenAd = null
-                                }
-                            }
-                            ad.fullScreenContentCallback = fullScreenContentCallback
-                            ad.show(this@MainActivity)
-                        }
-                    }
-                }
-            }
-        }
-    }
+//    override fun onPause() {
+//        super.onPause()
+//        lifecycleScope.launchWhenResumed {
+//            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+//                if (!prefState) {
+//                    AppOpenAd.load(
+//                        this@MainActivity, AppUtil.APP_OPEN_UNIT_ID, AdRequest.Builder().build(),
+//                        1, object : AppOpenAd.AppOpenAdLoadCallback() {
+//                            override fun onAdLoaded(appOpenAd: AppOpenAd) {
+//                                super.onAdLoaded(appOpenAd)
+//                                this@MainActivity.appOpenAd = appOpenAd
+//                            }
+//
+//                            override fun onAdFailedToLoad(error: LoadAdError) {
+//                                super.onAdFailedToLoad(error)
+//                                appOpenAd = null
+//                            }
+//                        })
+//                }
+//            }
+//        }
+//    }
+//    /**
+//     * check if have subscription
+//     * if have disable ad
+//     */
+//    override fun onResume() {
+//        super.onResume()
+//        lifecycleScope.launchWhenResumed {
+//            appSharedPrefManager.billingAdsSate.collectLatest { prefState ->
+//                if (!prefState) {
+//                    appOpenAd?.let { ad ->
+//                        if (flagAppOpenAd) {
+//                            val fullScreenContentCallback = object : FullScreenContentCallback() {
+//                                override fun onAdDismissedFullScreenContent() {
+//                                    this@MainActivity.appOpenAd = null
+//                                }
+//
+//                                override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+//                                    this@MainActivity.appOpenAd = null
+//                                }
+//                            }
+//                            ad.fullScreenContentCallback = fullScreenContentCallback
+//                            ad.show(this@MainActivity)
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     private fun setActionBarSettings(){
             val action = NavGraphDirections.globalSettingsFragment()
