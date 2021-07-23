@@ -11,7 +11,8 @@
         tools:layout="@layout/fragment_main">
         <action
             android:id="@+id/detailFragment"
-            app:destination="@id/detailFragment" />
+            app:destination="@id/detailFragment"
+            app:popUpTo="@id/mainFragment" />
         <action
             android:id="@+id/subscriptionFragment"
             app:destination="@id/subscriptionFragment"
@@ -30,8 +31,7 @@
         <action
             android:id="@+id/subscriptionFragment"
             app:destination="@id/subscriptionFragment"
-            app:popUpTo="@id/detailFragment"
-            app:popUpToInclusive="false" />
+            app:popUpTo="@id/detailFragment" />
     </fragment>
 
     <fragment

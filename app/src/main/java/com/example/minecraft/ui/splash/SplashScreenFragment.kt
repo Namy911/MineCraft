@@ -1,5 +1,6 @@
 package com.example.minecraft.ui.splash
 
+import android.app.Dialog
 import android.content.DialogInterface
 import android.content.Intent
 import android.net.ConnectivityManager
@@ -27,7 +28,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import java.lang.Exception
+import kotlin.Exception
 
 private const val TAG = "SplashFragment"
 @AndroidEntryPoint
@@ -40,9 +41,13 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
 
     private lateinit var appSharedPrefManager: AppSharedPreferencesManager
 
-    lateinit var billingManager: BillingManager
+    private lateinit var billingManager: BillingManager
 
-    var job: Job? = null
+    private val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: Network) { observeState() }
+        override fun onLost(network: Network) { dialogNoInternet() }
+    }
+    var dialogNetwork: AlertDialog? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -85,7 +90,7 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
     }
     // Progress bar config, main logic
     private fun observeState(){
-        job = lifecycleScope.launch {
+        lifecycleScope.launch {
             motor.fulList.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
                 .collectLatest { viewState ->
                     binding.apply {
@@ -108,11 +113,6 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
                     }
                 }
         }
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        job?.cancel()
     }
     override fun onDestroyView() {
         super.onDestroyView()
@@ -142,31 +142,18 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
             setNeutralButton(getString(R.string.dialog_no_internet_leave)) { dialog, _ -> dialog.dismiss(); requireActivity().finish() }
         }
 
-        val dialog = builder.create()
-        dialog.show()
-//        try { builder.create().show() }
-//        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
-        networkState(dialog)
+        dialogNetwork = builder.create()
+        dialogNetwork?.show()
+        try { builder.create().show() }
+        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
+        networkState()
     }
     /**
      * Listener to have internet state
      * [onAvailable] close dialog, see progress an redirect
      * [dialogNoInternet] see dialog to choose action
      */
-    private fun networkState(dialog: AlertDialog) {
-        val networkCallback = object : ConnectivityManager.NetworkCallback() {
-            override fun onAvailable(network: Network) {
-                if (this@SplashScreenFragment.isDetached) {
-                    observeState()
-                    dialog.dismiss()
-                }
-            }
-            override fun onLost(network: Network) {
-                if (this@SplashScreenFragment.isDetached) {
-                    dialogNoInternet()
-                }
-            }
-        }
+    private fun networkState() {
         val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
             connectivityManager.registerDefaultNetworkCallback(networkCallback)
@@ -175,6 +162,14 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
             connectivityManager.registerNetworkCallback(networkChangeFilter, networkCallback)
         }
     }
+
+    override fun onStop() {
+        super.onStop()
+        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
+        try { connectivityManager.unregisterNetworkCallback(networkCallback) } catch (e: Exception){ }
+        dialogNetwork?.dismiss()
+    }
+
     /**
      * Redirect if don't have subscription
      * @param [FLAG_DEST_SPLASH_TO_MAIN], subscriptionFragment([FLAG_DEST_SPLASH_TO_MAIN]), id to know which fragment was by previously
@@ -188,6 +183,5 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
         } else {
             findNavController().navigate(SplashScreenFragmentDirections.mainFragment())
         }
-
     }
 }

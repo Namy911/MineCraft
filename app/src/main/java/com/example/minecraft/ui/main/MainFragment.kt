@@ -59,6 +59,7 @@ class MainFragment : DownloadDialogUtil(){
     lateinit var appSharedPrefManager: AppSharedPreferencesManager
     var prefState = false
 
+//    var fulList = mutableListOf<RosterItem>()
     var fulList: MutableSet<RosterItem> = mutableSetOf()
 
     @Suppress("DEPRECATION")
@@ -108,7 +109,7 @@ class MainFragment : DownloadDialogUtil(){
                         binding.adView.loadAd(adRequest)
                         if (checkInternetConnection(requireContext())) {
                             // Have internet connection list
-                            viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
+                            viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
                                 .collectLatest { state ->
                                     when (state) {
                                         RosterItemLoadState.Loading -> {
@@ -120,10 +121,9 @@ class MainFragment : DownloadDialogUtil(){
                                             val job1 = async { getItemAd() }
                                             val job2 = async { state.content }
                                             job2.start()
-//                                            job1.start()
-
-                                            val content = job2.await()
+                                            job1.start()
                                             val ad = job1.await()
+                                            val content = job2.await()
                                             // prevent double insertion Ad
                                             val prev = fulList.size
                                             fulList.addAll(content)
@@ -148,15 +148,16 @@ class MainFragment : DownloadDialogUtil(){
                                         }
                                     }
 
-                                    container.addOnScrollListener(object :
-                                        RecyclerView.OnScrollListener() {
+                                    container.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                                         override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                                             super.onScrolled(recyclerView, dx, dy)
                                             val lastItem = manager.findLastCompletelyVisibleItemPosition()
                                             if (isLoading) {
                                                 if ((lastItem == adapter.itemCount - 2)
                                                     || !recyclerView.canScrollVertically(1)) {
-                                                    if (!checkInternetConnection(requireContext())) { dialogNetwork(false) }
+                                                    if (!checkInternetConnection(requireContext())) {
+                                                        dialogNetwork(false)
+                                                    }
                                                     viewModel.getItem(adapter.getItems(), PAGE_SIZE)
                                                     isLoading = false
                                                 }
@@ -210,8 +211,7 @@ class MainFragment : DownloadDialogUtil(){
     }
     //
     private fun networkState(){
-        val connectivityManager = requireActivity().applicationContext
-            .getSystemService(ConnectivityManager::class.java)
+        val connectivityManager = requireContext().getSystemService(ConnectivityManager::class.java)
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.N) {
             connectivityManager.registerDefaultNetworkCallback(object : ConnectivityManager.NetworkCallback() {
                 override fun onAvailable(network: Network) {
@@ -262,13 +262,13 @@ class MainFragment : DownloadDialogUtil(){
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent)
                 }
-//            builder.create().dismiss()
+            builder.create().dismiss()
         }
 
-        builder.create().show()
+        val dialog = builder.create()
 
-//        try { dialog.show() }
-//        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
+        try { dialog.show() }
+        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
     }
     // Insert last item in recycler
     private fun insertLastItem(list: List<RosterItem>){

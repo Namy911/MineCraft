@@ -73,7 +73,6 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
     //
     private fun checkInstallation(uri: String, tag: String, flagDir: String) {
         if (flagDir == DownloadAddon.DIR_CACHE) {
-            Log.d(TAG, "checkInstallation: DIR_CACHE")
             if (isAppInstalled()) {
                 val cacheLink =
                     requireActivity().externalCacheDir?.path + File.separator + getPackFileName(uri, tag)
@@ -91,8 +90,6 @@ abstract class DownloadDialogUtil : Fragment(), NetworkUtil {
             } else {
                 dialogDownloadApp()
             }
-        }else {
-            Log.d(TAG, "checkInstallation:NO DIR_CACHE")
         }
     }
     @SuppressLint("ShowToast")

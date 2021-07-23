@@ -180,18 +180,18 @@ class DetailFragment : DownloadDialogUtil() {
 //            }
             // [FLAG_DEST_BILLING_FRAGMENT] from right redirection, close button
             btnInstall.setOnClickListener {
-//                if (prefState) {
+                if (prefState) {
                     if (checkPermission()) {
                         checkFilesExists(args.model)
                         dialogDownload(args.model, DownloadAddon.DIR_CACHE)
                     }
-//                } else {
-//                    findNavController().navigate(
-//                        DetailFragmentDirections.subscriptionFragment(
-//                            FLAG_DEST_BILLING_FRAGMENT
-//                        )
-//                    )
-//                }
+                } else {
+                    findNavController().navigate(
+                        DetailFragmentDirections.subscriptionFragment(
+                            FLAG_DEST_BILLING_FRAGMENT
+                        )
+                    )
+                }
             }
         }
     }
@@ -336,14 +336,12 @@ class DetailFragment : DownloadDialogUtil() {
     private fun shareFilesCheck() {
         val temp1 = viewModel.getCachePathResource()
         val temp2 = viewModel.getCachePathBehavior()
-        Log.d(TAG, "shareFilesCheck:")
         val list = arrayListOf<Uri?>(null, null)
 
         if (checkPermission()) {
             if (checkInternetConnection(requireContext())) {
                 val model = args.model
                 if (temp1 == null && temp2 == null) {
-                    Log.d(TAG, "shareFilesCheck: null2")
                     workDownloadMultiple(
                         listOf(
                             getPackFileName(model.resource, TAG_RESOURCE),

@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity() {
 
         appSharedPrefManager = AppSharedPreferencesManager(this)
 
-        val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
+//        val flagDest = intent.getIntExtra(EXTRA_FLAG_DIR_NAME, -1)
         /** Setup navigation
          *  @param [flagDest] flag to hide settings ico
          *  @param [flagAppOpenAd] flag enable AD
