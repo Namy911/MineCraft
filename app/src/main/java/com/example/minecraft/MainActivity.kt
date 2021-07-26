@@ -21,8 +21,8 @@ private const val TAG = "MainActivity"
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     companion object{
-        const val FLAG_DEST_BILLING_FRAGMENT = 2
-        const val FLAG_DEST_SPLASH_TO_MAIN = 1
+        const val FLAG_DEST_DETAIL_BILLING = 2
+        const val FLAG_DEST_SPLASH_MAIN = 1
         const val FLAG_DEST_MAIN_FRAGMENT = 3
         const val EXTRA_FLAG_DIR_NAME = "activity.main.flag"
     }

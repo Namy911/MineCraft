@@ -89,12 +89,9 @@ class MainFragment : DownloadDialogUtil(){
         _binding = FragmentMainBinding.inflate(inflater, container, false)
         return binding.root
     }
-    /**
-     * Initialization
-     * Setup Recycle items with pagination
-     */
-    override fun onResume() {
-        super.onResume()
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         setupToolBartTitle(getString(R.string.title_fragment_details))
 
         binding.apply {
@@ -109,7 +106,7 @@ class MainFragment : DownloadDialogUtil(){
                         binding.adView.loadAd(adRequest)
                         if (checkInternetConnection(requireContext())) {
                             // Have internet connection list
-                            viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.STARTED)
+                            viewModel.list.flowWithLifecycle(lifecycle, Lifecycle.State.RESUMED)
                                 .collectLatest { state ->
                                     when (state) {
                                         RosterItemLoadState.Loading -> {
@@ -122,8 +119,8 @@ class MainFragment : DownloadDialogUtil(){
                                             val job2 = async { state.content }
                                             job2.start()
                                             job1.start()
-                                            val ad = job1.await()
                                             val content = job2.await()
+                                            val ad = job1.await()
                                             // prevent double insertion Ad
                                             val prev = fulList.size
                                             fulList.addAll(content)

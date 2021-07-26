@@ -1,7 +1,5 @@
 package com.example.minecraft.ui.splash
 
-import android.app.Dialog
-import android.content.DialogInterface
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
@@ -9,7 +7,6 @@ import android.net.NetworkRequest
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
-import android.util.Log
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.appcompat.app.AlertDialog
@@ -18,14 +15,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.flowWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_MAIN
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentSplashScreenBinding
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.BillingManager
 import com.example.minecraft.ui.util.NetworkUtil
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlin.Exception
@@ -41,7 +37,7 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
 
     private lateinit var appSharedPrefManager: AppSharedPreferencesManager
 
-    private lateinit var billingManager: BillingManager
+    private var billingManager: BillingManager? = null
 
     private val networkCallback = object : ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: Network) { observeState() }
@@ -53,7 +49,7 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
         super.onCreate(savedInstanceState)
         billingManager = BillingManager(requireActivity()){ }
         // Set pref state from billing subscription
-        billingManager.setSubsState()
+        billingManager?.setSubsState()
         appSharedPrefManager = AppSharedPreferencesManager(requireActivity())
         // Ful screen window
         @Suppress("DEPRECATION")
@@ -141,11 +137,9 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
             }
             setNeutralButton(getString(R.string.dialog_no_internet_leave)) { dialog, _ -> dialog.dismiss(); requireActivity().finish() }
         }
-
         dialogNetwork = builder.create()
         dialogNetwork?.show()
-        try { builder.create().show() }
-        catch (e : Exception){ Log.d(TAG, "dialogNoInternet: ") }
+
         networkState()
     }
     /**
@@ -169,17 +163,16 @@ class SplashScreenFragment : Fragment(), NetworkUtil {
         try { connectivityManager.unregisterNetworkCallback(networkCallback) } catch (e: Exception){ }
         dialogNetwork?.dismiss()
     }
-
     /**
      * Redirect if don't have subscription
-     * @param [FLAG_DEST_SPLASH_TO_MAIN], subscriptionFragment([FLAG_DEST_SPLASH_TO_MAIN]), id to know which fragment was by previously
-     * [FLAG_DEST_SPLASH_TO_MAIN] redirect to [BillingFragment],
+     * @param [FLAG_DEST_SPLASH_TO_MAIN], subscriptionFragment([FLAG_DEST_SPLASH_MAIN]), id to know which fragment was by previously
+     * [FLAG_DEST_SPLASH_MAIN] redirect to [BillingFragment],
      * path: SplashScreenFragment to subscriptionFragment, don't have subscription
      * [mainFragment] redirect to [MainFragment], have subscription
      */
     private fun navigateToMainScreen() {
         if (BillingManager.BILLING_FLAG_STATE) {
-            findNavController().navigate(SplashScreenFragmentDirections.subscriptionFragment(FLAG_DEST_SPLASH_TO_MAIN))
+            findNavController().navigate(SplashScreenFragmentDirections.subscriptionFragment(FLAG_DEST_SPLASH_MAIN))
         } else {
             findNavController().navigate(SplashScreenFragmentDirections.mainFragment())
         }

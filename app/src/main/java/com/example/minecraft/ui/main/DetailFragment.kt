@@ -17,17 +17,12 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager.widget.PagerAdapter
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkInfo
-import androidx.work.WorkManager
 import com.bumptech.glide.Glide
 import com.example.minecraft.BuildConfig
 import com.example.minecraft.R
 import com.example.minecraft.databinding.FragmentDetailBinding
 import com.example.minecraft.MainActivity
-import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
-import com.example.minecraft.data.model.AddonModel
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_DETAIL_BILLING
 import com.example.minecraft.ui.util.AppSharedPreferencesManager
 import com.example.minecraft.ui.util.AppUtil.Companion.REVARD_AD_UNIT_ID
 import com.example.minecraft.ui.util.DownloadDialogUtil
@@ -35,7 +30,6 @@ import com.google.android.gms.ads.*
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
@@ -49,7 +43,6 @@ class DetailFragment : DownloadDialogUtil() {
 
     private var _binding: FragmentDetailBinding? = null
     private val binding get() = checkNotNull(_binding) { "binding isn't initialized" }
-//    private val binding get() = _binding!!
 
     private val args: DetailFragmentArgs by navArgs()
     private val viewModel: MainViewModel by viewModels()
@@ -93,9 +86,9 @@ class DetailFragment : DownloadDialogUtil() {
         val tempResource = args.model.resource
         // check if file exist before download
         when {
-            tempBehavior.isNotEmpty() && tempResource.isNotEmpty() -> { checkFilesExists(args.model);Log.d(TAG, "onViewCreated: 1") }
-            tempBehavior.isNotEmpty() -> { checkFileExists(args.model.behavior, TAG_BEHAVIOR);Log.d(TAG, "onViewCreated: 2") }
-            tempResource.isNotEmpty() -> { checkFileExists(args.model.resource, TAG_RESOURCE);Log.d(TAG, "onViewCreated: 3") }
+            tempBehavior.isNotEmpty() && tempResource.isNotEmpty() -> { checkFilesExists(args.model) }
+            tempBehavior.isNotEmpty() -> { checkFileExists(tempBehavior, TAG_BEHAVIOR) }
+            tempResource.isNotEmpty() -> { checkFileExists(tempResource, TAG_RESOURCE) }
         }
         Log.d(TAG, "checkFilesExists: ${viewModel.getCachePathBehavior()}")
         Log.d(TAG, "checkFilesExists: ${viewModel.getCachePathResource()}")
@@ -107,12 +100,6 @@ class DetailFragment : DownloadDialogUtil() {
                 count = list.size
                 selection = 0
             }
-            //
-//            lifecycleScope.launchWhenStarted {
-//                viewModel.progress.collectLatest { value ->
-//                    progressDownload.progress = value
-//                }
-//            }
 
             txtDesc.text = args.model.description
             if (!prefState) {
@@ -139,11 +126,11 @@ class DetailFragment : DownloadDialogUtil() {
                                 }
                                 viewModel.getCachePathResource() == null -> {
                                     shareFileCheck(tempResource, TAG_RESOURCE)
-                                    checkFileExist(args.model.resource, TAG_RESOURCE)
+                                    checkFileExist(tempResource, TAG_RESOURCE)
                                 }
                                 viewModel.getCachePathBehavior() == null -> {
                                     shareFileCheck(tempBehavior, TAG_BEHAVIOR)
-                                    checkFileExist(args.model.behavior, TAG_BEHAVIOR)
+                                    checkFileExist(tempBehavior, TAG_BEHAVIOR)
                                 } else -> {
                                     checkFilesExists(args.model)
                                     shareFilesCheck()
@@ -151,11 +138,11 @@ class DetailFragment : DownloadDialogUtil() {
                             }
                         }
                         tempBehavior.isNotEmpty() -> {
-                            checkFileExists(args.model.behavior, TAG_BEHAVIOR)
+                            checkFileExists(tempBehavior, TAG_BEHAVIOR)
                             shareFileCheck(tempBehavior, TAG_BEHAVIOR)
                         }
                         tempResource.isNotEmpty() -> {
-                            checkFileExists(args.model.resource, TAG_RESOURCE)
+                            checkFileExists(tempResource, TAG_RESOURCE)
                             shareFileCheck(tempResource, TAG_RESOURCE)
                         }
                     }
@@ -187,9 +174,7 @@ class DetailFragment : DownloadDialogUtil() {
                     }
                 } else {
                     findNavController().navigate(
-                        DetailFragmentDirections.subscriptionFragment(
-                            FLAG_DEST_BILLING_FRAGMENT
-                        )
+                        DetailFragmentDirections.subscriptionFragment(FLAG_DEST_DETAIL_BILLING)
                     )
                 }
             }

@@ -1,6 +1,7 @@
 package com.example.minecraft.ui.billing
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,8 +12,8 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import com.bumptech.glide.Glide
 import com.example.minecraft.MainActivity
-import com.example.minecraft.MainActivity.Companion.FLAG_DEST_BILLING_FRAGMENT
-import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_TO_MAIN
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_DETAIL_BILLING
+import com.example.minecraft.MainActivity.Companion.FLAG_DEST_SPLASH_MAIN
 import com.example.minecraft.MainActivity.Companion.FLAG_DEST_MAIN_FRAGMENT
 import com.example.minecraft.R
 import com.example.minecraft.databinding.LayoutPremiumBinding
@@ -32,17 +33,20 @@ class BillingFragment : Fragment(), NetworkUtil {
 
     lateinit var appUtil: AppUtil
 
-    lateinit var billingManager: BillingManager
+    private var billingManager: BillingManager? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         appUtil = AppUtil()
-
-        billingManager = BillingManager(requireActivity()) { closeNavigation() }
+        billingManager = BillingManager(requireActivity()) {
+//            findNavController().navigate(BillingFragmentDirections.mainFragment())
+            closeNavigation()
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = LayoutPremiumBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
@@ -60,7 +64,7 @@ class BillingFragment : Fragment(), NetworkUtil {
         binding.apply {
             btnPremium.setOnClickListener {
                 if (checkInternetConnection(requireContext())) {
-                    billingManager.startConnection()
+                    billingManager?.startConnection()
                 }else{
                     Toast.makeText(requireActivity(), resources.getString(R.string.msg_no_internet), Toast.LENGTH_SHORT)
                         .show()
@@ -92,27 +96,27 @@ class BillingFragment : Fragment(), NetworkUtil {
     }
     /**
      * Navigation [close button], navigate back
-     * [FLAG_DEST_SPLASH_TO_MAIN] previously destination [SplashScreenFragment]
-     * [FLAG_DEST_BILLING_FRAGMENT], [FLAG_DEST_MAIN_FRAGMENT]
+     * [FLAG_DEST_SPLASH_MAIN] previously destination [SplashScreenFragment]
+     * [FLAG_DEST_DETAIL_BILLING], [FLAG_DEST_MAIN_FRAGMENT]
      * previously destination [DetailFragment] or [MainFragment]
      */
     private fun closeNavigation(){
         when (args.flagDest) {
-            FLAG_DEST_SPLASH_TO_MAIN -> { findNavController().navigate(BillingFragmentDirections.mainFragment()) }
-            FLAG_DEST_BILLING_FRAGMENT, FLAG_DEST_MAIN_FRAGMENT -> { findNavController().popBackStack() }
+            FLAG_DEST_SPLASH_MAIN -> { findNavController().navigate(BillingFragmentDirections.mainFragment()) }
+            FLAG_DEST_MAIN_FRAGMENT, FLAG_DEST_DETAIL_BILLING -> { findNavController().popBackStack() }
             else -> { throw RuntimeException("Bad flag no destination ")}
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        billingManager.endConnection()
+        billingManager?.endConnection()
         _binding = null
     }
 
     override fun onDetach() {
         super.onDetach()
-        billingManager.endConnection()
+        billingManager?.endConnection()
     }
 
     fun setupToolBartTitle(title: String){ (activity as MainActivity).setupToolBartTitle(title) }

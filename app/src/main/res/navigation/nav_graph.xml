@@ -11,8 +11,7 @@
         tools:layout="@layout/fragment_main">
         <action
             android:id="@+id/detailFragment"
-            app:destination="@id/detailFragment"
-            app:popUpTo="@id/mainFragment" />
+            app:destination="@id/detailFragment" />
         <action
             android:id="@+id/subscriptionFragment"
             app:destination="@id/subscriptionFragment"
@@ -30,8 +29,7 @@
             app:argType="string" />
         <action
             android:id="@+id/subscriptionFragment"
-            app:destination="@id/subscriptionFragment"
-            app:popUpTo="@id/detailFragment" />
+            app:destination="@id/subscriptionFragment" />
     </fragment>
 
     <fragment
@@ -67,9 +65,7 @@
             app:destination="@id/settingsDetailFragment" />
         <action
             android:id="@+id/mainFragment"
-            app:destination="@id/mainFragment"
-            app:popUpTo="@id/nav_graph"
-            app:popUpToInclusive="true" />
+            app:destination="@id/mainFragment" />
     </fragment>
     <fragment
         android:id="@+id/splashScreenFragment"
